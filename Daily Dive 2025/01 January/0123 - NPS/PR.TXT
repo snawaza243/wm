@@ -1,0 +1,28 @@
+git add WM/Controllers/NpsTransactionPunchingController.cs
+git add WM/Masters/NpsTransactionPunching.aspx
+git add WM/Masters/NpsTransactionPunching.aspx.cs
+git add WM/Masters/NpsTransactionPunching.aspx.designer.cs
+
+
+
+PSM_NPS_INSERT_UPDATE_PRA;
+PSM_NPS_GET_AR_BY_DTTS;
+PSM_NPS_GET_ARTR_LIST;
+PSM_LOGIN_DATA;
+PSM_NPS_PRINT_RECEIPT_GRID;
+PSM_NPT_GET_BRANCH_DATA;
+PSM_NPS_GET_SCH_CODE;
+PSM_NPS_Get_CRABranch_Master;
+PSM_NTP_GET_REQUEST_TYPES;
+PSAM_GET_BANK_MASTER_LIST;
+PSM_NTP_BRANCH_MASTER_LIST;
+
+
+not in use but useful
+
+PSM_NPS_CHECK_DUPLICATE_CHEQUE;
+PSM_GET_USERBYLOGIN;
+PSM_NPS_SAVE_LOGIN_ACTION;
+PSM_NTP_GET_CRA_BRANCH_DATA;
+EXPORT_TRANSACTIONS;
+

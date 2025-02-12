@@ -1,0 +1,11 @@
+
+PSM_AO_ApproveClient
+PSM_AO_GET_CLIENT_BY_ID
+PSM_AO_INSERT_CLIENT_DATA
+PSM_AO_UPDATE_CLIENT_DATA
+psm_ao_mm_update_by_inv;
+psm_ao_mm_insert;
+psm_ao_mm_get_inv_to_up;
+psm_ao_mm_existing_inv_list
+psm_ao_mm_existing_inv_grid;
+

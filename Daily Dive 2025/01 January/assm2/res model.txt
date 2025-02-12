@@ -1,0 +1,83 @@
+       <button type="button" class="btn btn-primary" onclick="openResAddModal()">
+           Residence Address
+   
+       </button>
+       <div clas ="modal fade" id="resAddModal" tabindex="-1" aria-labelledby="resAddModalLabel" aria-hidden="true" style="z-index: 99">
+           <div class="modal-dialog">
+               <div class="modal-content">
+                   <div class="modal-header">
+                       <h5 class="modal-title" id="resAddModalLabel">Residence Address Details</h5>
+                       <button type="button" class="btn-close" id="btnCloseResAddModal" aria-label="Close"></button>
+                   </div>
+                   <div class="modal-body">
+                       <div class="mb-3">
+                           <label for="resAddAddress1" class="form-label">Address 1</label>
+                           <asp:TextBox ID="resAddAddress1" CssClass="form-control" runat="server"></asp:TextBox>
+                       </div>
+                       <div class="mb-3">
+                           <label for="resAddAddress2" class="form-label">Address 2</label>
+                           <asp:TextBox ID="resAddAddress2" CssClass="form-control" runat="server"></asp:TextBox>
+                       </div>
+                       <div class="mb-3">
+                           <label for="resAddCity" class="form-label">City</label>
+                           <asp:TextBox ID="resAddCity" CssClass="form-control" runat="server"></asp:TextBox>
+                       </div>
+                       <div class="mb-3">
+                           <label for="resAddState" class="form-label">State</label>
+                           <asp:TextBox ID="resAddState" CssClass="form-control" runat="server"></asp:TextBox>
+                       </div>
+                       <div class="mb-3">
+                           <label for="resAddPIN" class="form-label">PIN</label>
+                           <asp:TextBox ID="resAddPIN" CssClass="form-control" runat="server"></asp:TextBox>
+                       </div>
+                   </div>
+                   <%--  <div class="modal-footer">
+                           <button type="button" class="btn btn-secondary" id="btnCloseResAddModal">Close</button>
+                       </div>--%>
+               </div>
+           </div>
+       </div>
+       <script>
+           const resAddModalStateKey = 'modalState_resAddModal';
+
+           // Function to open the modal
+           function openResAddModal() {
+               const modal = new bootstrap.Modal(document.getElementById('resAddModal'), {
+                   backdrop: false, // Prevent clicking outside to close
+                   keyboard: false, // Prevent Esc key from closing
+               });
+               modal.show();
+               sessionStorage.setItem(resAddModalStateKey, 'open');
+           }
+
+           // Function to close the modal
+           function closeResAddModal() {
+               const modalElement = document.getElementById('resAddModal');
+               const modal = bootstrap.Modal.getInstance(modalElement);
+               if (modal) {
+                   modal.hide();
+                   sessionStorage.setItem(resAddModalStateKey, 'closed');
+               }
+           }
+
+           // Close modal when clicking outside
+           window.addEventListener('click', function (event) {
+               const modalElement = document.getElementById('resAddModal');
+               if (event.target === modalElement) {
+                   closeResAddModal();
+               }
+           });
+
+           // Restore modal state on page load
+           document.addEventListener('DOMContentLoaded', function () {
+               const modalState = sessionStorage.getItem(resAddModalStateKey);
+               if (modalState === 'open') {
+                   openResAddModal();
+               }
+
+               const closeButton = document.getElementById('btnCloseResAddModal');
+               if (closeButton) {
+                   closeButton.addEventListener('click', closeResAddModal);
+               }
+           });
+           </script>

@@ -1,0 +1,2487 @@
+Dim Scode As String
+Dim strSchCode_sch As String
+Dim datecondition As String
+Dim amtcondition As String
+Dim Update_Flag As Boolean
+Dim MySlabNo As String
+Dim PunchDt As Variant
+Dim ModifyDt As Variant
+Dim MyCatId As String
+Dim vProdCode As String
+
+Private Function check_dates() As Boolean
+Dim i As Integer
+    check_dates = True
+    For i = 2 To msfgData.Rows - 1
+        If msfgData.TextMatrix(i, 0) = "1" Then
+            If msfgData.TextMatrix(i, 3) <> "" Then
+                If CDate(msfgData.TextMatrix(i, 2)) > CDate(msfgData.TextMatrix(i, 3)) Then
+                    check_dates = False
+                    Exit For
+                End If
+            End If
+        End If
+    Next
+End Function
+Private Function check_amount() As Boolean
+Dim i As Integer
+    check_amount = True
+    For i = 2 To msfgData.Rows - 1
+        If msfgData.TextMatrix(i, 0) = "1" Then
+            If msfgData.TextMatrix(i, 5) <> "" Then
+                If CDbl(msfgData.TextMatrix(i, 4)) > CDbl(msfgData.TextMatrix(i, 5)) Then
+                    check_amount = False
+                    Exit For
+                End If
+            End If
+        End If
+    Next
+End Function
+Private Function From_amount() As Boolean
+Dim i As Integer
+    From_amount = True
+    For i = 2 To msfgData.Rows - 1
+        If msfgData.TextMatrix(i, 0) = "1" Then
+            If msfgData.TextMatrix(i, 4) = "" Then
+                From_amount = False
+                Exit For
+            End If
+        End If
+    Next
+End Function
+
+Private Function Rate_Nature() As Boolean
+Dim i As Integer
+    Rate_Nature = True
+    For i = 2 To msfgData.Rows - 1
+        If msfgData.TextMatrix(i, 0) = "1" Then
+            If msfgData.TextMatrix(i, 6) = "" Or msfgData.TextMatrix(i, 7) = "" Then
+                Rate_Nature = False
+                Exit For
+            End If
+        End If
+    Next
+End Function
+
+Private Function Rate_Nature_PMS() As Boolean
+Dim i As Integer
+    Rate_Nature_PMS = True
+    For i = 2 To msfgData.Rows - 1
+        If msfgData.TextMatrix(i, 0) = "1" Then
+            If msfgData.TextMatrix(i, 7) = "" Then
+                Rate_Nature_PMS = False
+                Exit For
+            End If
+        End If
+    Next
+End Function
+Private Function from_date() As Boolean
+Dim i As Integer
+    from_date = True
+    For i = 2 To msfgData.Rows - 1
+        If msfgData.TextMatrix(i, 0) = "1" Then
+            If msfgData.TextMatrix(i, 2) = "" Then
+                from_date = False
+                Exit For
+            End If
+        End If
+    Next
+End Function
+Private Sub gridinit()
+    msfgData.Cols = 34 'CHANGE 31 TO 34
+    msfgData.Rows = 2
+    msfgData.Rows = 3
+    msfgData.MergeRow(0) = True: msfgData.MergeRow(1) = True: msfgData.MergeRow(2) = True: msfgData.MergeCol(0) = False: msfgData.MergeCol(1) = True: msfgData.MergeCol(2) = True: msfgData.MergeCol(3) = True: msfgData.MergeCol(4) = True: msfgData.MergeCol(5) = True: msfgData.MergeCol(6) = True: msfgData.MergeCol(7) = True: msfgData.MergeCol(8) = True: msfgData.MergeCol(9) = True
+    msfgData.MergeCells = flexMergeRestrictRows: msfgData.RowHeight(1) = 450
+    msfgData.TextMatrix(0, 0) = ""
+    msfgData.TextMatrix(0, 1) = "Scheme Details": msfgData.TextMatrix(0, 2) = "Scheme Details": msfgData.TextMatrix(0, 3) = "Scheme Details":  msfgData.TextMatrix(0, 4) = "Scheme Details": msfgData.TextMatrix(0, 5) = "Scheme Details": msfgData.TextMatrix(0, 6) = "Scheme Details": msfgData.TextMatrix(0, 7) = "Upfront":  msfgData.TextMatrix(0, 8) = "Upfront":
+    msfgData.TextMatrix(0, 9) = "Trail": msfgData.TextMatrix(0, 10) = "Trail": msfgData.TextMatrix(0, 11) = "Trail": msfgData.TextMatrix(0, 12) = "Trail": msfgData.TextMatrix(0, 13) = "Trail": msfgData.TextMatrix(0, 14) = "Trail": msfgData.TextMatrix(0, 15) = "Trail": msfgData.TextMatrix(0, 16) = "Trail": msfgData.TextMatrix(0, 17) = "UP(BASE)": msfgData.TextMatrix(0, 18) = "UP(ADD)": msfgData.TextMatrix(0, 19) = "SCH_CODE": msfgData.TextMatrix(0, 20) = "ALL(BASE)": msfgData.TextMatrix(0, 21) = "ALL(ADD)": msfgData.TextMatrix(0, 22) = "ALL(BASE2)": msfgData.TextMatrix(0, 23) = "ALL(ADD2)": msfgData.TextMatrix(0, 24) = "ALL(BASE3)": msfgData.TextMatrix(0, 25) = "ALL(ADD3)":
+    msfgData.TextMatrix(0, 26) = "ALL(BASE4)"
+    msfgData.TextMatrix(0, 27) = "ALL(ADD4)"
+    '------------New Log coloumns---------------
+    msfgData.TextMatrix(0, 28) = "Circular No."
+    msfgData.TextMatrix(0, 29) = "Request By"
+    msfgData.TextMatrix(0, 30) = "Approved By"
+    '-------------add by pankaj pundir on dated 15042016------------------------
+    msfgData.TextMatrix(0, 31) = "CategoryCode"
+    msfgData.TextMatrix(0, 32) = "Sip Rate"
+    msfgData.TextMatrix(0, 33) = "Category Name"
+    
+    msfgData.TextMatrix(1, 0) = ""
+    msfgData.TextMatrix(1, 1) = "Scheme": msfgData.TextMatrix(1, 2) = "Date From": msfgData.TextMatrix(1, 3) = "Date To": msfgData.TextMatrix(1, 4) = "Amt From": msfgData.TextMatrix(1, 5) = "Amt To": msfgData.TextMatrix(1, 6) = "Nature": msfgData.TextMatrix(1, 7) = "Base Rate(1Yr)": msfgData.TextMatrix(1, 8) = "Add Adj": msfgData.TextMatrix(1, 9) = "Base Rate(1Yr)": msfgData.TextMatrix(1, 10) = "Additional Rate(1Yr)": msfgData.TextMatrix(1, 11) = "Base Rate(2Yr)": msfgData.TextMatrix(1, 12) = "Additional Rate(2Yr)": msfgData.TextMatrix(1, 13) = "Base Rate(3Yr)": msfgData.TextMatrix(1, 14) = "Additional Rate(3Yr)": msfgData.TextMatrix(1, 15) = "Base Rate(Onwards)": msfgData.TextMatrix(1, 16) = "Additional Rate(Onwards)"
+    msfgData.TextMatrix(0, 17) = "UP(BASE)": msfgData.TextMatrix(0, 18) = "UP(ADD)": msfgData.TextMatrix(0, 19) = "SCH_CODE": msfgData.TextMatrix(0, 20) = "ALL(BASE)": msfgData.TextMatrix(0, 21) = "ALL(ADD)": msfgData.TextMatrix(0, 22) = "ALL(BASE2)": msfgData.TextMatrix(0, 23) = "ALL(ADD2)": msfgData.TextMatrix(0, 24) = "ALL(BASE3)": msfgData.TextMatrix(0, 25) = "ALL(ADD3)": msfgData.TextMatrix(0, 26) = "ALL(BASE4)": msfgData.TextMatrix(0, 27) = "ALL(ADD4)"
+    msfgData.ColAlignment(1) = 4: msfgData.ColAlignment(2) = 4: msfgData.ColAlignment(3) = 4: msfgData.ColAlignment(4) = 4: msfgData.ColAlignment(5) = 4: msfgData.ColAlignment(6) = 4: msfgData.ColAlignment(7) = 4: msfgData.ColAlignment(8) = 4: msfgData.ColAlignment(9) = 4: msfgData.ColAlignment(10) = 4: msfgData.ColAlignment(11) = 4: msfgData.ColAlignment(12) = 4: msfgData.ColAlignment(13) = 4: msfgData.ColAlignment(14) = 4: msfgData.ColAlignment(15) = 4: msfgData.ColAlignment(16) = 4: msfgData.ColAlignment(17) = 4
+    msfgData.ColWidth(0) = 500: msfgData.ColWidth(1) = 3100: msfgData.ColWidth(2) = 1000: msfgData.ColWidth(3) = 1000: msfgData.ColWidth(4) = 800: msfgData.ColWidth(5) = 800: msfgData.ColWidth(6) = 800: msfgData.ColWidth(7) = 800: msfgData.ColWidth(8) = 800: msfgData.ColWidth(9) = 0: msfgData.ColWidth(10) = 0: msfgData.ColWidth(11) = 0: msfgData.ColWidth(12) = 0: msfgData.ColWidth(13) = 0: msfgData.ColWidth(14) = 0: msfgData.ColWidth(15) = 0
+    msfgData.ColWidth(16) = 0: msfgData.ColWidth(17) = 1000: msfgData.ColWidth(18) = 0: msfgData.ColWidth(19) = 1000: msfgData.ColWidth(20) = 1000: msfgData.ColWidth(21) = 0: msfgData.ColWidth(22) = 0: msfgData.ColWidth(23) = 0: msfgData.ColWidth(24) = 0: msfgData.ColWidth(25) = 0: msfgData.ColWidth(26) = 0: msfgData.ColWidth(27) = 0: msfgData.ColWidth(31) = 0: msfgData.ColWidth(32) = 1000: msfgData.ColWidth(33) = 4000
+End Sub
+
+Private Sub Populate_Sch()
+Dim rsSch As New Adodb.Recordset
+If OptMF.Value = True Then
+    sql = "select a.sch_name,a.sch_code from SCHEME_INFO a,asset_class_master_new b where a.SCH_CODE=b.SCH_CODE(+) "
+    If cmbComp.ListIndex <> -1 Then sql = sql & " and a.mut_code='" & cmbComp.List(cmbComp.ListIndex, 1) & "' "
+    
+    If cmbAssetClass.ListIndex <> -1 Then
+        If cmbAssetClass.Text <> "Not Available" Then
+            sql = sql & " and b.asset_class='" & cmbAssetClass.List(cmbAssetClass.ListIndex, 0) & "' "
+        Else
+            If cmbBroktype.Text = "Upfront" Then
+                sql = sql & " and a.sch_code not in ( select t.sch_code from new_upfront_recd t,scheme_info a,asset_class_master_new b where t.sch_code=a.sch_code and a.sch_code=b.sch_code "
+                If cmbComp.ListIndex <> -1 Then sql = sql & " and a.mut_code='" & cmbComp.List(cmbComp.ListIndex, 1) & "' "
+                sql = sql & " ) "
+            Else
+                sql = sql & " and a.sch_code not in ( select t.sch_code from trail_recd t,scheme_info a,sch_sub_nat_mapping@mf.bajajcapital b where t.sch_code=a.sch_code and a.sch_code=b.sch_code "
+                If cmbComp.ListIndex <> -1 Then sql = sql & " and a.mut_code='" & cmbComp.List(cmbComp.ListIndex, 1) & "' "
+                sql = sql & " ) "
+            End If
+        End If
+    End If
+    
+    If cmbAsset.ListIndex <> -1 Then
+        If cmbAsset.Text <> "Not Available" Then
+            sql = sql & " and b.sub_asset_class_code='" & cmbAsset.List(cmbAsset.ListIndex, 1) & "' "
+        Else
+            If cmbBroktype.Text = "Upfront" Then
+                sql = sql & " and a.sch_code not in ( select t.sch_code from new_upfront_recd t,scheme_info a,asset_class_master_new b where t.sch_code=a.sch_code and a.sch_code=b.sch_code "
+                If cmbComp.ListIndex <> -1 Then sql = sql & " and a.mut_code='" & cmbComp.List(cmbComp.ListIndex, 1) & "' "
+                sql = sql & " ) "
+            Else
+                sql = sql & " and a.sch_code not in ( select t.sch_code from trail_recd t,scheme_info a,sch_sub_nat_mapping@mf.bajajcapital b where t.sch_code=a.sch_code and a.sch_code=b.sch_code "
+                If cmbComp.ListIndex <> -1 Then sql = sql & " and a.mut_code='" & cmbComp.List(cmbComp.ListIndex, 1) & "' "
+                sql = sql & " ) "
+            End If
+        End If
+    End If
+    
+    If cmbFund.ListIndex <> -1 Then
+        If cmbFund.Text <> "Not Available" Then
+            sql = sql & " and upper(a.fund_name)='" & UCase(cmbFund.Text) & "' "
+        Else
+            If cmbBroktype.Text = "Upfront" Then
+                sql = sql & " and a.sch_code not in ( select t.sch_code from new_upfront_recd t,scheme_info a,asset_class_master_new b where t.sch_code=a.sch_code and a.sch_code=b.sch_code "
+                If cmbComp.ListIndex <> -1 Then sql = sql & " and a.mut_code='" & cmbComp.List(cmbComp.ListIndex, 1) & "' "
+                sql = sql & " ) "
+            Else
+                sql = sql & " and a.sch_code not in ( select t.sch_code from trail_recd t,scheme_info a,sch_sub_nat_mapping@mf.bajajcapital b where t.sch_code=a.sch_code and a.sch_code=b.sch_code "
+                If cmbComp.ListIndex <> -1 Then sql = sql & " and a.mut_code='" & cmbComp.List(cmbComp.ListIndex, 1) & "' "
+                sql = sql & " ) "
+            End If
+        End If
+    End If
+    
+    
+    sql = sql & " order by a.sch_name asc"
+    
+    i = 2
+    
+    rsSch.open sql, MyConn, adOpenForwardOnly
+    msfgData.Rows = 3
+    While Not rsSch.EOF
+        msfgData.TextMatrix(i, 0) = ""
+        msfgData.TextMatrix(i, 1) = rsSch("sch_name")
+        msfgData.TextMatrix(i, 19) = rsSch("sch_code")
+        msfgData.Rows = msfgData.Rows + 1
+        i = i + 1
+        rsSch.MoveNext
+    Wend
+    msfgData.Rows = msfgData.Rows - 1
+    rsSch.Close
+    Set rsSch = Nothing
+Else
+    sql = "select a.Osch_name sch_name,a.osch_code sch_code from OTHER_PRODUCT a where 1=1"
+    If cmbComp.ListIndex <> -1 Then sql = sql & " and a.iss_code='" & cmbComp.List(cmbComp.ListIndex, 1) & "' "
+    sql = sql & " order by a.osch_name asc"
+    
+    i = 2
+    
+    rsSch.open sql, MyConn, adOpenForwardOnly
+    msfgData.Rows = 3
+    While Not rsSch.EOF
+        msfgData.TextMatrix(i, 0) = ""
+        msfgData.TextMatrix(i, 1) = rsSch("sch_name")
+        msfgData.TextMatrix(i, 19) = rsSch("sch_code")
+        msfgData.Rows = msfgData.Rows + 1
+        i = i + 1
+        rsSch.MoveNext
+    Wend
+    msfgData.Rows = msfgData.Rows - 1
+    rsSch.Close
+    Set rsSch = Nothing
+End If
+End Sub
+
+Private Sub Populate_Sch_Undef()
+Dim rsSch As New Adodb.Recordset
+If OptMF.Value = True Then
+    sql = "select a.sch_name,a.sch_code from SCHEME_INFO a,asset_class_master_new b where a.sch_code=b.sch_code(+) and a.sch_code not in (select sch_code from new_upfront_recd where iss_mut_code='" & cmbComp.List(cmbComp.ListIndex, 1) & "') "
+    If cmbComp.ListIndex <> -1 Then sql = sql & " and a.mut_code='" & cmbComp.List(cmbComp.ListIndex, 1) & "' "
+    
+   
+    If cmbAssetClass.ListIndex <> -1 Then
+        If cmbAssetClass.Text <> "Not Available" Then
+            sql = sql & " and b.asset_class='" & cmbAssetClass.List(cmbAssetClass.ListIndex, 0) & "' "
+        Else
+            If cmbBroktype.Text = "Upfront" Then
+                sql = sql & " and a.sch_code not in ( select t.sch_code from new_upfront_recd t,scheme_info a,asset_class_master_new b where t.sch_code=a.sch_code and a.sch_code=b.sch_code(+) "
+                If cmbComp.ListIndex <> -1 Then sql = sql & " and a.mut_code='" & cmbComp.List(cmbComp.ListIndex, 1) & "' "
+                sql = sql & " ) "
+            Else
+                sql = sql & " and a.sch_code not in ( select t.sch_code from trail_recd t,scheme_info a,sch_sub_nat_mapping@mf.bajajcapital b where t.sch_code=a.sch_code and a.sch_code=b.sch_code(+) "
+                If cmbComp.ListIndex <> -1 Then sql = sql & " and a.mut_code='" & cmbComp.List(cmbComp.ListIndex, 1) & "' "
+                sql = sql & " ) "
+            End If
+        End If
+    End If
+    
+    If cmbAsset.ListIndex <> -1 Then
+        If cmbAsset.Text <> "Not Available" Then
+            sql = sql & " and b.sub_asset_class_code='" & cmbAsset.List(cmbAsset.ListIndex, 1) & "' "
+        Else
+            If cmbBroktype.Text = "Upfront" Then
+                sql = sql & " and a.sch_code not in ( select t.sch_code from new_upfront_recd t,scheme_info a,asset_class_master_new b where t.sch_code=a.sch_code and a.sch_code=b.sch_code(+) "
+                If cmbComp.ListIndex <> -1 Then sql = sql & " and a.mut_code='" & cmbComp.List(cmbComp.ListIndex, 1) & "' "
+                sql = sql & " ) "
+            Else
+                sql = sql & " and a.sch_code not in ( select t.sch_code from trail_recd t,scheme_info a,sch_sub_nat_mapping@mf.bajajcapital b where t.sch_code=a.sch_code and a.sch_code=b.sch_code(+) "
+                If cmbComp.ListIndex <> -1 Then sql = sql & " and a.mut_code='" & cmbComp.List(cmbComp.ListIndex, 1) & "' "
+                sql = sql & " ) "
+            End If
+        End If
+    End If
+    
+    If cmbFund.ListIndex <> -1 Then
+        If cmbFund.Text <> "Not Available" Then
+            sql = sql & " and upper(a.fund_name)='" & UCase(cmbFund.Text) & "' "
+        Else
+            If cmbBroktype.Text = "Upfront" Then
+                sql = sql & " and a.sch_code not in ( select t.sch_code from new_upfront_recd t,scheme_info a,asset_class_master_new b where t.sch_code=a.sch_code and a.sch_code=b.sch_code(+) "
+                If cmbComp.ListIndex <> -1 Then sql = sql & " and a.mut_code='" & cmbComp.List(cmbComp.ListIndex, 1) & "' "
+                sql = sql & " ) "
+            Else
+                sql = sql & " and a.sch_code not in ( select t.sch_code from trail_recd t,scheme_info a,sch_sub_nat_mapping@mf.bajajcapital b where t.sch_code=a.sch_code and a.sch_code=b.sch_code(+) "
+                If cmbComp.ListIndex <> -1 Then sql = sql & " and a.mut_code='" & cmbComp.List(cmbComp.ListIndex, 1) & "' "
+                sql = sql & " ) "
+            End If
+        End If
+    End If
+    
+    
+    sql = sql & " order by a.sch_name asc"
+    
+    i = 2
+    
+    rsSch.open sql, MyConn, adOpenForwardOnly
+    msfgData.Rows = 3
+    While Not rsSch.EOF
+        msfgData.TextMatrix(i, 0) = ""
+        msfgData.TextMatrix(i, 1) = rsSch("sch_name")
+        msfgData.TextMatrix(i, 19) = rsSch("sch_code")
+        msfgData.Rows = msfgData.Rows + 1
+        i = i + 1
+        rsSch.MoveNext
+    Wend
+    msfgData.Rows = msfgData.Rows - 1
+    rsSch.Close
+    Set rsSch = Nothing
+Else
+    sql = "select a.osch_name sch_name,a.osch_code sch_code from other_product a where  a.osch_code not in (select sch_code from new_upfront_recd where iss_mut_code='" & cmbComp.List(cmbComp.ListIndex, 1) & "') "
+    If cmbComp.ListIndex <> -1 Then sql = sql & " and a.iss_code='" & cmbComp.List(cmbComp.ListIndex, 1) & "' "
+    sql = sql & " order by a.osch_name asc"
+    i = 2
+    rsSch.open sql, MyConn, adOpenForwardOnly
+    msfgData.Rows = 3
+    While Not rsSch.EOF
+        msfgData.TextMatrix(i, 0) = ""
+        msfgData.TextMatrix(i, 1) = rsSch("sch_name")
+        msfgData.TextMatrix(i, 19) = rsSch("sch_code")
+        msfgData.Rows = msfgData.Rows + 1
+        i = i + 1
+        rsSch.MoveNext
+    Wend
+    msfgData.Rows = msfgData.Rows - 1
+    rsSch.Close
+    Set rsSch = Nothing
+End If
+End Sub
+
+
+Private Sub RateFill()
+Dim rsData As New Adodb.Recordset
+Dim sql As String
+cmbRate.Clear
+If OptMF.Value = True Then
+    rsData.open "SELECT AST_CAT_CODE,AST_CAT_NAME||'   ('||TRIM(TO_CHAR(NOTIONAL_RATE,90.99))||')' AST_CAT_NAME,AST_CAT_NAME AST_CAT_NAME1,NOTIONAL_RATE,SIP_RATE fROM ASSET_CAT_MASTER_CREDIT@MF.BAJAJCAPITAL WHERE ACTIVE_FLAG='Y' AND PROD_CODE='" & vProdCode & "'  ORDER BY ast_cat_name", MyConn, adOpenForwardOnly
+Else
+    sql = "SELECT AST_CAT_CODE,AST_CAT_NAME||'   ('||TRIM(TO_CHAR(NOTIONAL_RATE,90.99))||')' AST_CAT_NAME,AST_CAT_NAME AST_CAT_NAME1,"
+    sql = sql & " NOTIONAL_RATE,SIP_RATE fROM ASSET_CAT_MASTER_CREDIT@MF.BAJAJCAPITAL WHERE ACTIVE_FLAG='Y' AND PROD_CODE='" & vProdCode & "' "
+    If cmbComp.ListIndex <> -1 Then
+        sql = sql & " and AST_CAT_NAME IN(SELECT UPPER(OSCH_NAME) FROM OTHER_PRODUCT WHERE ISS_CODE='" & cmbComp.List(cmbComp.ListIndex, 1) & "') "
+    End If
+    sql = sql & " ORDER BY ast_cat_name"
+    rsData.open sql, MyConn, adOpenForwardOnly
+End If
+While Not rsData.EOF
+    cmbRate.AddItem rsData("AST_CAT_NAME") & Space(100 - Len(rsData("AST_CAT_NAME"))) & "#" & rsData("AST_CAT_CODE") & "#" & rsData("NOTIONAL_RATE") & "#" & rsData("SIP_RATE") & "#" & rsData("AST_CAT_NAME1")
+    rsData.MoveNext
+Wend
+rsData.Close
+
+End Sub
+
+Private Sub Amt_from_KeyPress(KeyAscii As Integer)
+If (KeyAscii < 48 Or KeyAscii > 57) And KeyAscii <> 8 Then
+    KeyAscii = 0
+End If
+End Sub
+
+Private Sub Amt_to_KeyPress(KeyAscii As Integer)
+If (KeyAscii < 48 Or KeyAscii > 57) And KeyAscii <> 8 Then
+    KeyAscii = 0
+End If
+End Sub
+
+Private Sub chkSelect_Click()
+    msfgData.Col = 0
+    If chkSelect.Value = 1 Then
+        For i = 2 To msfgData.Rows - 1
+            msfgData.Row = i
+            Set msfgData.CellPicture = Image1.Picture
+            msfgData.CellPictureAlignment = 4
+            msfgData.CellForeColor = vbWhite
+            msfgData.Text = 1
+        Next
+    Else
+        For i = 2 To msfgData.Rows - 1
+            msfgData.Row = i
+            Set msfgData.CellPicture = Image2.Picture
+            msfgData.CellPictureAlignment = 4
+            msfgData.CellForeColor = vbWhite
+            msfgData.Text = 0
+        Next
+    End If
+End Sub
+
+
+
+Private Sub cmbAsset_Click()
+Dim rsData As New Adodb.Recordset
+    cmbFund.Clear
+    If cmbAsset.ListIndex <> -1 Then
+        'RsData.open "select DISTINCT T1.FUND_NAME from SCHEME_INFO T1,sch_sub_nat_mapping@mf.bajajcapital T2 where T1.SCH_CODE=T2.SCH_CODE(+) AND sch_nat_code='" & cmbAsset.List(cmbAsset.ListIndex, 1) & "' and t1.mut_code='" & cmbComp.List(cmbComp.ListIndex, 1) & "'", MyConn, adOpenForwardOnly
+        rsData.open "select DISTINCT upper(T1.FUND_NAME) FUND_NAME from scheme_info@mf.bajajcapital T1,asset_class_master_new T2 where T1.SCH_CODE=T2.SCH_CODE(+) AND sub_asset_class_code='" & cmbAsset.List(cmbAsset.ListIndex, 1) & "' and t1.mut_code='" & cmbComp.List(cmbComp.ListIndex, 1) & "' order by upper(T1.FUND_NAME)   ", MyConn, adOpenForwardOnly
+        'cmbFund.AddItem "Not Available"
+        While Not rsData.EOF
+            cmbFund.AddItem rsData("FUND_NAME")
+            rsData.MoveNext
+        Wend
+        rsData.Close
+    End If
+    Set rsData = Nothing
+End Sub
+
+Private Sub cmbAssetClass_Click()
+Dim rsData As New Adodb.Recordset
+    cmbAsset.Clear
+    If cmbComp.ListIndex <> -1 Then
+        i = 0
+        'RsData.open "SELECT distinct sch_nat_name,t1.sch_nat_code FROM SCH_SUB_NATURE t1,sch_sub_nat_mapping@mf.bajajcapital t2 where t1.sch_nat_code=t2.sch_nat_code and t1.sch_nat_code is not null and t1.SCH_NATURE='" & cmbAssetClass.List(cmbAssetClass.ListIndex, 0) & "' and t2.mut_code='" & cmbComp.List(cmbComp.ListIndex, 1) & "'", MyConn, adOpenForwardOnly
+        rsData.open "SELECT distinct (sub_asset_class) sch_nat_name,sub_asset_class_code sch_nat_code FROM asset_class_master_new t1,scheme_info@mf.bajajcapital t2 where t1.sch_code=t2.sch_code  and t1.asset_class='" & cmbAssetClass.List(cmbAssetClass.ListIndex, 0) & "' and t2.mut_code='" & cmbComp.List(cmbComp.ListIndex, 1) & "'", MyConn, adOpenForwardOnly
+        'cmbAsset.AddItem "Not Available"
+        While Not rsData.EOF
+            cmbAsset.AddItem rsData("sch_nat_name")
+            cmbAsset.List(i, 1) = rsData("sch_nat_code")
+            i = i + 1
+            rsData.MoveNext
+        Wend
+        rsData.Close
+    End If
+    Set rsData = Nothing
+End Sub
+
+Private Sub CmbComp_Change()
+    CmbComp_Click
+End Sub
+
+Private Sub CmbComp_Click()
+Dim rsData As New Adodb.Recordset
+
+    If OptPMS.Value = True Then
+        RateFill
+    End If
+    cmbAssetClass.Clear
+    If cmbComp.ListIndex <> -1 Then
+        i = 0
+        'RsData.open "SELECT distinct sch_nat_name,t1.sch_nat_code FROM SCH_SUB_NATURE t1,sch_sub_nat_mapping@mf.bajajcapital t2 where t1.sch_nat_code is not null and t1.SCH_NAT_CODE=t2.SCH_NAT_CODE and mut_code='" & cmbComp.List(cmbComp.ListIndex, 1) & "'", MyConn, adOpenForwardOnly
+        rsData.open "SELECT distinct (asset_class) sch_nat_name,asset_class_code sch_nat_code FROM asset_class_master_new t1,scheme_info@mf.bajajcapital t2 where t1.sch_code=t2.sch_code and mut_code='" & cmbComp.List(cmbComp.ListIndex, 1) & "'", MyConn, adOpenForwardOnly
+        cmbAssetClass.AddItem "Not Available"
+        While Not rsData.EOF
+            cmbAssetClass.AddItem rsData("sch_nat_name")
+            cmbAssetClass.List(i, 1) = rsData("sch_nat_code")
+            i = i + 1
+            rsData.MoveNext
+        Wend
+        rsData.Close
+    End If
+    
+
+    cmbFund.Clear
+    If cmbComp.ListIndex <> -1 Then
+    'RsData.open "select DISTINCT T1.FUND_NAME from SCHEME_INFO T1,sch_sub_nat_mapping@mf.bajajcapital T2 where T1.SCH_CODE=T2.SCH_CODE(+) AND sch_nat_code='" & cmbAsset.List(cmbAsset.ListIndex, 1) & "' and t1.mut_code='" & cmbComp.List(cmbComp.ListIndex, 1) & "'", MyConn, adOpenForwardOnly
+    rsData.open "select DISTINCT upper(T1.FUND_NAME) FUND_NAME from scheme_info@mf.bajajcapital T1,asset_class_master_new T2 where T1.SCH_CODE=T2.SCH_CODE(+) and t1.mut_code='" & cmbComp.List(cmbComp.ListIndex, 1) & "' order by upper(T1.FUND_NAME)   ", MyConn, adOpenForwardOnly
+    'cmbFund.AddItem "Not Available"
+    While Not rsData.EOF
+        cmbFund.AddItem rsData("FUND_NAME")
+        rsData.MoveNext
+    Wend
+    rsData.Close
+    End If
+    
+    
+    Set rsData = Nothing
+End Sub
+
+
+
+Private Sub cmbRate_Change()
+    For i = 2 To msfgData.Rows - 1
+        If msfgData.TextMatrix(i, 0) = "1" Then ' it is checked
+            If msfgData.Col = 2 And msfgData.TextMatrix(i, 17) <> "" And Update_Flag = False Then
+                KeyAscii = 0
+                Exit Sub
+            End If
+            A1 = Split(Trim(cmbRate.Text), "#")
+            'MsgBox A1(0) & " - " & Trim(A1(1)) & " - " & Trim(A1(2)) & "- " & Trim(A1(3))
+            '0 cat code 1 cat name 2 notional rate 3 sip rate
+            msfgData.TextMatrix(i, 7) = Trim(A1(2)) 'notional rate cmbRate.Text
+            msfgData.TextMatrix(i, 31) = Trim(A1(1)) 'aset cate code
+            msfgData.TextMatrix(i, 32) = Trim(A1(3)) 'sip rate
+            msfgData.TextMatrix(i, 33) = Trim(A1(4)) 'Category Name
+        End If
+    Next i
+End Sub
+
+Private Sub cmbRate_Click()
+    cmbRate_Change
+End Sub
+
+Private Sub Cmdcancel_Click()
+Dim rsData As New Adodb.Recordset
+    Frame3.Visible = False
+    msfgRateMaster.Rows = 1
+    msfgRateMaster.Rows = 2
+    cmbRate.Clear
+    If rsData.State = 1 Then rsData.Close
+    sql = "SELECT AST_CAT_CODE,AST_CAT_NAME||'    ('||TRIM(TO_CHAR(NOTIONAL_RATE,90.99))||')' AST_CAT_NAME,NOTIONAL_RATE,SIP_RATE,AST_CAT_NAME AST_CAT_NAME1 fROM ASSET_CAT_MASTER_CREDIT@MF.BAJAJCAPITAL WHERE ACTIVE_FLAG='Y' AND PROD_CODE='" & vProdCode & "'"
+    If cmbComp.ListIndex <> -1 Then
+        sql = sql & " and AST_CAT_NAME IN(SELECT UPPER(OSCH_NAME) FROM OTHER_PRODUCT WHERE ISS_CODE='" & cmbComp.List(cmbComp.ListIndex, 1) & "') "
+    End If
+    sql = sql & " ORDER BY ast_cat_name"
+    rsData.open sql, MyConn, adOpenForwardOnly
+    
+    While Not rsData.EOF
+        cmbRate.AddItem rsData("AST_CAT_NAME") & Space(100 - Len(rsData("AST_CAT_NAME"))) & "#" & rsData("AST_CAT_CODE") & "#" & rsData("NOTIONAL_RATE") & "#" & rsData("SIP_RATE") & "#" & rsData("AST_CAT_NAME1")
+        rsData.MoveNext
+    Wend
+    rsData.Close
+    
+    txtcatname.Text = ""
+    txtRate.Text = ""
+    If OptPMS.Value = True Then
+        TxtAdvText.Text = "0"
+    Else
+        TxtAdvText.Text = ""
+    End If
+End Sub
+
+Private Sub cmdExit_Click()
+    Unload Me
+End Sub
+
+Private Sub CmdExport_Click()
+On Error GoTo err1
+    Call FlexGrid_To_Excel(msfgData, msfgData.Rows, 17, 1)
+    Exit Sub
+err1:
+    MsgBox err.Description
+End Sub
+
+Private Sub cmdFund_Click()
+    strscheme = "frmNewMFBrok"
+    frmFundSearch.Show
+    frmFundSearch.ZOrder
+End Sub
+
+Private Sub cmdInsert_Click()
+On Error GoTo err1
+Dim str_Dt_to As String
+Dim str_amount_to As String
+Dim sql As String
+Dim J As Integer
+Dim FLAG_INSERT As Boolean
+    
+    FLAG_INSERT = False
+    If from_date = False Then
+        MsgBox "From Date Cannot be Blank", vbInformation
+        Exit Sub
+    End If
+
+    If From_amount = False Then
+        MsgBox "From Amount Cannot be Blank", vbInformation
+        Exit Sub
+    End If
+
+    If check_dates = False Then
+        MsgBox "From Date Cannot be Greater than To Date", vbInformation
+        Exit Sub
+    End If
+
+    If check_amount = False Then
+        MsgBox "From Amount Cannot be Greater than To Amount", vbInformation
+        Exit Sub
+    End If
+    
+    If OptMF.Value = True Then
+        If Rate_Nature = False Then
+            MsgBox "Nature and Rate cannot be left blank", vbInformation
+            Exit Sub
+        End If
+    Else
+        If Rate_Nature_PMS = False Then
+            MsgBox "Nature and Rate cannot be left blank", vbInformation
+            Exit Sub
+        End If
+    End If
+    
+    Me.MousePointer = 11
+    For i = 2 To msfgData.Rows - 1
+        If msfgData.TextMatrix(i, 0) = "1" Then
+            str_Dt_to = "NULL"
+            str_amount_to = "NULL"
+            '--------------------Rate Log mayank-----------------------------------------
+             If msfgData.TextMatrix(i, 28) = "" And msfgData.TextMatrix(i, 29) = "" Then
+                Me.MousePointer = 0
+                MsgBox "Plz. Enter Either Circular No or Request By", vbInformation
+                Exit Sub
+             End If
+             '-------------------------------------------------------------------------------
+            If msfgData.TextMatrix(i, 3) <> "" Then str_Dt_to = msfgData.TextMatrix(i, 3)
+            If msfgData.TextMatrix(i, 5) <> "" Then str_amount_to = msfgData.TextMatrix(i, 5)
+            
+            If cmbBroktype.Text = "Upfront" Then
+                
+                If Check_Slab_Ins(i, "Upfront") = True Then
+                    FLAG_INSERT = True
+                    For J = 1 To 1
+                        sql = "insert into new_upfront_recd(prod_class_code,iss_mut_code,sch_code,date_from,date_to,amount_from,amount_to,per_rs,GROSS_FIGURE,investor_code,broker_id,loggeduserid,timest,circular_no,request_by,approved_by,b15,arn_code,tran_type,SCH_NATURE,SIP_ADV_RATE,AST_CAT_CODE) values ( '" & vProdCode & "','" & cmbComp.List(cmbComp.ListIndex, 1) & "','" & _
+                        msfgData.TextMatrix(i, 19) & "',TO_DATE('" & msfgData.TextMatrix(i, 2) & "','dd-mm-RRRR'),TO_DATE('" & str_Dt_to & "','dd-mm-RRRR')," & msfgData.TextMatrix(i, 4) & "," & str_amount_to & ",'Percentage'," & msfgData.TextMatrix(i, 7) & "," & J & ",'1'," & Glbloginid & ",sysdate,'" & msfgData.TextMatrix(i, 28) & "','" & msfgData.TextMatrix(i, 29) & "','" & msfgData.TextMatrix(i, 30) & "','" & msfgData.TextMatrix(i, 8) & "'"
+                        If Cmbarn.Text = "" Then
+                            sql = sql & ",''"
+                        Else
+                            sql = sql & ",'" & Cmbarn.Text & "'"
+                        End If
+                        If Cmbtran.Text = "" Then
+                            sql = sql & ",''"
+                        Else
+                            sql = sql & ",'" & Cmbtran.Text & "'"
+                        End If
+                        sql = sql & ",'" & msfgData.TextMatrix(i, 6) & "'," & msfgData.TextMatrix(i, 32) & "," & msfgData.TextMatrix(i, 31) & ")"
+                        sql = Replace(sql, "'NULL'", "NULL")
+                        MyConn.Execute sql
+                    Next
+                End If
+                
+                If msfgData.TextMatrix(i, 7) <> "" Then
+'                    If Check_Slab_Ins(i, "Add Upfront") = True Then
+'                        FLAG_INSERT = True
+'                        For J = 1 To 1
+'                            Sql = "insert into new_add_incentive_recd(prod_class_code,iss_mut_code,sch_code,date_from,date_to,amount_from,amount_to,per_rs,GROSS_FIGURE,investor_code,broker_id,loggeduserid,timest,circular_no,request_by,approved_by) values ( 'DT001','" & cmbComp.List(cmbComp.ListIndex, 1) & "','" & _
+'                            msfgData.TextMatrix(i, 19) & "',TO_DATE('" & msfgData.TextMatrix(i, 2) & "','dd-mm-RRRR'),TO_DATE('" & str_Dt_to & "','dd-mm-RRRR')," & msfgData.TextMatrix(i, 4) & "," & str_amount_to & ",'Percentage'," & msfgData.TextMatrix(i, 7) & "," & J & ",'1'," & Glbloginid & ",sysdate,'" & msfgData.TextMatrix(i, 28) & "','" & msfgData.TextMatrix(i, 29) & "','" & msfgData.TextMatrix(i, 30) & "')"
+'                            Sql = Replace(Sql, "'NULL'", "NULL")
+'                            MyConn.Execute Sql
+'                            'MySlabNo = SqlRet("select max(slab_id from new_upfront_recd")
+'                            'MyConn.Execute "insert into RATE_MASTER_LOG(slabid,Circular_No,Requested_By,Approved_By) values('" & MySlabNo & "','" & TxtCircularno & "','" & TxtReqby & "','" & TxtApprovedby & "') "
+'                        Next
+'                    End If
+                End If
+                
+            
+            Else
+                If msfgData.TextMatrix(i, 9) <> "" Then
+                    If Check_Slab_Trail_Ins(i, 0, "Trail", 17) = True Then
+                        FLAG_INSERT = True
+                        For J = 1 To 1
+                            sql = "insert into trail_recd(prod_class_code,iss_mut_code,sch_code,date_from,date_to,amount_from,amount_to,per_rs,GROSS_FIGURE,investor_code,broker_id,loggeduserid,due_after,valid_till,timest,circular_no,request_by,approved_by) values ( '" & vProdCode & "','" & cmbComp.List(cmbComp.ListIndex, 1) & "','" & _
+                            msfgData.TextMatrix(i, 19) & "',TO_DATE('" & msfgData.TextMatrix(i, 2) & "','dd-mm-RRRR'),TO_DATE('" & str_Dt_to & "','dd-mm-RRRR')," & msfgData.TextMatrix(i, 4) & "," & str_amount_to & ",'Percentage'," & msfgData.TextMatrix(i, 9) & "," & J & ",'1'," & Glbloginid & ",0,365,sysdate,'" & msfgData.TextMatrix(i, 28) & "','" & msfgData.TextMatrix(i, 29) & "','" & msfgData.TextMatrix(i, 30) & "')"
+                            sql = Replace(sql, "'NULL'", "NULL")
+                            MyConn.Execute sql
+                        Next
+                    End If
+                End If
+                
+                If msfgData.TextMatrix(i, 11) <> "" Then
+                    If Check_Slab_Trail_Ins(i, 366, "Trail", 20) = True Then
+                        FLAG_INSERT = True
+                        For J = 1 To 1
+                            sql = "insert into trail_recd(prod_class_code,iss_mut_code,sch_code,date_from,date_to,amount_from,amount_to,per_rs,GROSS_FIGURE,investor_code,broker_id,loggeduserid,due_after,valid_till,timest,circular_no,request_by,approved_by) values ( '" & vProdCode & "','" & cmbComp.List(cmbComp.ListIndex, 1) & "','" & _
+                            msfgData.TextMatrix(i, 19) & "',TO_DATE('" & msfgData.TextMatrix(i, 2) & "','dd-mm-RRRR'),TO_DATE('" & str_Dt_to & "','dd-mm-RRRR')," & msfgData.TextMatrix(i, 4) & "," & str_amount_to & ",'Percentage'," & msfgData.TextMatrix(i, 11) & "," & J & ",'1'," & Glbloginid & ",366,730,sysdate,'" & msfgData.TextMatrix(i, 28) & "','" & msfgData.TextMatrix(i, 29) & "','" & msfgData.TextMatrix(i, 30) & "')"
+                            sql = Replace(sql, "'NULL'", "NULL")
+                            MyConn.Execute sql
+                        Next
+                    End If
+                End If
+                
+                If msfgData.TextMatrix(i, 13) <> "" Then
+                    If Check_Slab_Trail_Ins(i, 731, "Trail", 22) = True Then
+                        FLAG_INSERT = True
+                        For J = 1 To 1
+                            sql = "insert into trail_recd(prod_class_code,iss_mut_code,sch_code,date_from,date_to,amount_from,amount_to,per_rs,GROSS_FIGURE,investor_code,broker_id,loggeduserid,due_after,valid_till,timest,circular_no,request_by,approved_by) values ( '" & vProdCode & "','" & cmbComp.List(cmbComp.ListIndex, 1) & "','" & _
+                            msfgData.TextMatrix(i, 19) & "',TO_DATE('" & msfgData.TextMatrix(i, 2) & "','dd-mm-RRRR'),TO_DATE('" & str_Dt_to & "','dd-mm-RRRR')," & msfgData.TextMatrix(i, 4) & "," & str_amount_to & ",'Percentage'," & msfgData.TextMatrix(i, 13) & "," & J & ",'1'," & Glbloginid & ",731,1095,sysdate,'" & msfgData.TextMatrix(i, 28) & "','" & msfgData.TextMatrix(i, 29) & "','" & msfgData.TextMatrix(i, 30) & "')"
+                            sql = Replace(sql, "'NULL'", "NULL")
+                            MyConn.Execute sql
+                        Next
+                    End If
+                End If
+                
+                If msfgData.TextMatrix(i, 15) <> "" Then
+                    If Check_Slab_Trail_Ins(i, 1096, "Trail", 24) = True Then
+                        FLAG_INSERT = True
+                        For J = 1 To 1
+                            sql = "insert into trail_recd(prod_class_code,iss_mut_code,sch_code,date_from,date_to,amount_from,amount_to,per_rs,GROSS_FIGURE,investor_code,broker_id,loggeduserid,due_after,valid_till,timest,circular_no,request_by,approved_by) values ( '" & vProdCode & "','" & cmbComp.List(cmbComp.ListIndex, 1) & "','" & _
+                            msfgData.TextMatrix(i, 19) & "',TO_DATE('" & msfgData.TextMatrix(i, 2) & "','dd-mm-RRRR'),TO_DATE('" & str_Dt_to & "','dd-mm-RRRR')," & msfgData.TextMatrix(i, 4) & "," & str_amount_to & ",'Percentage'," & msfgData.TextMatrix(i, 15) & "," & J & ",'1'," & Glbloginid & ",1096,NULL,sysdate,'" & msfgData.TextMatrix(i, 28) & "','" & msfgData.TextMatrix(i, 29) & "','" & msfgData.TextMatrix(i, 30) & "')"
+                            sql = Replace(sql, "'NULL'", "NULL")
+                            MyConn.Execute sql
+                        Next
+                    End If
+                End If
+                
+                
+                If msfgData.TextMatrix(i, 10) <> "" Then
+                    If Check_Slab_Trail_Ins(i, 0, "Add Trail", 18) = True Then
+                        FLAG_INSERT = True
+                        For J = 1 To 1
+                            sql = "insert into add_trail_recd(prod_class_code,iss_mut_code,sch_code,date_from,date_to,amount_from,amount_to,per_rs,GROSS_FIGURE,investor_code,broker_id,loggeduserid,due_after,valid_till,timest,circular_no,request_by,approved_by) values ( '" & vProdCode & "','" & cmbComp.List(cmbComp.ListIndex, 1) & "','" & _
+                            msfgData.TextMatrix(i, 19) & "',TO_DATE('" & msfgData.TextMatrix(i, 2) & "','dd-mm-RRRR'),TO_DATE('" & str_Dt_to & "','dd-mm-RRRR')," & msfgData.TextMatrix(i, 4) & "," & str_amount_to & ",'Percentage'," & msfgData.TextMatrix(i, 10) & "," & J & ",'1'," & Glbloginid & ",0,365,sysdate,'" & msfgData.TextMatrix(i, 28) & "','" & msfgData.TextMatrix(i, 29) & "','" & msfgData.TextMatrix(i, 30) & "')"
+                            sql = Replace(sql, "'NULL'", "NULL")
+                            MyConn.Execute sql
+                        Next
+                    End If
+                End If
+                
+                If msfgData.TextMatrix(i, 12) <> "" Then
+                    If Check_Slab_Trail_Ins(i, 366, "Add Trail", 21) = True Then
+                        FLAG_INSERT = True
+                        For J = 1 To 1
+                            sql = "insert into add_trail_recd(prod_class_code,iss_mut_code,sch_code,date_from,date_to,amount_from,amount_to,per_rs,GROSS_FIGURE,investor_code,broker_id,loggeduserid,due_after,valid_till,timest,circular_no,request_by,approved_by) values ( '" & vProdCode & "','" & cmbComp.List(cmbComp.ListIndex, 1) & "','" & _
+                            msfgData.TextMatrix(i, 19) & "',TO_DATE('" & msfgData.TextMatrix(i, 2) & "','dd-mm-RRRR'),TO_DATE('" & str_Dt_to & "','dd-mm-RRRR')," & msfgData.TextMatrix(i, 4) & "," & str_amount_to & ",'Percentage'," & msfgData.TextMatrix(i, 12) & "," & J & ",'1'," & Glbloginid & ",366,730,sysdate,'" & msfgData.TextMatrix(i, 28) & "','" & msfgData.TextMatrix(i, 29) & "','" & msfgData.TextMatrix(i, 30) & "')"
+                            sql = Replace(sql, "'NULL'", "NULL")
+                            MyConn.Execute sql
+                        Next
+                    End If
+                End If
+                
+                If msfgData.TextMatrix(i, 14) <> "" Then
+                    If Check_Slab_Trail_Ins(i, 731, "Add Trail", 23) = True Then
+                        FLAG_INSERT = True
+                        For J = 1 To 1
+                            sql = "insert into add_trail_recd(prod_class_code,iss_mut_code,sch_code,date_from,date_to,amount_from,amount_to,per_rs,GROSS_FIGURE,investor_code,broker_id,loggeduserid,due_after,valid_till,timest,circular_no,request_by,approved_by) values ( '" & vProdCode & "','" & cmbComp.List(cmbComp.ListIndex, 1) & "','" & _
+                            msfgData.TextMatrix(i, 19) & "',TO_DATE('" & msfgData.TextMatrix(i, 2) & "','dd-mm-RRRR'),TO_DATE('" & str_Dt_to & "','dd-mm-RRRR')," & msfgData.TextMatrix(i, 4) & "," & str_amount_to & ",'Percentage'," & msfgData.TextMatrix(i, 14) & "," & J & ",'1'," & Glbloginid & ",731,1095,sysdate,'" & msfgData.TextMatrix(i, 28) & "','" & msfgData.TextMatrix(i, 29) & "','" & msfgData.TextMatrix(i, 30) & "')"
+                            sql = Replace(sql, "'NULL'", "NULL")
+                            MyConn.Execute sql
+                        Next
+                    End If
+                End If
+                
+                
+                If msfgData.TextMatrix(i, 16) <> "" Then
+                    If Check_Slab_Trail_Ins(i, 1096, "Add Trail", 25) = True Then
+                        FLAG_INSERT = True
+                        For J = 1 To 1
+                            sql = "insert into add_trail_recd(prod_class_code,iss_mut_code,sch_code,date_from,date_to,amount_from,amount_to,per_rs,GROSS_FIGURE,investor_code,broker_id,loggeduserid,due_after,valid_till,timest,circular_no,request_by,approved_by) values ( '" & vProdCode & "','" & cmbComp.List(cmbComp.ListIndex, 1) & "','" & _
+                            msfgData.TextMatrix(i, 19) & "',TO_DATE('" & msfgData.TextMatrix(i, 2) & "','dd-mm-RRRR'),TO_DATE('" & str_Dt_to & "','dd-mm-RRRR')," & msfgData.TextMatrix(i, 4) & "," & str_amount_to & ",'Percentage'," & msfgData.TextMatrix(i, 16) & "," & J & ",'1'," & Glbloginid & ",1096,NULL,sysdate,'" & msfgData.TextMatrix(i, 28) & "','" & msfgData.TextMatrix(i, 29) & "','" & msfgData.TextMatrix(i, 30) & "')"
+                            sql = Replace(sql, "'NULL'", "NULL")
+                            MyConn.Execute sql
+                        Next
+                    End If
+                End If
+            End If
+        End If
+    Next i
+    Me.MousePointer = 0
+    If FLAG_INSERT = True And cmbBroktype.Text = "Upfront" Then
+    
+        MyConn.Execute "update new_upfront_recd set investor_CODE=13 WHERE INVESTOR_CODE=6"
+        MyConn.Execute "update new_add_incentive_recd set investor_CODE=13 WHERE INVESTOR_CODE=6 and (slab_type<>'SIP' OR SLAB_TYPE IS NULL)"
+        MsgBox "Inserted Successfully ", vbInformation
+        cmdShow_Click
+    ElseIf FLAG_INSERT = True And cmbBroktype.Text = "Trail" Then
+        
+        MyConn.Execute "update trail_recd set investor_CODE=13 WHERE INVESTOR_CODE=6"
+        MyConn.Execute "update add_trail_recd set investor_CODE=13 WHERE INVESTOR_CODE=6"
+        MsgBox "Inserted Successfully ", vbInformation
+        cmdShow_Click
+    End If
+    
+    Exit Sub
+err1:
+    MsgBox err.Description
+    Resume
+End Sub
+
+Private Sub cmdOk_Click()
+Dim i As Integer
+   For i = 1 To msfgRateMaster.Rows - 1
+        If msfgRateMaster.TextMatrix(i, 0) <> "" Then
+            MyConn.Execute "update ASSET_CAT_MASTER_CREDIT@MF.BAJAJCAPITAL SET ACTIVE_FLAG='" & msfgRateMaster.TextMatrix(i, 5) & "',CL_FLAG='" & msfgRateMaster.TextMatrix(i, 6) & "' where AST_CAT_CODE= '" & UCase(msfgRateMaster.TextMatrix(i, 0)) & "'"
+        End If
+    Next
+    MsgBox "Records Updated Successfuly", vbInformation
+End Sub
+
+Private Sub cmdRateMaster_Click()
+    Dim rsData As New Adodb.Recordset
+    Dim i As Integer
+    
+    If cmbComp.ListIndex = -1 Then
+        MsgBox "Please Choose Company First", vbInformation
+        cmbComp.SetFocus
+        Exit Sub
+    End If
+        
+    Frame3.Visible = True
+    
+    If OptMF.Value = True Then
+         txtcatname.Visible = True
+         cmbSchRate.Visible = False
+         
+         rsData.open "select ast_cLS_name,AST_CLS_CODE from ASSET_CLASS_MASTER@MF.BAJAJCAPITAL WHERE AST_CLS_CODE <> '56' ORDER BY TO_NUMBER(AST_CLS_CODE) ", MyConn, adOpenForwardOnly
+         If Not rsData.EOF Then
+              cmdCatClass.Clear
+             While Not rsData.EOF
+                 cmdCatClass.AddItem rsData(0) & Space(100 - Len(rsData(0))) & "#" & rsData(1)
+                 rsData.MoveNext
+             Wend
+         End If
+         rsData.Close
+         Set rsData = Nothing
+    Else
+        cmbSchRate.Clear
+        If rsData.State = 1 Then rsData.Close
+        rsData.open "select osch_code ,osch_name  from other_product a WHERE a.iss_code='" & cmbComp.List(cmbComp.ListIndex, 1) & "'  order by osch_name", MyConn, adOpenForwardOnly
+        
+        While Not rsData.EOF
+            cmbSchRate.AddItem rsData("osch_name") & Space(100 - Len(rsData("osch_name"))) & "$" & rsData("osch_code")
+            rsData.MoveNext
+        Wend
+        rsData.Close
+        
+        txtcatname.Visible = False
+        cmbSchRate.Visible = True
+        
+        
+        rsData.open "select ast_cLS_name,AST_CLS_CODE from ASSET_CLASS_MASTER@MF.BAJAJCAPITAL WHERE AST_CLS_CODE = '56' ORDER BY TO_NUMBER(AST_CLS_CODE) ", MyConn, adOpenForwardOnly
+         
+         If Not rsData.EOF Then
+              cmdCatClass.Clear
+             While Not rsData.EOF
+                 cmdCatClass.AddItem rsData(0) & Space(100 - Len(rsData(0))) & "#" & rsData(1)
+                 rsData.MoveNext
+             Wend
+         End If
+         rsData.Close
+         Set rsData = Nothing
+    End If
+    
+    DoEvents
+    i = 1
+    msfgRateMaster.AllowUserResizing = flexResizeColumns
+    
+    msfgRateMaster.ColWidth(0) = 0 'AST_CAT_CODE
+    msfgRateMaster.ColWidth(1) = 4000 'AST CAT NAME
+    msfgRateMaster.ColWidth(2) = 1500 'AST CAT CALSS
+    msfgRateMaster.ColWidth(3) = 1100  'NOTIONAL RATE
+    msfgRateMaster.ColWidth(4) = 800  'SIP ADV RATE
+    msfgRateMaster.ColWidth(5) = 1000   'ACTIVE FLAG
+    msfgRateMaster.ColWidth(6) = 1000   'CL FLAG
+            
+    msfgRateMaster.TextMatrix(0, 1) = "Category"
+    msfgRateMaster.TextMatrix(0, 2) = "Class"
+    msfgRateMaster.TextMatrix(0, 3) = "Notional Rate"
+    msfgRateMaster.TextMatrix(0, 4) = "SIP Rate"
+    msfgRateMaster.TextMatrix(0, 5) = "Active Flag"
+    msfgRateMaster.TextMatrix(0, 6) = "CL Flag"
+    
+    sql = " SELECT AST_CAT_CODE,AST_CAT_NAME,AST_CLS_NAME,NOTIONAL_RATE,SIP_RATE,ACTIVE_FLAG,CL_FLAG FROM  "
+    sql = sql & "ASSET_CAT_MASTER_CREDIT@MF.BAJAJCAPITAL CAT,ASSET_CLASS_MASTER@MF.BAJAJCAPITAL CLS  "
+    sql = sql & " WHERE CAT.AST_CLS_CODE=CLS.AST_CLS_CODE  "
+    sql = sql & " AND PROD_CODE='" & vProdCode & "' "
+    If cmbComp.ListIndex <> -1 Then
+        sql = sql & " and AST_CAT_NAME IN(SELECT UPPER(OSCH_NAME) FROM OTHER_PRODUCT WHERE ISS_CODE='" & cmbComp.List(cmbComp.ListIndex, 1) & "') "
+    End If
+    sql = sql & " ORDER BY TO_NUMBER(AST_CAT_CODE) "
+    
+    rsData.open sql, MyConn, adOpenForwardOnly
+    While Not rsData.EOF
+        msfgRateMaster.TextMatrix(i, 0) = rsData("AST_CAT_CODE")
+        msfgRateMaster.TextMatrix(i, 1) = rsData("AST_CAT_NAME")
+        msfgRateMaster.TextMatrix(i, 2) = rsData("AST_CLS_NAME")
+        msfgRateMaster.TextMatrix(i, 3) = rsData("NOTIONAL_RATE")
+        msfgRateMaster.TextMatrix(i, 4) = rsData("SIP_RATE")
+        msfgRateMaster.TextMatrix(i, 5) = rsData("active_flag")
+        msfgRateMaster.TextMatrix(i, 6) = IIf(IsNull(rsData("CL_flag")), "", rsData("CL_flag")) 'IIf(IsNull(rsData("CL_flag")), "", rsData("CL_flag")))
+        msfgRateMaster.Rows = msfgRateMaster.Rows + 1
+        i = i + 1
+        rsData.MoveNext
+    Wend
+    If msfgRateMaster.Rows > 2 Then msfgRateMaster.Rows = msfgRateMaster.Rows - 1
+    rsData.Close
+    Set rsData = Nothing
+End Sub
+
+Private Sub cmdReset_Click()
+    'MsgBox msfgData.TextMatrix(2, 16)
+    cmbAsset.Clear
+    cmbFund.Clear
+    cmbBroktype.Clear
+    mskfromdate.Text = "__/__/____"
+    msktodate.Text = "__/__/____"
+    Amt_from.Text = ""
+    Amt_to.Text = ""
+    Form_Load
+    cmbComp.Text = ""
+    cmbFund.Text = ""
+End Sub
+
+Private Sub cmdSave_Click()
+Dim rsDup As New Adodb.Recordset
+Dim A1() As String
+Dim acode1 As String
+Dim Aname1 As String
+
+Dim sch() As String
+Dim Schcode1 As String
+Dim Schname1 As String
+
+If Trim(cmdCatClass.Text) <> "" Then
+    A1 = Split(Trim(cmdCatClass.Text), "#")
+    acode1 = Trim(A1(1))
+    Aname1 = Trim(A1(0))
+Else
+    MsgBox "Please Choose Category Class", vbInformation
+    cmdCatClass.SetFocus
+    Exit Sub
+End If
+
+If Trim(cmbSchRate.Text) <> "" Then
+    sch = Split(Trim(cmbSchRate.Text), "$")
+    Schcode1 = Trim(sch(1))
+    Schname1 = Trim(sch(0))
+Else
+    MsgBox "Please Choose Category Class", vbInformation
+    cmbSchRate.SetFocus
+    Exit Sub
+End If
+
+If OptMF.Value = True Then
+    If txtcatname.Text = "" Then
+        MsgBox "Category Name can not be left blank", vbInformation
+        txtcatname.SetFocus
+        Exit Sub
+    End If
+Else
+    If cmbSchRate.ListIndex = -1 Then
+        MsgBox "Scheme Name can not be left blank", vbInformation
+        cmbSchRate.SetFocus
+        Exit Sub
+    End If
+End If
+If txtRate.Text = "" Then
+    txtRate.Text = 0
+End If
+If Val(txtRate.Text) > 100 Then
+    MsgBox "Rate cannot be greater than 100", vbCritical
+    Exit Sub
+End If
+
+If TxtAdvText.Text = "" Then
+    MsgBox "Please enter Sip Adv Rate you want to Save ", vbCritical
+    Exit Sub
+End If
+If Val(TxtAdvText.Text) > 100 Then
+    MsgBox "SIP Adv Rate cannot be greater than 100", vbCritical
+    Exit Sub
+End If
+
+If OptMF.Value = True Then
+    'rsDup.open "select count(*) from ASSET_CAT_MASTER_CREDIT@MF.BAJAJCAPITAL where upper(AST_CAT_NAME) ='" & UCase(txtcatname.Text) & "' and NOTIONAL_RATE=" & val(txtRate.Text) & " and SIP_RATE=" & val(TxtAdvText.Text) & " ", MyConn, adOpenForwardOnly
+    rsDup.open "select count(*) from ASSET_CAT_MASTER_CREDIT@MF.BAJAJCAPITAL where upper(AST_CAT_NAME) ='" & UCase(txtcatname.Text) & "'", MyConn, adOpenForwardOnly
+Else
+    'rsDup.open "select count(*) from ASSET_CAT_MASTER_CREDIT@MF.BAJAJCAPITAL where upper(AST_CAT_NAME) ='" & UCase(Schname1) & "' and NOTIONAL_RATE=" & val(txtRate.Text) & " and SIP_RATE=" & val(TxtAdvText.Text) & " ", MyConn, adOpenForwardOnly
+    rsDup.open "select count(*) from ASSET_CAT_MASTER_CREDIT@MF.BAJAJCAPITAL where upper(AST_CAT_NAME) ='" & UCase(Schname1) & "'", MyConn, adOpenForwardOnly
+End If
+
+If rsDup(0) >= 1 Then
+    If MyCatId <> "" Then
+        If OptMF.Value = True Then
+            MyConn.Execute "update ASSET_CAT_MASTER_CREDIT@MF.BAJAJCAPITAL set AST_CAT_NAME ='" & UCase(txtcatname.Text) & "'  where AST_CAT_CODE= '" & MyCatId & "'"
+        Else
+            MyConn.Execute "update ASSET_CAT_MASTER_CREDIT@MF.BAJAJCAPITAL set AST_CAT_NAME ='" & UCase(Schname1) & "'  where AST_CAT_CODE= '" & MyCatId & "'"
+        End If
+        MsgBox "Rate updated sucessfully", vbInformation
+    Else
+        MsgBox "Rate already exists, Please Double click the record you want to update", vbInformation
+    End If
+    
+    rsDup.Close
+    Set rsDup = Nothing
+    Exit Sub
+End If
+
+If OptMF.Value = True Then
+    MyConn.Execute "insert into ASSET_CAT_MASTER_CREDIT@MF.BAJAJCAPITAL(AST_CAT_NAME, AST_CLS_CODE, NOTIONAL_RATE, SIP_RATE, ACTIVE_FLAG, LOGGEDUSERID,prod_code,date_from) values('" & UCase(txtcatname.Text) & "'," & acode1 & "," & Val(txtRate.Text) & "," & Val(TxtAdvText.Text) & ",'Y'," & Glbloginid & ",'" & vProdCode & "',trunc(sysdate,'MM'))"
+Else
+    MyConn.Execute "insert into ASSET_CAT_MASTER_CREDIT@MF.BAJAJCAPITAL(AST_CAT_NAME, AST_CLS_CODE, NOTIONAL_RATE, SIP_RATE, ACTIVE_FLAG, LOGGEDUSERID,prod_code,date_from) values('" & UCase(Schname1) & "'," & acode1 & "," & Val(txtRate.Text) & "," & Val(TxtAdvText.Text) & ",'Y'," & Glbloginid & ",'" & vProdCode & "',trunc(sysdate,'MM'))"
+End If
+
+If msfgRateMaster.TextMatrix(msfgRateMaster.Rows - 1, 0) <> "" Then msfgRateMaster.Rows = msfgRateMaster.Rows + 1
+msfgRateMaster.TextMatrix(msfgRateMaster.Rows - 1, 0) = Val(Round(txtRate.Text, 4))
+msfgRateMaster.TextMatrix(msfgRateMaster.Rows - 1, 1) = "Y"
+
+Set rsDup = Nothing
+MsgBox "Rates Successfully Saved", vbInformation
+    
+    
+'-----------------------referesh grid----------------------------
+msfgRateMaster.Rows = 2
+i = 1
+msfgRateMaster.AllowUserResizing = flexResizeColumns
+
+msfgRateMaster.ColWidth(0) = 0 'AST_CAT_CODE
+msfgRateMaster.ColWidth(1) = 4000 'AST CAT NAME
+msfgRateMaster.ColWidth(2) = 1500 'AST CAT CALSS
+msfgRateMaster.ColWidth(3) = 1100  'NOTIONAL RATE
+msfgRateMaster.ColWidth(4) = 800  'SIP ADV RATE
+msfgRateMaster.ColWidth(5) = 1000   'ACTIVE FLAG
+        
+msfgRateMaster.TextMatrix(0, 1) = "Category"
+msfgRateMaster.TextMatrix(0, 2) = "Class"
+msfgRateMaster.TextMatrix(0, 3) = "Notional Rate"
+msfgRateMaster.TextMatrix(0, 4) = "SIP Rate"
+msfgRateMaster.TextMatrix(0, 5) = "Active Flag"
+    
+sql = " SELECT AST_CAT_CODE,AST_CAT_NAME,AST_CLS_NAME,NOTIONAL_RATE,SIP_RATE,ACTIVE_FLAG FROM  "
+sql = sql & "ASSET_CAT_MASTER_CREDIT@MF.BAJAJCAPITAL CAT,ASSET_CLASS_MASTER@MF.BAJAJCAPITAL CLS  "
+sql = sql & " WHERE CAT.AST_CLS_CODE=CLS.AST_CLS_CODE "
+sql = sql & " AND PROD_CODE='" & vProdCode & "' "
+sql = sql & " ORDER BY TO_NUMBER(AST_CAT_CODE) "
+
+
+If rsDup.State = 1 Then rsDup.Close
+rsDup.open sql, MyConn, adOpenForwardOnly
+While Not rsDup.EOF
+    msfgRateMaster.TextMatrix(i, 0) = rsDup("AST_CAT_CODE")
+    msfgRateMaster.TextMatrix(i, 1) = rsDup("AST_CAT_NAME")
+    msfgRateMaster.TextMatrix(i, 2) = rsDup("AST_CLS_NAME")
+    msfgRateMaster.TextMatrix(i, 3) = rsDup("NOTIONAL_RATE")
+    msfgRateMaster.TextMatrix(i, 4) = rsDup("SIP_RATE")
+    msfgRateMaster.TextMatrix(i, 5) = rsDup("active_flag")
+    msfgRateMaster.Rows = msfgRateMaster.Rows + 1
+    i = i + 1
+    rsDup.MoveNext
+Wend
+If msfgRateMaster.Rows > 2 Then msfgRateMaster.Rows = msfgRateMaster.Rows - 1
+rsDup.Close
+Set rsDup = Nothing
+txtcatname.Text = ""
+txtRate.Text = ""
+If OptPMS.Value = True Then
+    TxtAdvText.Text = "0"
+Else
+    TxtAdvText.Text = ""
+End If
+End Sub
+
+Private Sub cmdShow_Click()
+On Error GoTo err1
+Dim rsGetRate As New Adodb.Recordset
+Dim rsGetRate_Add As New Adodb.Recordset
+Dim sql As String
+Dim sql_add As String
+    gridinit
+    If chkOpen.Value = 1 And chkUndef.Value = 1 Then
+        MsgBox "Either Show Open Rates or Show Undefined Rates can be selected", vbInformation
+        Exit Sub
+    End If
+    
+    If mskfromdate.Text = "__/__/____" Then
+        MsgBox "Please Enter From Date", vbInformation
+        mskfromdate = "__/__/____"
+        mskfromdate.SetFocus
+        Exit Sub
+    End If
+    
+    If IsDate(mskfromdate) = True And IsDate(msktodate) = True Then
+        If CDate(Format(mskfromdate, "DD/MM/YYYY")) > CDate(Format(msktodate, "DD/MM/YYYY")) Then
+            MsgBox "From Date should be less then To Date", vbInformation
+            mskfromdate = "__/__/____"
+            msktodate = "__/__/____"
+            mskfromdate.SetFocus
+            Exit Sub
+        End If
+    End If
+    
+    If mskfromdate.Text = "__/__/____" Or Amt_from.Text = "" Then
+        MsgBox "Please Enter Date From and Amount From for which Rates you like to Modify", vbInformation
+        mskfromdate.SetFocus
+        Exit Sub
+    End If
+    
+    If OptMF.Value = True Then
+            If chkUndef.Value = 0 Then
+                If cmbBroktype.ListIndex <> -1 Then
+                    If cmbBroktype.Text = "Upfront" Then
+                        sql = "select T.SLAB_ID,t.sch_code,a.sch_name,t.date_from,t.date_to,t.amount_from,t.amount_to,t.GROSS_FIGURE,t.investor_code,t.circular_no,t.request_by,t.approved_by,b15,SCH_NATURE,T.AST_CAT_CODE,T.SIP_ADV_RATE,(SELECT MAX(AST_CAT_NAME) FROM ASSET_CAT_MASTER_CREDIT@MF.BAJAJCAPITAL Z WHERE Z.AST_CAT_CODE=T.AST_CAT_CODE) AST_CAT_NAME from new_upfront_recd t,scheme_info a,asset_class_master_new b where t.sch_code(+)=a.sch_code and a.sch_code=b.sch_code(+)   "
+                    Else
+                        sql = "select T.SLAB_ID,t.sch_code,a.sch_name,t.date_from,t.date_to,t.amount_from,t.amount_to,t.GROSS_FIGURE,t.investor_code,t.due_after,t.valid_till,t.circular_no,t.request_by,t.approved_by from trail_recd t,scheme_info a,sch_sub_nat_mapping@mf.bajajcapital b where t.sch_code=a.sch_code and a.sch_code=b.sch_code(+)  "
+                    End If
+                Else
+                    MsgBox "Please Select Brokerage Type ", vbInformation
+                    Exit Sub
+                End If
+                
+                
+                
+                If Cmbarn.Text <> "" And InStr(sql, "new_upfront_recd") > 0 Then
+                     sql = sql & "and arn_code='" & Cmbarn.Text & "' "
+                End If
+                
+                If Cmbtran.Text <> "" And InStr(sql, "new_upfront_recd") > 0 Then
+                    sql = sql & "and tran_type='" & Cmbtran.Text & "'  "
+                End If
+                
+                
+                sql = sql & " and t.DATE_FROM>=to_date('" & mskfromdate.Text & "','dd/mm/RRRR') "
+                If msktodate.Text <> "__/__/____" Then sql = sql & " and t.DATE_TO<=to_date('" & msktodate.Text & "','dd/mm/RRRR') "
+                
+                If chkOpen.Value = 1 Then sql = sql & " and (t.DATE_TO is null OR T.DATE_TO>=TO_DATE(SYSDATE)) "
+                
+                sql = sql & " and t.Amount_FROM>=" & Val(Amt_from.Text) & " "
+                If Amt_to.Text <> "" Then sql = sql & " and t.Amount_TO<=" & Val(Amt_to.Text) & " "
+                
+                If cmbComp.ListIndex <> -1 Then sql = sql & " and a.mut_code='" & cmbComp.List(cmbComp.ListIndex, 1) & "' "
+                
+                
+                If cmbAssetClass.ListIndex <> -1 Then
+                    If cmbAssetClass.Text <> "Not Available" Then
+                        sql = sql & " and b.asset_class='" & cmbAssetClass.List(cmbAssetClass.ListIndex, 0) & "' "
+                    Else
+                        If cmbBroktype.Text = "Upfront" Then
+                            sql = sql & " and a.sch_code not in ( select t.sch_code from new_upfront_recd t,scheme_info a,asset_class_master_new b where t.sch_code=a.sch_code and a.sch_code=b.sch_code "
+                            If cmbComp.ListIndex <> -1 Then sql = sql & " and a.mut_code='" & cmbComp.List(cmbComp.ListIndex, 1) & "' "
+                            sql = sql & " ) "
+                        Else
+                            sql = sql & " and a.sch_code not in ( select t.sch_code from trail_recd t,scheme_info a,sch_sub_nat_mapping@mf.bajajcapital b where t.sch_code=a.sch_code and a.sch_code=b.sch_code "
+                            If cmbComp.ListIndex <> -1 Then sql = sql & " and a.mut_code='" & cmbComp.List(cmbComp.ListIndex, 1) & "' "
+                            sql = sql & " ) "
+                        End If
+                    End If
+                End If
+                
+                If cmbAsset.ListIndex <> -1 Then
+                    If cmbAsset.Text <> "Not Available" Then
+                        sql = sql & " and b.sub_asset_class_code='" & cmbAsset.List(cmbAsset.ListIndex, 1) & "' "
+                    Else
+                        If cmbBroktype.Text = "Upfront" Then
+                            sql = sql & " and a.sch_code not in ( select t.sch_code from new_upfront_recd t,scheme_info a,asset_class_master_new b where t.sch_code=a.sch_code and a.sch_code=b.sch_code "
+                            If cmbComp.ListIndex <> -1 Then sql = sql & " and a.mut_code='" & cmbComp.List(cmbComp.ListIndex, 1) & "' "
+                            sql = sql & " ) "
+                        Else
+                            sql = sql & " and a.sch_code not in ( select t.sch_code from trail_recd t,scheme_info a,sch_sub_nat_mapping@mf.bajajcapital b where t.sch_code=a.sch_code and a.sch_code=b.sch_code "
+                            If cmbComp.ListIndex <> -1 Then sql = sql & " and a.mut_code='" & cmbComp.List(cmbComp.ListIndex, 1) & "' "
+                            sql = sql & " ) "
+                        End If
+                    End If
+                End If
+                
+                If cmbFund.ListIndex <> -1 Then
+                    If cmbFund.Text <> "Not Available" Then
+                        sql = sql & " and upper(a.fund_name)='" & UCase(cmbFund.Text) & "' "
+                    Else
+                        If cmbBroktype.Text = "Upfront" Then
+                            sql = sql & " and a.sch_code not in ( select t.sch_code from new_upfront_recd t,scheme_info a,asset_class_master_new b where t.sch_code=a.sch_code and a.sch_code=b.sch_code "
+                            If cmbComp.ListIndex <> -1 Then sql = sql & " and a.mut_code='" & cmbComp.List(cmbComp.ListIndex, 1) & "' "
+                            sql = sql & " ) "
+                        Else
+                            sql = sql & " and a.sch_code not in ( select t.sch_code from trail_recd t,scheme_info a,sch_sub_nat_mapping@mf.bajajcapital b where t.sch_code=a.sch_code and a.sch_code=b.sch_code "
+                            If cmbComp.ListIndex <> -1 Then sql = sql & " and a.mut_code='" & cmbComp.List(cmbComp.ListIndex, 1) & "' "
+                            sql = sql & " ) "
+                        End If
+                    End If
+                End If
+                
+                If cmbBroktype.Text = "Upfront" Then
+                    sql = sql & " order by a.sch_name asc,Investor_code desc,t.DATE_FROM asc,t.amount_from asc"
+                Else
+                    sql = sql & " order by a.sch_name asc,t.DATE_FROM asc,t.amount_from asc,due_after asc,Investor_code desc"
+                End If
+                If cmbBroktype.Text = "Upfront" Then sql_add = Replace(sql, "new_upfront_recd", "new_add_incentive_recd")
+                
+                rsGetRate.open sql, MyConn, adOpenForwardOnly
+                Populate_Grid rsGetRate, cmbBroktype.Text
+                
+                rsGetRate.Close
+                
+                Set rsData = Nothing
+                
+                If msfgData.Rows = 2 Then
+                    Populate_Sch
+                    cmdUpdate.Enabled = False
+                Else
+                    cmdUpdate.Enabled = True
+                End If
+                
+                Set rsGetRate = Nothing
+                Set rsGetRate_Add = Nothing
+                
+            Else
+        
+                Populate_Sch_Undef
+                cmdUpdate.Enabled = False
+            End If
+    Else
+            If chkUndef.Value = 0 Then
+                If cmbBroktype.ListIndex <> -1 Then
+                    sql = "select T.SLAB_ID,t.sch_code,a.osch_name sch_name,t.date_from,t.date_to,t.amount_from,t.amount_to,t.GROSS_FIGURE,t.investor_code,t.circular_no,t.request_by,t.approved_by,b15,SCH_NATURE,T.AST_CAT_CODE,T.SIP_ADV_RATE,(SELECT MAX(AST_CAT_NAME) FROM ASSET_CAT_MASTER_CREDIT@MF.BAJAJCAPITAL Z WHERE Z.AST_CAT_CODE=T.AST_CAT_CODE) AST_CAT_NAME from new_upfront_recd t,other_product a where t.sch_code(+)=a.osch_code   "
+                Else
+                    MsgBox "Please Select Brokerage Type ", vbInformation
+                    Exit Sub
+                End If
+                
+                If mskfromdate.Text = "__/__/____" Or Amt_from.Text = "" Then
+                    MsgBox "Please Enter Date From and Amount From for which Rates you like to Modify", vbInformation
+                    mskfromdate.SetFocus
+                    Exit Sub
+                End If
+                
+                
+                If Cmbarn.Text <> "" And InStr(sql, "new_upfront_recd") > 0 Then
+                     sql = sql & "and arn_code='" & Cmbarn.Text & "' "
+                End If
+                
+                If Cmbtran.Text <> "" And InStr(sql, "new_upfront_recd") > 0 Then
+                    sql = sql & "and tran_type='" & Cmbtran.Text & "'  "
+                End If
+                
+                
+                sql = sql & " and t.DATE_FROM>=to_date('" & mskfromdate.Text & "','dd/mm/RRRR') "
+                If msktodate.Text <> "__/__/____" Then sql = sql & " and t.DATE_TO<=to_date('" & msktodate.Text & "','dd/mm/RRRR') "
+                
+                If chkOpen.Value = 1 Then sql = sql & " and (t.DATE_TO is null OR T.DATE_TO>=TO_DATE(SYSDATE)) "
+                
+                sql = sql & " and t.Amount_FROM>=" & Val(Amt_from.Text) & " "
+                If Amt_to.Text <> "" Then sql = sql & " and t.Amount_TO<=" & Val(Amt_to.Text) & " "
+                
+                If cmbComp.ListIndex <> -1 Then sql = sql & " and a.iss_code='" & cmbComp.List(cmbComp.ListIndex, 1) & "' "
+                
+                sql = sql & " order by a.osch_name asc,Investor_code desc,t.DATE_FROM asc,t.amount_from asc"
+                
+                If cmbBroktype.Text = "Upfront" Then sql_add = Replace(sql, "new_upfront_recd", "new_add_incentive_recd")
+                
+                rsGetRate.open sql, MyConn, adOpenForwardOnly
+                Populate_Grid rsGetRate, cmbBroktype.Text
+                
+                rsGetRate.Close
+                
+                Set rsData = Nothing
+                
+                If msfgData.Rows = 2 Then
+                    Populate_Sch
+                    cmdUpdate.Enabled = False
+                Else
+                    cmdUpdate.Enabled = True
+                End If
+                
+                Set rsGetRate = Nothing
+                Set rsGetRate_Add = Nothing
+                
+            Else
+        
+                Populate_Sch_Undef
+                cmdUpdate.Enabled = False
+            End If
+    End If
+    Exit Sub
+err1:
+    MsgBox err.Description
+    Resume
+End Sub
+
+
+
+Private Sub cmdUpdate_Click()
+On Error GoTo err1
+Dim str_Dt_to As String
+Dim str_amount_to As String
+Dim sql As String
+Dim FLAG_MODIFY As Boolean
+
+    FLAG_MODIFY = False
+    If from_date = False Then
+        MsgBox "From Date Cannot be Blank", vbInformation
+        Exit Sub
+    End If
+
+    If From_amount = False Then
+        MsgBox "From Amount Cannot be Blank", vbInformation
+        Exit Sub
+    End If
+
+    If check_dates = False Then
+        MsgBox "From Date Cannot be Greater than To Date", vbInformation
+        Exit Sub
+    End If
+
+    If check_amount = False Then
+        MsgBox "From Amount Cannot be Greater than To Amount", vbInformation
+        Exit Sub
+    End If
+    
+    If OptMF.Value = True Then
+        If Rate_Nature = False Then
+            MsgBox "Nature and Rate cannot be left blank", vbInformation
+            Exit Sub
+        End If
+    Else
+        If Rate_Nature_PMS = False Then
+            MsgBox "Nature and Rate cannot be left blank", vbInformation
+            Exit Sub
+        End If
+    End If
+    
+    
+
+    Me.MousePointer = 11
+    For i = 2 To msfgData.Rows - 1
+        If msfgData.TextMatrix(i, 0) = "1" Then
+            str_Dt_to = "NULL"
+            str_amount_to = "NULL"
+            '--------------------Rate Log mayank-----------------------------------------
+             If msfgData.TextMatrix(i, 28) = "" And msfgData.TextMatrix(i, 29) = "" Then
+                Me.MousePointer = 0
+                MsgBox "Plz. Enter Either Circular No or Request By", vbInformation
+                Exit Sub
+             End If
+             '-------------------------------------------------------------------------------
+            If msfgData.TextMatrix(i, 3) <> "" Then str_Dt_to = msfgData.TextMatrix(i, 3)
+            If msfgData.TextMatrix(i, 5) <> "" Then str_amount_to = msfgData.TextMatrix(i, 5)
+            
+            If cmbBroktype.Text = "Upfront" Then
+                If Check_Slab(i, "Upfront", 17) = True Then
+                    
+                '---------------------------Post Month Rtae Change---------------------
+                PunchDt = SqlRet("select timest from new_upfront_recd where slab_id in (" & msfgData.TextMatrix(i, 20) & ")")
+                'ModifyDt = SqlRet("select modify_date from new_upfront_recd where slab_id in (" & msfgData.TextMatrix(i, 19) & ")")
+                ModifyDt = SqlRet("select sysdate from dual")
+                
+                If PunchDt <> "" And ModifyDt <> "" Then
+                    If Format(PunchDt, "mm/yyyy") <> Format(ModifyDt, "mm/yyyy") And Format(ModifyDt, "mm/yyyy") > Format(PunchDt, "mm/yyyy") And msfgData.TextMatrix(i, 30) = "" Then
+                        MsgBox "Plz. Enter Approved By", vbInformation
+                        Exit Sub
+                    End If
+                End If
+                '----------------------------------------------------------------------
+                    FLAG_MODIFY = True
+                    sql = ""
+                    sql = "Update new_upfront_recd set Date_from=to_date('" & msfgData.TextMatrix(i, 2) & "','dd/mm/RRRR') ,date_to=to_date('" & str_Dt_to & "','dd/mm/RRRR'),amount_from=" & msfgData.TextMatrix(i, 4) & ",Amount_to=" & str_amount_to & ",GROSS_FIGURE=" & msfgData.TextMatrix(i, 7) & ",SCH_NATURE='" & msfgData.TextMatrix(i, 6) & "' "
+                    sql = sql & " ,modify_user='" & Glbloginid & "',modify_date=sysdate"
+                    '-------------------------log maynk---------------------
+                    sql = sql & " ,circular_no='" & msfgData.TextMatrix(i, 28) & "',request_by='" & msfgData.TextMatrix(i, 29) & "',approved_by='" & msfgData.TextMatrix(i, 30) & "',b15='" & msfgData.TextMatrix(i, 8) & "',arn_code='" & Cmbarn.Text & "',tran_type='" & Cmbtran.Text & "'"
+                    If msfgData.TextMatrix(i, 32) <> "" Then
+                        sql = sql & " ,SIP_ADV_RATE=" & msfgData.TextMatrix(i, 32) & ",AST_CAT_CODE='" & msfgData.TextMatrix(i, 31) & "'"
+                    Else
+                        sql = sql & " ,SIP_ADV_RATE=null,AST_CAT_CODE=null"
+                    End If
+                        
+                    '--------------------------------------------------------
+                    sql = sql & " where slab_id in (" & Replace(msfgData.TextMatrix(i, 20), "'", "") & ") "
+                    sql = Replace(sql, "'NULL'", "NULL")
+                    MyConn.Execute sql
+                    'MyConn.Execute "insert into RATE_MASTER_LOG_MF(slabid,Circular_No,Requested_By,Approved_By) values(" & msfgData.TextMatrix(i, 19) & ",'" & TxtCircularno & "','" & TxtReqby & "','" & TxtApprovedby & "') "
+                End If
+                
+                If msfgData.TextMatrix(i, 18) <> "" And msfgData.TextMatrix(i, 7) <> "" Then
+'                    If Check_Slab(i, "Add Upfront", 18) = True Then
+'                     '---------------------------Post Month Rtae Change---------------------
+'                        PunchDt = SqlRet("select timest from new_add_incentive_recd where slab_id in (" & msfgData.TextMatrix(i, 21) & ") and (slab_type<>'SIP' OR SLAB_TYPE IS NULL)")
+'                        ModifyDt = SqlRet("select modify_date from new_add_incentive_recd where slab_id in (" & msfgData.TextMatrix(i, 21) & ") and (slab_type<>'SIP' OR SLAB_TYPE IS NULL)")
+'                        If PunchDt <> "" And ModifyDt <> "" Then
+'                            If Format(PunchDt, "mm/yyyy") <> Format(ModifyDt, "mm/yyyy") Then
+'                                MsgBox "Plz. Enter Approved By", vbInformation
+'                                Exit Sub
+'                            End If
+'                        End If
+'                '----------------------------------------------------------------------
+'                        FLAG_MODIFY = True
+'                        Sql = "Update new_add_incentive_recd set Date_from=to_date('" & msfgData.TextMatrix(i, 2) & "','dd/mm/RRRR') ,date_to=to_date('" & str_Dt_to & "','dd/mm/RRRR'),amount_from=" & msfgData.TextMatrix(i, 4) & ",Amount_to=" & str_amount_to & ",GROSS_FIGURE=" & msfgData.TextMatrix(i, 7) & " "
+'                        Sql = Sql & " ,modify_user='" & Glbloginid & "',modify_date=sysdate"
+'                        '-------------------------log maynk---------------------
+'                        Sql = Sql & " ,circular_no='" & msfgData.TextMatrix(i, 28) & "',request_by='" & msfgData.TextMatrix(i, 29) & "',approved_by='" & msfgData.TextMatrix(i, 30) & "'"
+'                        '--------------------------------------------------------
+'                        Sql = Sql & " where (slab_type<>'SIP' OR SLAB_TYPE IS NULL) AND  slab_id in (" & Replace(msfgData.TextMatrix(i, 20), "'", "") & ") "
+'                        Sql = Replace(Sql, "'NULL'", "NULL")
+'                        MyConn.Execute Sql
+'                        'MyConn.Execute "insert into RATE_MASTER_LOG_MF(slabid,Circular_No,Requested_By,Approved_By) values(" & msfgData.TextMatrix(i, 20) & ",'" & TxtCircularno & "','" & TxtReqby & "','" & TxtApprovedby & "') "
+'                    End If
+                Else
+'                    If Check_Slab_Ins(i, "Add Upfront") = True Then
+'                        FLAG_MODIFY = True
+'                        For J = 1 To 1
+'                            If msfgData.TextMatrix(i, 7) <> "" Then
+'                                Sql = "insert into new_add_incentive_recd(prod_class_code,iss_mut_code,sch_code,date_from,date_to,amount_from,amount_to,per_rs,GROSS_FIGURE,investor_code,broker_id,loggeduserid,timest,circular_no,request_by,approved_by) values ( 'DT001','" & cmbComp.List(cmbComp.ListIndex, 1) & "','" & _
+'                                msfgData.TextMatrix(i, 19) & "',TO_DATE('" & msfgData.TextMatrix(i, 2) & "','dd-mm-RRRR'),TO_DATE('" & str_Dt_to & "','dd-mm-RRRR')," & msfgData.TextMatrix(i, 4) & "," & str_amount_to & ",'Percentage'," & msfgData.TextMatrix(i, 7) & "," & J & ",'1'," & Glbloginid & ",sysdate,'" & msfgData.TextMatrix(i, 28) & "','" & msfgData.TextMatrix(i, 29) & "','" & msfgData.TextMatrix(i, 30) & "')"
+'                                Sql = Replace(Sql, "'NULL'", "NULL")
+'                                MyConn.Execute Sql
+'                            End If
+'                        Next
+'                    End If
+                End If
+                
+            End If
+            
+            
+            If cmbBroktype.Text = "Trail" Then
+                '*********
+                'Base
+                '*********
+                If Check_Slab_Trail(i, 0, "Trail", 17) = True Then
+                '---------------------------Post Month Rtae Change---------------------
+                        PunchDt = SqlRet("select timest from trail_recd where slab_id in (" & Trail_Slabs(i, 0, "Base") & ")")
+                        ModifyDt = SqlRet("select modify_date from trail_recd where slab_id in (" & Trail_Slabs(i, 0, "Base") & ")")
+                        If PunchDt <> "" And ModifyDt <> "" Then
+                            If Format(PunchDt, "mm/yyyy") <> Format(ModifyDt, "mm/yyyy") Then
+                                MsgBox "Plz. Enter Approved By", vbInformation
+                                Exit Sub
+                            End If
+                        End If
+                '----------------------------------------------------------------------
+                    FLAG_MODIFY = True
+                    sql = "Update trail_recd set Date_from=to_date('" & msfgData.TextMatrix(i, 2) & "','dd/mm/RRRR') ,date_to=to_date('" & str_Dt_to & "','dd/mm/RRRR'),amount_from=" & msfgData.TextMatrix(i, 4) & ",Amount_to=" & str_amount_to & ",GROSS_FIGURE=" & msfgData.TextMatrix(i, 9) & " "
+                    sql = sql & " ,modify_user='" & Glbloginid & "'modify_date=sysdate"
+                     '-------------------------log maynk---------------------
+                    sql = sql & " ,circular_no='" & msfgData.TextMatrix(i, 28) & "',request_by='" & msfgData.TextMatrix(i, 29) & "',approved_by='" & msfgData.TextMatrix(i, 30) & "'"
+                    '--------------------------------------------------------
+                    sql = sql & "where slab_id in (" & Trail_Slabs(i, 0, "Base") & ") "
+                    sql = Replace(sql, "'NULL'", "NULL")
+                    MyConn.Execute sql
+                    'MyConn.Execute "insert into RATE_MASTER_LOG_MF(slabid,Circular_No,Requested_By,Approved_By) values(" & msfgData.TextMatrix(i, 0) & ",'" & TxtCircularno & "','" & TxtReqby & "','" & TxtApprovedby & "') "
+                End If
+                
+                If msfgData.TextMatrix(i, 20) <> "" Then
+                    If Check_Slab_Trail(i, 366, "Trail", 20) = True Then
+                    '---------------------------Post Month Rtae Change---------------------
+                        PunchDt = SqlRet("select timest from trail_recd where slab_id in (" & Trail_Slabs(i, 366, "Base") & ")")
+                        ModifyDt = SqlRet("select modify_date from trail_recd where slab_id in (" & Trail_Slabs(i, 366, "Base") & ")")
+                        If PunchDt <> "" And ModifyDt <> "" Then
+                            If Format(PunchDt, "mm/yyyy") <> Format(ModifyDt, "mm/yyyy") Then
+                                MsgBox "Plz. Enter Approved By", vbInformation
+                                Exit Sub
+                            End If
+                        End If
+                '----------------------------------------------------------------------
+                        FLAG_MODIFY = True
+                        sql = "Update trail_recd set Date_from=to_date('" & msfgData.TextMatrix(i, 2) & "','dd/mm/RRRR') ,date_to=to_date('" & str_Dt_to & "','dd/mm/RRRR'),amount_from=" & msfgData.TextMatrix(i, 4) & ",Amount_to=" & str_amount_to & ",GROSS_FIGURE=" & msfgData.TextMatrix(i, 11) & ",due_after=366,valid_till=730 "
+                        sql = sql & " ,modify_user='" & Glbloginid & "'modify_date=sysdate"
+                         '-------------------------log maynk---------------------
+                        sql = sql & " ,circular_no='" & msfgData.TextMatrix(i, 28) & "',request_by='" & msfgData.TextMatrix(i, 29) & "',approved_by='" & msfgData.TextMatrix(i, 30) & "'"
+                        '--------------------------------------------------------
+                        sql = sql & " where slab_id in (" & Trail_Slabs(i, 366, "Base") & ") "
+                        sql = Replace(sql, "'NULL'", "NULL")
+                        MyConn.Execute sql
+                        'MyConn.Execute "insert into RATE_MASTER_LOG_MF(slabid,Circular_No,Requested_By,Approved_By) values(" & msfgData.TextMatrix(i, 366) & ",'" & TxtCircularno & "','" & TxtReqby & "','" & TxtApprovedby & "') "
+                    End If
+                Else
+                
+                    'insert base slab for 2nd year
+                    If Check_Slab_Trail(i, 366, "Trail", 20) = True Then
+                        FLAG_MODIFY = True
+                        For J = 1 To 1
+                            If msfgData.TextMatrix(i, 11) <> "" Then
+                                sql = "insert into trail_recd(prod_class_code,iss_mut_code,sch_code,date_from,date_to,amount_from,amount_to,per_rs,GROSS_FIGURE,investor_code,broker_id,loggeduserid,due_after,valid_till,timest,circular_no,request_by,approved_by) values ( '" & vProdCode & "','" & cmbComp.List(cmbComp.ListIndex, 1) & "','" & _
+                                msfgData.TextMatrix(i, 19) & "',TO_DATE('" & msfgData.TextMatrix(i, 2) & "','dd-mm-RRRR'),TO_DATE('" & str_Dt_to & "','dd-mm-RRRR')," & msfgData.TextMatrix(i, 4) & "," & str_amount_to & ",'Percentage'," & msfgData.TextMatrix(i, 11) & "," & J & ",'1'," & Glbloginid & ",366,730,sysdate,'" & msfgData.TextMatrix(i, 28) & "','" & msfgData.TextMatrix(i, 29) & "','" & msfgData.TextMatrix(i, 30) & "')"
+                                sql = Replace(sql, "'NULL'", "NULL")
+                                MyConn.Execute sql
+                            End If
+                        Next
+                    End If
+                    
+                End If
+                
+                If msfgData.TextMatrix(i, 22) <> "" Then
+                    If Check_Slab_Trail(i, 731, "Trail", 22) = True Then
+                    '---------------------------Post Month Rtae Change---------------------
+                        PunchDt = SqlRet("select timest from trail_recd where slab_id in (" & Trail_Slabs(i, 731, "Base") & ")")
+                        ModifyDt = SqlRet("select modify_date from trail_recd where slab_id in (" & Trail_Slabs(i, 731, "Base") & ")")
+                        If PunchDt <> "" And ModifyDt <> "" Then
+                            If Format(PunchDt, "mm/yyyy") <> Format(ModifyDt, "mm/yyyy") Then
+                                MsgBox "Plz. Enter Approved By", vbInformation
+                                Exit Sub
+                            End If
+                        End If
+                '----------------------------------------------------------------------
+                        FLAG_MODIFY = True
+                        sql = "Update trail_recd set Date_from=to_date('" & msfgData.TextMatrix(i, 2) & "','dd/mm/RRRR') ,date_to=to_date('" & str_Dt_to & "','dd/mm/RRRR'),amount_from=" & msfgData.TextMatrix(i, 4) & ",Amount_to=" & str_amount_to & ",GROSS_FIGURE=" & msfgData.TextMatrix(i, 13) & ",due_after=731,valid_till=1095 "
+                        sql = sql & " ,modify_user='" & Glbloginid & "',modify_date=sysdate"
+                         '-------------------------log maynk---------------------
+                        sql = sql & " ,circular_no='" & msfgData.TextMatrix(i, 28) & "',request_by='" & msfgData.TextMatrix(i, 29) & "',approved_by='" & msfgData.TextMatrix(i, 30) & "'"
+                        '--------------------------------------------------------
+                        sql = sql & " where slab_id in (" & Trail_Slabs(i, 731, "Base") & ") "
+                        sql = Replace(sql, "'NULL'", "NULL")
+                        MyConn.Execute sql
+                        'MyConn.Execute "insert into RATE_MASTER_LOG_MF(slabid,Circular_No,Requested_By,Approved_By) values(" & msfgData.TextMatrix(i, 731) & ",'" & TxtCircularno & "','" & TxtReqby & "','" & TxtApprovedby & "') "
+                    End If
+                Else
+                    'insert base slab for 3rd year
+                    If Check_Slab_Trail(i, 731, "Trail", 22) = True Then
+                        FLAG_MODIFY = True
+                        For J = 1 To 1
+                            If msfgData.TextMatrix(i, 13) <> "" Then
+                                sql = "insert into trail_recd(prod_class_code,iss_mut_code,sch_code,date_from,date_to,amount_from,amount_to,per_rs,GROSS_FIGURE,investor_code,broker_id,loggeduserid,due_after,valid_till,timest,circular_no,request_by,approved_by) values ('" & vProdCode & "','" & cmbComp.List(cmbComp.ListIndex, 1) & "','" & _
+                                msfgData.TextMatrix(i, 19) & "',TO_DATE('" & msfgData.TextMatrix(i, 2) & "','dd-mm-RRRR'),TO_DATE('" & str_Dt_to & "','dd-mm-RRRR')," & msfgData.TextMatrix(i, 4) & "," & str_amount_to & ",'Percentage'," & msfgData.TextMatrix(i, 13) & "," & J & ",'1'," & Glbloginid & ",731,1095,sysdate,'" & msfgData.TextMatrix(i, 28) & "','" & msfgData.TextMatrix(i, 29) & "','" & msfgData.TextMatrix(i, 30) & "')"
+                                sql = Replace(sql, "'NULL'", "NULL")
+                                MyConn.Execute sql
+                            End If
+                        Next
+                    End If
+                End If
+                
+                If msfgData.TextMatrix(i, 24) <> "" Then
+                    If Check_Slab_Trail(i, 1096, "Trail", 24) = True Then
+                    '---------------------------Post Month Rtae Change---------------------
+                        PunchDt = SqlRet("select timest from trail_recd where slab_id in (" & Trail_Slabs(i, 1096, "Base") & ")")
+                        ModifyDt = SqlRet("select modify_date from trail_recd where slab_id in (" & Trail_Slabs(i, 1096, "Base") & ")")
+                        If PunchDt <> "" And ModifyDt <> "" Then
+                            If Format(PunchDt, "mm/yyyy") <> Format(ModifyDt, "mm/yyyy") Then
+                                MsgBox "Plz. Enter Approved By", vbInformation
+                                Exit Sub
+                            End If
+                        End If
+                '----------------------------------------------------------------------
+                        FLAG_MODIFY = True
+                        sql = "Update trail_recd set Date_from=to_date('" & msfgData.TextMatrix(i, 2) & "','dd/mm/RRRR') ,date_to=to_date('" & str_Dt_to & "','dd/mm/RRRR'),amount_from=" & msfgData.TextMatrix(i, 4) & ",Amount_to=" & str_amount_to & ",GROSS_FIGURE=" & msfgData.TextMatrix(i, 15) & ",due_after=1096,valid_till=NULL "
+                        sql = sql & " ,modify_user='" & Glbloginid & "',modify_date=sysdate"
+                         '-------------------------log maynk---------------------
+                         sql = sql & " ,circular_no='" & msfgData.TextMatrix(i, 28) & "',request_by='" & msfgData.TextMatrix(i, 29) & "',approved_by='" & msfgData.TextMatrix(i, 30) & "'"
+                        '--------------------------------------------------------
+                        sql = sql & " where slab_id in (" & Trail_Slabs(i, 1096, "Base") & ") "
+                        sql = Replace(sql, "'NULL'", "NULL")
+                        MyConn.Execute sql
+                        'MyConn.Execute "insert into RATE_MASTER_LOG_MF(slabid,Circular_No,Requested_By,Approved_By) values(" & msfgData.TextMatrix(i, 731) & ",'" & TxtCircularno & "','" & TxtReqby & "','" & TxtApprovedby & "') "
+                    End If
+                Else
+                    'insert base slab for 4th year
+                    If Check_Slab_Trail(i, 1096, "Trail", 24) = True Then
+                        FLAG_MODIFY = True
+                        For J = 1 To 1
+                            If msfgData.TextMatrix(i, 15) <> "" Then
+                                sql = "insert into trail_recd(prod_class_code,iss_mut_code,sch_code,date_from,date_to,amount_from,amount_to,per_rs,GROSS_FIGURE,investor_code,broker_id,loggeduserid,due_after,valid_till,timest,circular_no,request_by,approved_by) values ( '" & vProdCode & "','" & cmbComp.List(cmbComp.ListIndex, 1) & "','" & _
+                                msfgData.TextMatrix(i, 19) & "',TO_DATE('" & msfgData.TextMatrix(i, 2) & "','dd-mm-RRRR'),TO_DATE('" & str_Dt_to & "','dd-mm-RRRR')," & msfgData.TextMatrix(i, 4) & "," & str_amount_to & ",'Percentage'," & msfgData.TextMatrix(i, 15) & "," & J & ",'1'," & Glbloginid & ",1096,NULL,sysdate,'" & msfgData.TextMatrix(i, 28) & "','" & msfgData.TextMatrix(i, 29) & "','" & msfgData.TextMatrix(i, 30) & "')"
+                                sql = Replace(sql, "'NULL'", "NULL")
+                                MyConn.Execute sql
+                             End If
+                        Next
+                    End If
+                End If
+                '************
+                'Additional
+                '************
+                If msfgData.TextMatrix(i, 18) <> "" Then
+                    If Check_Slab_Trail(i, 0, "Add Trail", 18) = True Then
+                     '---------------------------Post Month Rtae Change---------------------
+                        PunchDt = SqlRet("select timest from trail_recd where slab_id in (" & Trail_Slabs(i, 0, "Add") & ")")
+                        ModifyDt = SqlRet("select modify_date from trail_recd where slab_id in (" & Trail_Slabs(i, 0, "Add") & ")")
+                        If PunchDt <> "" And ModifyDt <> "" Then
+                            If Format(PunchDt, "mm/yyyy") <> Format(ModifyDt, "mm/yyyy") Then
+                                MsgBox "Plz. Enter Approved By", vbInformation
+                                Exit Sub
+                            End If
+                        End If
+                '----------------------------------------------------------------------
+                        FLAG_MODIFY = True
+                        sql = "Update add_trail_recd set Date_from=to_date('" & msfgData.TextMatrix(i, 2) & "','dd/mm/RRRR') ,date_to=to_date('" & str_Dt_to & "','dd/mm/RRRR'),amount_from=" & msfgData.TextMatrix(i, 4) & ",Amount_to=" & str_amount_to & ",GROSS_FIGURE=" & msfgData.TextMatrix(i, 10) & " "
+                        sql = sql & " ,modify_user='" & Glbloginid & "',modify_date=sysdate"
+                         '-------------------------log maynk---------------------
+                        sql = sql & " ,circular_no='" & msfgData.TextMatrix(i, 28) & "',request_by='" & msfgData.TextMatrix(i, 29) & "',approved_by='" & msfgData.TextMatrix(i, 30) & "'"
+                        '--------------------------------------------------------
+                        sql = sql & " where slab_id in (" & Trail_Slabs(i, 0, "Add") & ") "
+                        sql = Replace(sql, "'NULL'", "NULL")
+                        MyConn.Execute sql
+                    End If
+                Else
+                    'insert base slab for 1st year
+                    If Check_Slab_Trail(i, 0, "Add Trail", 18) = True Then
+                        FLAG_MODIFY = True
+                        For J = 1 To 1
+                            If msfgData.TextMatrix(i, 10) <> "" Then
+                                sql = "insert into add_trail_recd(prod_class_code,iss_mut_code,sch_code,date_from,date_to,amount_from,amount_to,per_rs,GROSS_FIGURE,investor_code,broker_id,loggeduserid,due_after,valid_till,timest,circular_no,request_by,approved_by) values ( '" & vProdCode & "','" & cmbComp.List(cmbComp.ListIndex, 1) & "','" & _
+                                msfgData.TextMatrix(i, 19) & "',TO_DATE('" & msfgData.TextMatrix(i, 2) & "','dd-mm-RRRR'),TO_DATE('" & str_Dt_to & "','dd-mm-RRRR')," & msfgData.TextMatrix(i, 4) & "," & str_amount_to & ",'Percentage'," & msfgData.TextMatrix(i, 10) & "," & J & ",'1'," & Glbloginid & ",0,365,sysdate,'" & msfgData.TextMatrix(i, 28) & "','" & msfgData.TextMatrix(i, 29) & "','" & msfgData.TextMatrix(i, 30) & "')"
+                                sql = Replace(sql, "'NULL'", "NULL")
+                                MyConn.Execute sql
+                            End If
+                        Next
+                    End If
+                End If
+                
+                If msfgData.TextMatrix(i, 21) <> "" Then
+                    If Check_Slab_Trail(i, 366, "Add Trail", 21) = True Then
+                     '---------------------------Post Month Rtae Change---------------------
+                        PunchDt = SqlRet("select timest from trail_recd where slab_id in (" & Trail_Slabs(i, 366, "Add") & ")")
+                        ModifyDt = SqlRet("select modify_date from trail_recd where slab_id in (" & Trail_Slabs(i, 366, "Add") & ")")
+                        If PunchDt <> "" And ModifyDt <> "" Then
+                            If Format(PunchDt, "mm/yyyy") <> Format(ModifyDt, "mm/yyyy") Then
+                                MsgBox "Plz. Enter Approved By", vbInformation
+                                Exit Sub
+                            End If
+                        End If
+                '----------------------------------------------------------------------
+                        FLAG_MODIFY = True
+                        sql = "Update add_trail_recd set Date_from=to_date('" & msfgData.TextMatrix(i, 2) & "','dd/mm/RRRR') ,date_to=to_date('" & str_Dt_to & "','dd/mm/RRRR'),amount_from=" & msfgData.TextMatrix(i, 4) & ",Amount_to=" & str_amount_to & ",GROSS_FIGURE=" & msfgData.TextMatrix(i, 12) & ",due_after=366,valid_till=730 "
+                        sql = sql & " ,modify_user='" & Glbloginid & "',modify_date=sysdate"
+                         '-------------------------log maynk---------------------
+                        sql = sql & " ,circular_no='" & msfgData.TextMatrix(i, 28) & "',request_by='" & msfgData.TextMatrix(i, 29) & "',approved_by='" & msfgData.TextMatrix(i, 30) & "'"
+                        '--------------------------------------------------------
+                        sql = sql & "where slab_id in (" & Trail_Slabs(i, 366, "Add") & ") "
+                        sql = Replace(sql, "'NULL'", "NULL")
+                        MyConn.Execute sql
+                    End If
+                Else
+                    'insert base slab for 2nd year
+                    If Check_Slab_Trail(i, 366, "Add Trail", 21) = True Then
+                        FLAG_MODIFY = True
+                        For J = 1 To 6
+                            If msfgData.TextMatrix(i, 12) <> "" Then
+                                sql = "insert into add_trail_recd(prod_class_code,iss_mut_code,sch_code,date_from,date_to,amount_from,amount_to,per_rs,GROSS_FIGURE,investor_code,broker_id,loggeduserid,due_after,valid_till,timest,circular_no,request_by,approved_by) values ( '" & vProdCode & "','" & cmbComp.List(cmbComp.ListIndex, 1) & "','" & _
+                                msfgData.TextMatrix(i, 19) & "',TO_DATE('" & msfgData.TextMatrix(i, 2) & "','dd-mm-RRRR'),TO_DATE('" & str_Dt_to & "','dd-mm-RRRR')," & msfgData.TextMatrix(i, 4) & "," & str_amount_to & ",'Percentage'," & msfgData.TextMatrix(i, 12) & "," & J & ",'1'," & Glbloginid & ",366,730,sysdate,'" & msfgData.TextMatrix(i, 28) & "','" & msfgData.TextMatrix(i, 29) & "','" & msfgData.TextMatrix(i, 30) & "')"
+                                sql = Replace(sql, "'NULL'", "NULL")
+                                MyConn.Execute sql
+                            End If
+                        Next
+                    End If
+                    
+                End If
+                
+                If msfgData.TextMatrix(i, 23) <> "" Then
+                    If Check_Slab_Trail(i, 731, "Add Trail", 23) = True Then
+                     '---------------------------Post Month Rtae Change---------------------
+                        PunchDt = SqlRet("select timest from trail_recd where slab_id in (" & Trail_Slabs(i, 731, "Add") & ")")
+                        ModifyDt = SqlRet("select modify_date from trail_recd where slab_id in (" & Trail_Slabs(i, 731, "Add") & ")")
+                        If PunchDt <> "" And ModifyDt <> "" Then
+                            If Format(PunchDt, "mm/yyyy") <> Format(ModifyDt, "mm/yyyy") Then
+                                MsgBox "Plz. Enter Approved By", vbInformation
+                                Exit Sub
+                            End If
+                        End If
+                '----------------------------------------------------------------------
+                        FLAG_MODIFY = True
+                        sql = "Update add_trail_recd set Date_from=to_date('" & msfgData.TextMatrix(i, 2) & "','dd/mm/RRRR') ,date_to=to_date('" & str_Dt_to & "','dd/mm/RRRR'),amount_from=" & msfgData.TextMatrix(i, 4) & ",Amount_to=" & str_amount_to & ",GROSS_FIGURE=" & msfgData.TextMatrix(i, 14) & ",due_after=731,valid_till=1095 "
+                        sql = sql & " ,modify_user='" & Glbloginid & "',modify_date=sysdate"
+                         '-------------------------log maynk---------------------
+                        sql = sql & " ,circular_no='" & msfgData.TextMatrix(i, 28) & "',request_by='" & msfgData.TextMatrix(i, 29) & "',approved_by='" & msfgData.TextMatrix(i, 30) & "'"
+                        '--------------------------------------------------------
+                        sql = sql & " where slab_id in (" & Trail_Slabs(i, 731, "Add") & ") "
+                        sql = Replace(sql, "'NULL'", "NULL")
+                        MyConn.Execute sql
+                    End If
+                Else
+                    'insert base slab for 3rd year
+                    If Check_Slab_Trail(i, 731, "Add Trail", 23) = True Then
+                        FLAG_MODIFY = True
+                        For J = 1 To 1
+                            If msfgData.TextMatrix(i, 14) <> "" Then
+                                sql = "insert into add_trail_recd(prod_class_code,iss_mut_code,sch_code,date_from,date_to,amount_from,amount_to,per_rs,GROSS_FIGURE,investor_code,broker_id,loggeduserid,due_after,valid_till,timest,circular_no,request_by,approved_by) values ( '" & vProdCode & "','" & cmbComp.List(cmbComp.ListIndex, 1) & "','" & _
+                                msfgData.TextMatrix(i, 19) & "',TO_DATE('" & msfgData.TextMatrix(i, 2) & "','dd-mm-RRRR'),TO_DATE('" & str_Dt_to & "','dd-mm-RRRR')," & msfgData.TextMatrix(i, 4) & "," & str_amount_to & ",'Percentage'," & msfgData.TextMatrix(i, 14) & "," & J & ",'1'," & Glbloginid & ",731,1095,sysdate,'" & msfgData.TextMatrix(i, 28) & "','" & msfgData.TextMatrix(i, 29) & "','" & msfgData.TextMatrix(i, 30) & "')"
+                                sql = Replace(sql, "'NULL'", "NULL")
+                                MyConn.Execute sql
+                            End If
+                        Next
+                    End If
+                End If
+                
+                If msfgData.TextMatrix(i, 25) <> "" Then
+                    If Check_Slab_Trail(i, 1096, "Add Trail", 25) = True Then
+                    '---------------------------Post Month Rtae Change---------------------
+                        PunchDt = SqlRet("select timest from trail_recd where slab_id in (" & Trail_Slabs(i, 1096, "Add") & ")")
+                        ModifyDt = SqlRet("select modify_date from trail_recd where slab_id in (" & Trail_Slabs(i, 1096, "Add") & ")")
+                        If PunchDt <> "" And ModifyDt <> "" Then
+                            If Format(PunchDt, "mm/yyyy") <> Format(ModifyDt, "mm/yyyy") Then
+                                MsgBox "Plz. Enter Approved By", vbInformation
+                                Exit Sub
+                            End If
+                        End If
+                '----------------------------------------------------------------------
+                        FLAG_MODIFY = True
+                        sql = "Update add_trail_recd set Date_from=to_date('" & msfgData.TextMatrix(i, 2) & "','dd/mm/RRRR') ,date_to=to_date('" & str_Dt_to & "','dd/mm/RRRR'),amount_from=" & msfgData.TextMatrix(i, 4) & ",Amount_to=" & str_amount_to & ",GROSS_FIGURE=" & msfgData.TextMatrix(i, 16) & ",due_after=1096,valid_till=NULL "
+                        sql = sql & " ,modify_user='" & Glbloginid & "',modify_date=sysdate"
+                        '-------------------------log mayank---------------------
+                        sql = sql & " ,circular_no='" & msfgData.TextMatrix(i, 28) & "',request_by='" & msfgData.TextMatrix(i, 29) & "',approved_by='" & msfgData.TextMatrix(i, 30) & "'"
+                        '--------------------------------------------------------
+                        sql = sql & " where slab_id in (" & Trail_Slabs(i, 1096, "Add") & ") "
+                        sql = Replace(sql, "'NULL'", "NULL")
+                        MyConn.Execute sql
+                    End If
+                Else
+                    'insert base slab for 4th year
+                    If Check_Slab_Trail(i, 1096, "Add Trail", 25) = True Then
+                        FLAG_MODIFY = True
+                        For J = 1 To 1
+                            If msfgData.TextMatrix(i, 16) <> "" Then
+                                sql = "insert into add_trail_recd(prod_class_code,iss_mut_code,sch_code,date_from,date_to,amount_from,amount_to,per_rs,GROSS_FIGURE,investor_code,broker_id,loggeduserid,due_after,valid_till,timest,circular_no,request_by,approved_by) values ( '" & vProdCode & "','" & cmbComp.List(cmbComp.ListIndex, 1) & "','" & _
+                                msfgData.TextMatrix(i, 19) & "',TO_DATE('" & msfgData.TextMatrix(i, 2) & "','dd-mm-RRRR'),TO_DATE('" & str_Dt_to & "','dd-mm-RRRR')," & msfgData.TextMatrix(i, 4) & "," & str_amount_to & ",'Percentage'," & msfgData.TextMatrix(i, 16) & "," & J & ",'1'," & Glbloginid & ",1096,NULL,sysdate,'" & msfgData.TextMatrix(i, 28) & "','" & msfgData.TextMatrix(i, 29) & "','" & msfgData.TextMatrix(i, 30) & "')"
+                                sql = Replace(sql, "'NULL'", "NULL")
+                                MyConn.Execute sql
+                            End If
+                        Next
+                    End If
+                End If
+            End If
+        End If
+    Next i
+    
+    Me.MousePointer = 0
+    If FLAG_MODIFY = True And cmbBroktype.Text = "Upfront" Then
+    
+        MyConn.Execute "update new_upfront_recd set investor_CODE=13 WHERE INVESTOR_CODE=6"
+        MyConn.Execute "update new_add_incentive_recd set investor_CODE=13 WHERE INVESTOR_CODE=6 and (slab_type<>'SIP' OR SLAB_TYPE IS NULL)"
+        MsgBox "Updated Successfully ", vbInformation
+        cmdShow_Click
+    ElseIf FLAG_MODIFY = True And cmbBroktype.Text = "Trail" Then
+    
+        MyConn.Execute "update trail_recd set investor_CODE=13 WHERE INVESTOR_CODE=6"
+        MyConn.Execute "update add_trail_recd set investor_CODE=13 WHERE INVESTOR_CODE=6"
+        MsgBox "Updated Successfully ", vbInformation
+        cmdShow_Click
+    End If
+        
+    
+    Exit Sub
+err1:
+    MsgBox err.Description
+    Resume
+End Sub
+
+
+
+Private Function Trail_Slabs(ByVal i As Integer, year As Integer, Sub_type As String) As String
+Dim rsSlab As New Adodb.Recordset
+Dim sql As String
+Dim strSlab As String
+    
+'Dim strSlab As String
+
+
+        sql = ""
+        If Sub_type = "Base" Then
+        
+            If year = "0" Then
+                strSlab = msfgData.TextMatrix(i, 17)
+            ElseIf year = "366" Then
+                strSlab = msfgData.TextMatrix(i, 18)
+            ElseIf year = "731" Then
+                strSlab = msfgData.TextMatrix(i, 22)
+            ElseIf year = "1096" Then
+                strSlab = msfgData.TextMatrix(i, 24)
+            End If
+            
+            sql = " select distinct slab_id from trail_recd t1 inner join   "
+            sql = sql & " (select sch_code,date_from,amount_from,due_after from trail_recd where slab_id='" & strSlab & "' "
+            sql = sql & " ) t2 "
+            sql = sql & " on t1.SCH_CODE=t2.sch_code "
+            sql = sql & "  and t1.DATE_FROM=t2.date_from "
+            sql = sql & "  and t1.AMOUNT_FROM=t2.amount_from "
+            sql = sql & "  and t1.DUE_AFTER=t2.due_after "
+            
+        
+            
+        Else
+        
+            If year = "0" Then
+                strSlab = msfgData.TextMatrix(i, 18)
+            ElseIf year = "366" Then
+                strSlab = msfgData.TextMatrix(i, 21)
+            ElseIf year = "731" Then
+                strSlab = msfgData.TextMatrix(i, 23)
+            ElseIf year = "1096" Then
+                strSlab = msfgData.TextMatrix(i, 25)
+            End If
+            
+            sql = " select distinct slab_id from add_trail_recd t1 inner join   "
+            sql = sql & " (select sch_code,date_from,amount_from,due_after from add_trail_recd where slab_id='" & strSlab & "' "
+            sql = sql & " ) t2 "
+            sql = sql & " on t1.SCH_CODE=t2.sch_code "
+            sql = sql & "  and t1.DATE_FROM=t2.date_from "
+            sql = sql & "  and t1.AMOUNT_FROM=t2.amount_from "
+            sql = sql & "  and t1.DUE_AFTER=t2.due_after "
+        
+            
+        End If
+        
+        rsSlab.open sql, MyConn, adOpenForwardOnly
+        strSlab = ""
+        While Not rsSlab.EOF
+            strSlab = strSlab & "'" & rsSlab("slab_id") & "',"
+            rsSlab.MoveNext
+        Wend
+        rsSlab.Close
+        
+        If Len(strSlab) > 0 Then strSlab = Left(strSlab, Len(strSlab) - 1)
+        Trail_Slabs = strSlab
+        
+        Set rsSlab = Nothing
+        
+        
+End Function
+
+
+Private Sub Command1_Click()
+
+End Sub
+
+Private Sub Form_KeyPress(KeyAscii As Integer)
+    If KeyAscii = 13 Then
+        SendKeys "{Tab}"
+    End If
+End Sub
+
+Private Sub Form_Load()
+Cmbarn.AddItem "ALL"
+Cmbarn.AddItem "Arn-0010"
+Cmbarn.AddItem "Arn-49850"
+Cmbarn.ListIndex = 0
+Cmbtran.AddItem "ALL"
+Cmbtran.AddItem "New"
+Cmbtran.AddItem "Switch"
+Cmbtran.AddItem "SIP"
+Cmbtran.ListIndex = 0
+
+gridinit
+ShowData
+
+If GlbDataFilter = "72" Then
+    Update_Flag = True
+Else
+    Update_Flag = False
+End If
+
+OptMF.Value = True
+vProdCode = "DT001"
+End Sub
+
+
+Public Sub getCondition1(i As Integer)
+Dim cond1 As String, cond2 As String
+    cond1 = "and"
+    cond2 = "not"
+    
+     If msfgData.TextMatrix(i, 3) <> "" And Trim(msfgData.TextMatrix(i, 5)) <> "" Then
+       If sql_ora = "SQL" Then
+           datecondition = " and not(('" & Format(Trim(msfgData.TextMatrix(i, 3)), "mm/dd/yyyy") & "' < date_from) or ('" & Format(Trim(msfgData.TextMatrix(i, 2)), "mm/dd/yyyy") & "' > date_to " & cond1 & " date_to is " & cond2 & " NULL))"
+       Else
+           datecondition = " and not((to_date('" & msfgData.TextMatrix(i, 3) & "', 'DD-MM-YYYY')< date_from) or ('" & Format(Trim(msfgData.TextMatrix(i, 2)), "DD-MMM-YYYY") & "' > date_to " & cond1 & " date_to is " & cond2 & " NULL))"
+       End If
+       amtcondition = " and not((" & msfgData.TextMatrix(i, 5) & " < amount_from) or (" & msfgData.TextMatrix(i, 4) & " > amount_to " & cond1 & " amount_to is " & cond2 & " NULL))"
+     ElseIf msfgData.TextMatrix(i, 3) = "" And Trim(msfgData.TextMatrix(i, 5)) <> "" Then
+       If sql_ora = "SQL" Then
+             datecondition = " and not('" & Format(Trim(msfgData.TextMatrix(i, 2)), "mm/dd/yyyy") & "' > date_to " & cond1 & " date_to is " & cond2 & " NULL)"
+       Else
+             datecondition = " and not(to_date('" & msfgData.TextMatrix(i, 2) & "', 'DD-MM-YYYY')> date_to " & cond1 & " date_to is " & cond2 & " NULL)"
+       End If
+       amtcondition = " and not((" & msfgData.TextMatrix(i, 5) & " < amount_from) or (" & msfgData.TextMatrix(i, 4) & " > amount_to " & cond1 & " amount_to is " & cond2 & " NULL))"
+     ElseIf msfgData.TextMatrix(i, 3) <> "" And msfgData.TextMatrix(i, 5) = "" Then
+       If sql_ora = "SQL" Then
+             datecondition = " and not(('" & Format(Trim(msfgData.TextMatrix(i, 3)), "mm/dd/yyyy") & "' < date_from) or ('" & Format(Trim(msfgData.TextMatrix(i, 2)), "mm/dd/yyyy") & "' > date_to " & cond1 & " date_to is " & cond2 & " NULL))"
+       Else
+             datecondition = " and not((to_date('" & Trim(msfgData.TextMatrix(i, 3)) & "', 'DD-MM-YYYY')< date_from) or (to_date('" & Trim(msfgData.TextMatrix(i, 2)) & "', 'DD-MM-YYYY') > date_to " & cond1 & " date_to is " & cond2 & " NULL))"
+       End If
+       amtcondition = " and not(" & msfgData.TextMatrix(i, 4) & " > amount_to " & cond1 & " amount_to is " & cond2 & " NULL)"
+     ElseIf msfgData.TextMatrix(i, 3) = "" And msfgData.TextMatrix(i, 5) = "" Then
+       If sql_ora = "SQL" Then
+            datecondition = " and not('" & Format(Trim(msfgData.TextMatrix(i, 2)), "mm/dd/yyyy") & "' > date_to " & cond1 & " date_to is " & cond2 & " NULL)"
+       Else
+            datecondition = " and not('" & Format(Trim(msfgData.TextMatrix(i, 2)), "DD-MMM-YYYY") & "' > date_to " & cond1 & " date_to is " & cond2 & " NULL)"
+       End If
+       amtcondition = " and not(" & msfgData.TextMatrix(i, 4) & " > amount_to " & cond1 & " amount_to is " & cond2 & " NULL)"
+     End If
+End Sub
+
+
+Public Function getCondition(i As Integer) As String
+    datecondition = ""
+    amtcondition = ""
+    appcondition = ""
+   
+   getCondition1 (i)
+   getCondition = datecondition & amtcondition
+End Function
+
+
+Private Function Check_Slab(ByVal CHECK_ROW As Integer, brok_type As String, col_slab As Integer) As Boolean
+Dim rsCheck As New Adodb.Recordset
+Dim sqlString As String
+Dim sc_code() As String
+
+    Check_Slab = True
+    If brok_type = "Upfront" Then
+        sqlString = "Select count(*) from new_upfront_recd s,scheme_info o where s.sch_code=o.sch_code and arn_code='" & Cmbarn.Text & "' and tran_type='" & Cmbtran.Text & "'"
+    Else
+        sqlString = "Select count(*) from new_add_incentive_recd s,scheme_info o where s.sch_code=o.sch_code and (slab_type<>'SIP' OR SLAB_TYPE IS NULL) "
+    End If
+    
+    sqlString = sqlString & " and investor_code=1 and s.sch_code='" & msfgData.TextMatrix(CHECK_ROW, 19) & "'"      ' in(" & strSchCode_sch & ")"
+    sqlString = sqlString & getCondition(CHECK_ROW) & " and slab_id<>'" & msfgData.TextMatrix(CHECK_ROW, col_slab) & "'"
+    
+    
+    If rsCheck.State = 1 Then rsCheck.Close
+    rsCheck.open sqlString, MyConn, adOpenForwardOnly
+    If rsCheck(0) > 0 Then
+        msfgData.Row = CHECK_ROW
+        msfgData.Col = 1
+        msfgData.CellBackColor = vbCyan
+        Check_Slab = False
+    End If
+    rsCheck.Close
+    
+    Set rsCheck = Nothing
+End Function
+Private Function Check_Slab_Ins(ByVal CHECK_ROW As Integer, brok_type As String) As Boolean
+Dim rsCheck As New Adodb.Recordset
+Dim sqlString As String
+Dim sc_code() As String
+
+    Check_Slab_Ins = True
+    If brok_type = "Upfront" Then
+        sqlString = "Select count(*) from new_upfront_recd s,scheme_info o where s.sch_code=o.sch_code and arn_code='" & Cmbarn.Text & "' and tran_type='" & Cmbtran.Text & "'"
+    Else
+        sqlString = "Select count(*) from new_add_incentive_recd s,scheme_info o where s.sch_code=o.sch_code and (slab_type<>'SIP' OR SLAB_TYPE IS NULL) "
+    End If
+    sqlString = sqlString & " and investor_code=1 and s.sch_code='" & msfgData.TextMatrix(CHECK_ROW, 19) & "'"      ' in(" & strSchCode_sch & ")"
+    sqlString = sqlString & getCondition(CHECK_ROW) & ""
+    
+    
+    If rsCheck.State = 1 Then rsCheck.Close
+    rsCheck.open sqlString, MyConn, adOpenForwardOnly
+    If rsCheck(0) > 0 Then
+        msfgData.Row = CHECK_ROW
+        msfgData.Col = 1
+        msfgData.CellBackColor = vbCyan
+        Check_Slab_Ins = False
+    End If
+    rsCheck.Close
+    
+    Set rsCheck = Nothing
+End Function
+
+Private Function Check_Slab_Trail(ByVal CHECK_ROW As Integer, year As Integer, brok_type As String, slab_col As Integer) As Boolean
+Dim rsCheck As New Adodb.Recordset
+Dim sqlString As String
+Dim sc_code() As String
+
+    Check_Slab_Trail = True
+    If brok_type = "Trail" Then
+        sqlString = "Select count(*) from trail_recd s,scheme_info o where s.sch_code=o.sch_code and due_after=" & year
+    Else
+        sqlString = "Select count(*) from add_trail_recd s,scheme_info o where s.sch_code=o.sch_code and due_after=" & year
+    End If
+    
+    sqlString = sqlString & " and investor_code=1 and s.sch_code='" & msfgData.TextMatrix(CHECK_ROW, 19) & "'"      ' in(" & strSchCode_sch & ")"
+    sqlString = sqlString & getCondition(CHECK_ROW) & " and slab_id<>'" & msfgData.TextMatrix(CHECK_ROW, slab_col) & "'"
+    
+    If rsCheck.State = 1 Then rsCheck.Close
+    rsCheck.open sqlString, MyConn, adOpenForwardOnly
+    If rsCheck(0) > 0 Then
+        msfgData.Row = CHECK_ROW
+        msfgData.Col = 1
+        msfgData.CellBackColor = vbCyan
+        Check_Slab_Trail = False
+    End If
+    rsCheck.Close
+    
+    Set rsCheck = Nothing
+End Function
+Private Function Check_Slab_Trail_Ins(ByVal CHECK_ROW As Integer, year As Integer, brok_type As String, slab_col As Integer) As Boolean
+Dim rsCheck As New Adodb.Recordset
+Dim sqlString As String
+Dim sc_code() As String
+
+    Check_Slab_Trail_Ins = True
+    If brok_type = "Trail" Then
+        sqlString = "Select count(*) from trail_recd s,scheme_info o where s.sch_code=o.sch_code and due_after=" & year
+    Else
+        sqlString = "Select count(*) from add_trail_recd s,scheme_info o where s.sch_code=o.sch_code and due_after=" & year
+    End If
+    sqlString = sqlString & " and investor_code=1 and s.sch_code='" & msfgData.TextMatrix(CHECK_ROW, 19) & "'"      ' in(" & strSchCode_sch & ")"
+    sqlString = sqlString & getCondition(CHECK_ROW) & ""
+    
+    If rsCheck.State = 1 Then rsCheck.Close
+    rsCheck.open sqlString, MyConn, adOpenForwardOnly
+    If rsCheck(0) > 0 Then
+        msfgData.Row = CHECK_ROW
+        msfgData.Col = 1
+        msfgData.CellBackColor = vbCyan
+        Check_Slab_Trail_Ins = False
+    End If
+    rsCheck.Close
+    
+    Set rsCheck = Nothing
+End Function
+
+Private Sub ShowData()
+Dim rsData As New Adodb.Recordset
+Dim i As Integer
+    
+i = 0
+cmbComp.Clear
+rsData.open "select mut_code,upper(mut_name) mut_name from mut_fund order by upper(mut_name)", MyConn, adOpenForwardOnly
+While Not rsData.EOF
+    cmbComp.AddItem rsData("mut_name")
+    cmbComp.List(i, 1) = rsData("mut_code")
+    i = i + 1
+    rsData.MoveNext
+Wend
+rsData.Close
+
+
+RateFill
+
+
+'0  CAT NAME
+'1  cat code
+'2   NOTIONAL RATE
+'3 SIP RATE
+
+
+cmbAssetClass.Clear
+cmbAssetClass.AddItem "Debt"
+cmbAssetClass.List(0, 1) = "D"
+cmbAssetClass.AddItem "Equity"
+cmbAssetClass.List(1, 1) = "E"
+cmbAssetClass.AddItem "Cash"
+cmbAssetClass.List(2, 1) = "C"
+cmbAssetClass.AddItem "Not Available"
+cmbAssetClass.List(2, 1) = "N"
+
+cmbBroktype.AddItem "Upfront"
+cmbBroktype.ListIndex = 0
+Set rsData = Nothing
+    
+End Sub
+
+'done vinit
+Private Sub Populate_Grid(rsBase As Adodb.Recordset, BrokType As String)
+On Error Resume Next
+Dim Rest_slab_up As String
+Dim Rest_slab_addup As String
+Dim rsadd As New Adodb.Recordset
+Dim cnt As Integer
+    i = 2
+    msfgData.Rows = 2
+    msfgData.Rows = 3
+    
+    If BrokType = "Upfront" Then
+        While Not rsBase.EOF
+            If rsBase("investor_code") = "1" Then
+                Rest_slab_up = ""
+            End If
+            Rest_slab_up = Rest_slab_up & "'" & rsBase("SLAB_ID") & "',"
+            If rsBase("investor_code") = "1" Then
+                msfgData.TextMatrix(i, 0) = ""
+                msfgData.TextMatrix(i, 1) = rsBase("sch_name")
+                msfgData.TextMatrix(i, 2) = rsBase("date_from")
+                msfgData.TextMatrix(i, 3) = rsBase("Date_to")
+                msfgData.TextMatrix(i, 4) = rsBase("amount_from")
+                msfgData.TextMatrix(i, 5) = rsBase("amount_to")
+                msfgData.TextMatrix(i, 6) = rsBase("sch_nature")
+                msfgData.TextMatrix(i, 7) = rsBase("GROSS_FIGURE")
+                msfgData.TextMatrix(i, 8) = rsBase("b15")
+                msfgData.TextMatrix(i, 17) = rsBase("SLAB_ID")
+                msfgData.TextMatrix(i, 19) = rsBase("SCH_CODE")
+                '------------Rate log mayank----------------------
+                msfgData.TextMatrix(i, 28) = IIf(IsNull(rsBase("circular_no")), "", rsBase("circular_no"))
+                msfgData.TextMatrix(i, 29) = IIf(IsNull(rsBase("request_by")), "", rsBase("request_by"))
+                msfgData.TextMatrix(i, 30) = IIf(IsNull(rsBase("approved_by")), "", rsBase("approved_by"))
+                'add by pankaj pundir on date 15042016 for category code and sip advantage rate
+                msfgData.TextMatrix(i, 31) = IIf(IsNull(rsBase("aset_cat_code")), "", rsBase("aset_cat_code"))
+                msfgData.TextMatrix(i, 32) = IIf(IsNull(rsBase("sip_adv_rate")), "", rsBase("sip_adv_rate"))
+                msfgData.TextMatrix(i, 33) = IIf(IsNull(rsBase("Ast_Cat_Name")), "", rsBase("Ast_Cat_Name"))
+                '-----------------------------------------------
+            
+                sql = ""
+                sql = "select SLAB_ID,GROSS_FIGURE,investor_code from new_add_incentive_recd where (slab_type<>'SIP' OR SLAB_TYPE IS NULL) AND sch_code='" & rsBase("sch_code") & "' and date_from>=to_date('" & Format(msfgData.TextMatrix(i, 2), "dd/mm/yyyy") & "','dd/mm/RRRR') and Amount_from>=" & Val(msfgData.TextMatrix(i, 4)) & " "
+                
+                If msfgData.TextMatrix(i, 3) <> "" Then
+                    sql = sql & " and date_to<=TO_DATE('" & Format(msfgData.TextMatrix(i, 3), "dd/mm/yyyy") & "','dd/mm/RRRR') "
+                Else
+                    sql = sql & " and date_to is null"
+                End If
+                
+                If msfgData.TextMatrix(i, 5) <> "" Then
+                    sql = sql & " and amount_to<=" & Val(msfgData.TextMatrix(i, 5)) & " "
+                Else
+                    sql = sql & " and amount_to is null"
+                End If
+                
+                'Sql = Sql & " and arn_code='" & Cmbarn.Text & "' "
+                'Sql = Sql & " and tran_type='" & Cmbtran.Text & "' "
+                
+                sql = sql & " order by sch_code asc,investor_code desc"
+                
+                If rsadd.State = 1 Then rsadd.Close
+                rsadd.open sql, MyConn, adOpenForwardOnly
+            
+                While Not rsadd.EOF
+                    If rsadd("investor_code") = "13" Then Rest_slab_addup = ""
+                    Rest_slab_addup = Rest_slab_addup & "'" & rsadd("SLAB_ID") & "',"
+                    
+                    If rsadd("investor_code") = "1" Then
+                        msfgData.TextMatrix(i, 7) = rsadd("GROSS_FIGURE")
+                        msfgData.TextMatrix(i, 18) = rsadd("SLAB_ID")
+                        If Len(Rest_slab_addup) > 0 Then Rest_slab_addup = Left(Rest_slab_addup, Len(Rest_slab_addup) - 1)
+                        msfgData.TextMatrix(i, 21) = Rest_slab_addup
+                        'Debug.Print Rest_slab_addup
+                    End If
+                    rsadd.MoveNext
+                Wend
+                
+                DoEvents
+                
+                If Len(Rest_slab_up) > 0 Then Rest_slab_up = Left(Rest_slab_up, Len(Rest_slab_up) - 1)
+                msfgData.TextMatrix(i, 20) = Rest_slab_up
+                Debug.Print rsBase("SLAB_ID") & "-" & Rest_slab_up
+                i = i + 1
+                msfgData.Rows = msfgData.Rows + 1
+            End If
+            rsBase.MoveNext
+        Wend
+        msfgData.Rows = msfgData.Rows - 1
+    Else
+        While Not rsBase.EOF
+            If rsBase("investor_code") = "13" Then
+                Rest_slab_up = ""
+            End If
+            
+            Rest_slab_up = Rest_slab_up & "'" & rsBase("SLAB_ID") & "',"
+            
+            If rsBase("investor_code") = "1" And rsBase("due_after") = "0" Then
+                msfgData.TextMatrix(i, 0) = ""
+                msfgData.TextMatrix(i, 1) = rsBase("sch_name")
+                msfgData.TextMatrix(i, 2) = rsBase("date_from")
+                msfgData.TextMatrix(i, 3) = rsBase("Date_to")
+                msfgData.TextMatrix(i, 4) = rsBase("amount_from")
+                msfgData.TextMatrix(i, 5) = rsBase("amount_to")
+                msfgData.TextMatrix(i, 9) = rsBase("GROSS_FIGURE")
+                msfgData.TextMatrix(i, 17) = rsBase("SLAB_ID")
+                msfgData.TextMatrix(i, 19) = rsBase("SCH_CODE")
+                '------------Rate log mayank----------------------
+                msfgData.TextMatrix(i, 28) = IIf(IsNull(rsBase("circular_no")), "", rsBase("circular_no"))
+                msfgData.TextMatrix(i, 29) = IIf(IsNull(rsBase("request_by")), "", rsBase("request_by"))
+                msfgData.TextMatrix(i, 30) = IIf(IsNull(rsBase("approved_by")), "", rsBase("approved_by"))
+                '-----------------------------------------------
+                sql = ""
+                sql = "select SLAB_ID,GROSS_FIGURE,investor_code,valid_till,due_after from trail_recd where sch_code='" & rsBase("sch_code") & "' and date_from>=to_date('" & Format(msfgData.TextMatrix(i, 2), "dd/mm/yyyy") & "','dd/mm/RRRR') and Amount_from>=" & Val(msfgData.TextMatrix(i, 4)) & " and due_after>=366 and investor_code=1 "
+                'MsgBox msfgData.TextMatrix(2, 16)
+                If msfgData.TextMatrix(i, 3) <> "" Then
+                    sql = sql & " and date_to<=TO_DATE('" & Format(msfgData.TextMatrix(i, 3), "dd/mm/yyyy") & "','dd/mm/RRRR') "
+                Else
+                    sql = sql & " and date_to is null"
+                End If
+                
+                If msfgData.TextMatrix(i, 5) <> "" Then
+                    sql = sql & " and amount_to<=" & Val(msfgData.TextMatrix(i, 5)) & " "
+                Else
+                    sql = sql & " and amount_to is null"
+                End If
+                
+                sql = sql & " order by sch_code asc,due_after asc,investor_code desc"
+                
+                If rsadd.State = 1 Then rsadd.Close
+                rsadd.open sql, MyConn, adOpenForwardOnly
+                k = 11
+                flag = True
+                cnt = 1
+                While Not rsadd.EOF And flag = True
+                    If rsadd("investor_code") = "1" Then
+                        msfgData.TextMatrix(i, k) = rsadd("GROSS_FIGURE")
+                        If rsadd("due_after") = "366" Then
+                            msfgData.TextMatrix(i, 20) = rsadd("SLAB_ID")
+                        ElseIf rsadd("due_after") = "731" Then
+                            msfgData.TextMatrix(i, 22) = rsadd("SLAB_ID")
+                        ElseIf rsadd("due_after") = "1096" Then
+                            msfgData.TextMatrix(i, 24) = rsadd("SLAB_ID")
+                        End If
+                        
+                        If IsNull(rsadd("valid_till")) And cnt = 1 Then
+                            msfgData.TextMatrix(i, k + 2) = rsadd("GROSS_FIGURE")
+                            msfgData.TextMatrix(i, k + 4) = rsadd("GROSS_FIGURE")
+                            flag = False
+                        ElseIf IsNull(rsadd("valid_till")) And cnt = 2 Then
+                            msfgData.TextMatrix(i, k + 2) = rsadd("GROSS_FIGURE")
+                            'msfgData.TextMatrix(i, k + 4) = rsAdd("GROSS_FIGURE")
+                            flag = False
+                        End If
+                        
+                        If Not IsNull(rsadd("valid_till")) Then
+                            cnt = cnt + 1
+                        End If
+                        k = k + 2
+                    End If
+                    rsadd.MoveNext
+                Wend
+                
+                sql = ""
+                sql = "select SLAB_ID,GROSS_FIGURE,investor_code,valid_till from add_trail_recd where sch_code='" & rsBase("sch_code") & "' and date_from>=to_date('" & Format(msfgData.TextMatrix(i, 2), "dd/mm/yyyy") & "','dd/mm/RRRR') and Amount_from>=" & Val(msfgData.TextMatrix(i, 4)) & " and due_after=0 and investor_code=1 "
+
+                If msfgData.TextMatrix(i, 3) <> "" Then
+                    sql = sql & " and date_to<=TO_DATE('" & Format(msfgData.TextMatrix(i, 3), "dd/mm/yyyy") & "','dd/mm/RRRR') "
+                Else
+                    sql = sql & " and date_to is null"
+                End If
+
+                If msfgData.TextMatrix(i, 5) <> "" Then
+                    sql = sql & " and amount_to<=" & Val(msfgData.TextMatrix(i, 5)) & " "
+                Else
+                    sql = sql & " and amount_to is null"
+                End If
+
+                sql = sql & " order by sch_code asc,investor_code desc"
+
+                If rsadd.State = 1 Then rsadd.Close
+                rsadd.open sql, MyConn, adOpenForwardOnly
+            
+                While Not rsadd.EOF
+                    If rsadd("investor_code") = "1" Then
+                        msfgData.TextMatrix(i, 10) = rsadd("GROSS_FIGURE")
+                        msfgData.TextMatrix(i, 18) = rsadd("SLAB_ID")
+                    End If
+                    rsadd.MoveNext
+                Wend
+                
+                sql = ""
+                sql = "select SLAB_ID,GROSS_FIGURE,investor_code,valid_till,due_after from add_trail_recd where sch_code='" & rsBase("sch_code") & "' and date_from>=to_date('" & Format(msfgData.TextMatrix(i, 2), "dd/mm/yyyy") & "','dd/mm/RRRR') and Amount_from>=" & Val(msfgData.TextMatrix(i, 4)) & " and due_after>=366 and investor_code=1 "
+                
+                If msfgData.TextMatrix(i, 3) <> "" Then
+                    sql = sql & " and date_to<=TO_DATE('" & Format(msfgData.TextMatrix(i, 3), "dd/mm/yyyy") & "','dd/mm/RRRR') "
+                Else
+                    sql = sql & " and date_to is null"
+                End If
+                
+                If msfgData.TextMatrix(i, 5) <> "" Then
+                    sql = sql & " and amount_to<=" & Val(msfgData.TextMatrix(i, 5)) & " "
+                Else
+                    sql = sql & " and amount_to is null"
+                End If
+                
+                sql = sql & " order by sch_code asc,due_after asc,investor_code desc"
+                
+                If rsadd.State = 1 Then rsadd.Close
+                rsadd.open sql, MyConn, adOpenForwardOnly
+                k = 12
+                flag = True
+                cnt = 1
+                While Not rsadd.EOF And flag = True
+                    If rsadd("investor_code") = "1" Then
+                        msfgData.TextMatrix(i, k) = rsadd("GROSS_FIGURE")
+                        
+                        If rsadd("due_after") = "366" Then
+                            msfgData.TextMatrix(i, 21) = rsadd("SLAB_ID")
+                        ElseIf rsadd("due_after") = "731" Then
+                            msfgData.TextMatrix(i, 23) = rsadd("SLAB_ID")
+                        ElseIf rsadd("due_after") = "1096" Then
+                            msfgData.TextMatrix(i, 25) = rsadd("SLAB_ID")
+                        End If
+                        
+                        If IsNull(rsadd("valid_till")) And cnt = 1 Then
+                            msfgData.TextMatrix(i, k + 2) = rsadd("GROSS_FIGURE")
+                            msfgData.TextMatrix(i, k + 4) = rsadd("GROSS_FIGURE")
+                            flag = False
+                        ElseIf IsNull(rsadd("valid_till")) And cnt = 2 Then
+                            msfgData.TextMatrix(i, k + 2) = rsadd("GROSS_FIGURE")
+                            flag = False
+                        End If
+                        
+                        If Not IsNull(rsadd("valid_till")) Then
+                            cnt = cnt + 1
+                        End If
+                        k = k + 2
+                    End If
+                    rsadd.MoveNext
+                Wend
+                
+                DoEvents
+                i = i + 1
+                msfgData.Rows = msfgData.Rows + 1
+            End If
+            rsBase.MoveNext
+        Wend
+        msfgData.Rows = msfgData.Rows - 1
+    End If
+End Sub
+
+
+
+Private Sub Label17_Click()
+
+End Sub
+
+Private Sub msfgData_Click()
+    If msfgData.Col = 0 Then
+        msfgData.CellForeColor = vbWhite
+        If msfgData.CellPicture = Image1.Picture Then
+            Set msfgData.CellPicture = Image2.Picture
+            msfgData.CellPictureAlignment = 4
+            msfgData.Text = 0
+        Else
+            Set msfgData.CellPicture = Image1.Picture
+            msfgData.CellPictureAlignment = 4
+            msfgData.Text = 1
+        End If
+    End If
+End Sub
+Private Sub msfgData_KeyPress(KeyAscii As Integer)
+Dim i As Integer
+    If msfgData.Col = 0 Then
+        msfgData.CellForeColor = vbWhite
+        If KeyAscii = 13 Or KeyAscii = 32 Then
+            If msfgData.CellPicture = Image1.Picture Then
+                Set msfgData.CellPicture = Image2.Picture
+                msfgData.CellPictureAlignment = 4
+                msfgData.Text = 0
+            Else
+                Set msfgData.CellPicture = Image1.Picture
+                msfgData.CellPictureAlignment = 4
+                msfgData.Text = 1
+            End If
+            
+        End If
+    End If
+    
+    On Error Resume Next
+    If msfgData.TextMatrix(msfgData.Row, 0) = "1" Then
+    
+        If msfgData.Row > 0 Then
+            If KeyAscii = 8 Then
+                If Len(msfgData.TextMatrix(msfgData.Row, msfgData.Col)) >= 1 Then
+                    For i = 2 To msfgData.Rows - 1
+                    'For i = msfgData.Row To msfgData.Row
+                    
+                        If msfgData.TextMatrix(i, 0) = "1" Then
+                            If msfgData.Col = 2 And msfgData.TextMatrix(i, 17) <> "" And Update_Flag = False Then
+                                KeyAscii = 0
+                                Exit Sub
+                            End If
+                            
+                            If msfgData.TextMatrix(i, msfgData.Col) <> "" And chkOverWrite.Value = 1 Then
+                                msfgData.TextMatrix(i, msfgData.Col) = Mid(msfgData.TextMatrix(i, msfgData.Col), 1, Len(msfgData.TextMatrix(i, msfgData.Col)) - 1)
+                                ' may 04 15
+                            ElseIf msfgData.TextMatrix(i, msfgData.Col) = "" Then
+                                msfgData.TextMatrix(i, msfgData.Col) = Mid(msfgData.TextMatrix(i, msfgData.Col), 1, Len(msfgData.TextMatrix(i, msfgData.Col)) - 1)
+                            End If
+                            
+                        End If
+                    Next i
+                End If
+            Else
+                
+                    If (KeyAscii < 46 Or KeyAscii > 57) And (msfgData.Col <> 6 And msfgData.Col <> 28 And msfgData.Col <> 29 And msfgData.Col <> 30) Then
+                        'If msfgData.Col <> 27 And msfgData.Col <> 28 And msfgData.Col <> 29 Then
+                            KeyAscii = 0
+                        'End If
+                    Else
+                        For i = 2 To msfgData.Rows - 1
+                        'For i = msfgData.Row To msfgData.Row
+                        
+                            If msfgData.TextMatrix(i, 0) = "1" Then
+                                If msfgData.Col = 2 And msfgData.TextMatrix(i, 17) <> "" And Update_Flag = False Then
+                                    KeyAscii = 0
+                                    Exit Sub
+                                End If
+                                
+                                If msfgData.Col = 6 Then
+                                    If UCase(Chr(KeyAscii)) = "T" Or UCase(Chr(KeyAscii)) = "C" Or UCase(Chr(KeyAscii)) = "O" Then
+                                        If msfgData.TextMatrix(i, msfgData.Col) = "T" And (UCase(Chr(KeyAscii)) = "O" Or UCase(Chr(KeyAscii)) = "C") Then
+                                            msfgData.TextMatrix(i, msfgData.Col + 1) = ""
+                                        End If
+                                        msfgData.TextMatrix(i, msfgData.Col) = UCase(Chr(KeyAscii))
+
+                                    End If
+                                ElseIf msfgData.TextMatrix(i, msfgData.Col) <> "" And chkOverWrite.Value = 1 Then
+                                    msfgData.TextMatrix(i, msfgData.Col) = msfgData.TextMatrix(i, msfgData.Col) + Chr(KeyAscii)
+                                    'may 04 15
+                                ElseIf msfgData.TextMatrix(i, msfgData.Col) = "" Then
+                                    msfgData.TextMatrix(i, msfgData.Col) = msfgData.TextMatrix(i, msfgData.Col) + Chr(KeyAscii)
+                                End If
+                            End If
+                        Next i
+                    End If
+            End If
+        End If
+        If msfgData.Col <> 28 And msfgData.Col <> 29 And msfgData.Col <> 30 Then
+            If (KeyAscii < 48 Or KeyAscii > 57) And KeyAscii <> 40 And KeyAscii <> 41 And KeyAscii <> 47 And KeyAscii <> 45 And KeyAscii <> 8 And KeyAscii <> 91 And KeyAscii <> 93 Then
+                KeyAscii = 0
+            End If
+        End If
+    End If
+    
+    '------------------------New rate Log mayank----------------------------
+     If msfgData.TextMatrix(msfgData.Row, 0) = "1" Then
+        If msfgData.Col = 6 Or msfgData.Col = 7 Or msfgData.Col = 8 Or msfgData.Col = 9 Or msfgData.Col = 10 Or msfgData.Col = 11 Or msfgData.Col = 12 Or msfgData.Col = 13 Or msfgData.Col = 14 Or msfgData.Col = 15 Then
+            If msfgData.TextMatrix(msfgData.Row, 27) = "" And msfgData.TextMatrix(msfgData.Row, 28) = "" Then
+                MsgBox "Plz. Enter either Circular No. or Request By", vbInformation
+                Exit Sub
+            End If
+        End If
+     End If
+
+    '-----------------------------------------------------------------------
+    Exit Sub
+    
+End Sub
+
+
+
+
+
+
+Private Sub msfgData_KeyUp(KeyCode As Integer, Shift As Integer)
+Dim rsGetData As New Adodb.Recordset
+Dim strQuery As String
+        For i = 2 To msfgData.Rows - 1
+            If msfgData.TextMatrix(i, 0) = "1" Then
+                If msfgData.Col = 2 And msfgData.TextMatrix(i, 17) <> "" And Update_Flag = False Then
+                    KeyAscii = 0
+                    Exit Sub
+                End If
+                strQuery = ""
+                
+                If msfgData.Col = 6 Then
+                    If msfgData.TextMatrix(i, msfgData.Col) = "T" Then
+                        strQuery = "select GET_TRAIL_UPFRONT_RATES('" & msfgData.TextMatrix(i, 19) & "',to_date('" & Format(msfgData.TextMatrix(i, 2), "dd-MMM-yyyy") & "'),to_date('" & Format(msfgData.TextMatrix(i, 3), "dd-MMM-yyyy") & "')," & msfgData.TextMatrix(i, 4) & ",'" & msfgData.TextMatrix(i, 5) & "','" & Cmbtran.Text & "') from dual"
+                        strQuery = Replace(strQuery, "to_date('')", "Null")
+                        strQuery = Replace(strQuery, "''", "Null")
+                        rsGetData.open strQuery, MyConn, adOpenForwardOnly
+                        'code goes here
+                        msfgData.TextMatrix(i, msfgData.Col + 1) = rsGetData(0)
+                        'MsgBox rsGetData(0)
+                        rsGetData.Close
+                    End If
+                End If
+            End If
+        Next i
+        Set rsGetData = Nothing
+End Sub
+
+Private Sub msfgRateMaster_DblClick()
+Dim A1() As String
+Dim acode1 As String
+Dim Aname1 As String
+Dim MyRs As New Adodb.Recordset
+MyCatId = msfgRateMaster.TextMatrix(msfgRateMaster.Row, 0)
+If MyRs.State = 1 Then MyRs.Close
+MyRs.open "SELECT * FROM ASSET_CAT_MASTER_CREDIT@MF.BAJAJCAPITAL WHERE AST_CAT_CODE=" & MyCatId & "", MyConn, adOpenForwardOnly
+If Not MyRs.EOF Then
+    If OptMF.Value = True Then
+        txtcatname.Text = MyRs.Fields("AST_CAT_NAME")
+    Else
+        For i = 0 To cmbSchRate.ListCount - 1
+            A1 = Split(Trim(cmbSchRate.List(i)), "$")
+            If UCase(Trim(A1(0))) = MyRs.Fields("AST_CAT_NAME") Then
+                cmbSchRate.ListIndex = i
+                Exit For
+            End If
+        Next
+    End If
+    txtRate.Text = MyRs.Fields("notional_rate")
+    TxtAdvText.Text = MyRs.Fields("SIP_RATE")
+    For i = 0 To cmdCatClass.ListCount - 1
+        A1 = Split(Trim(cmdCatClass.List(i)), "#")
+        If UCase(Trim(A1(1))) = MyRs.Fields("AST_CLS_CODE") Then
+            cmdCatClass.ListIndex = i
+            Exit For
+        End If
+    Next
+End If
+MyRs.Close
+End Sub
+
+Private Sub msfgRateMaster_KeyPress(KeyAscii As Integer)
+    If msfgRateMaster.Col = 5 Then
+        If UCase(Chr(KeyAscii)) = "Y" Or UCase(Chr(KeyAscii)) = "N" Then
+            msfgRateMaster.TextMatrix(msfgRateMaster.Row, 5) = UCase(Chr(KeyAscii))
+        End If
+    End If
+    
+    If msfgRateMaster.Col = 6 Then
+        If UCase(Chr(KeyAscii)) = "Y" Or UCase(Chr(KeyAscii)) = "N" Then
+            msfgRateMaster.TextMatrix(msfgRateMaster.Row, 6) = UCase(Chr(KeyAscii))
+        End If
+    End If
+End Sub
+
+
+
+
+Private Sub optmf_Click()
+Dim rsData As New Adodb.Recordset
+cmbComp.Clear
+rsData.open "select mut_code,mut_name from mut_fund order by mut_name", MyConn, adOpenForwardOnly
+While Not rsData.EOF
+    cmbComp.AddItem rsData("mut_name")
+    cmbComp.List(i, 1) = rsData("mut_code")
+    i = i + 1
+    rsData.MoveNext
+Wend
+rsData.Close
+
+cmbAssetClass.Enabled = True
+cmbAsset.Enabled = True
+cmbFund.Enabled = True
+cmdFund.Enabled = True
+
+cmbAssetClass.Clear
+cmbAssetClass.AddItem "Debt"
+cmbAssetClass.List(0, 1) = "D"
+cmbAssetClass.AddItem "Equity"
+cmbAssetClass.List(1, 1) = "E"
+cmbAssetClass.AddItem "Cash"
+cmbAssetClass.List(2, 1) = "C"
+cmbAssetClass.AddItem "Not Available"
+cmbAssetClass.List(2, 1) = "N"
+vProdCode = "DT001"
+TxtAdvText.Enabled = True
+RateFill
+End Sub
+
+
+Private Sub OptPMS_Click()
+Dim rsData As New Adodb.Recordset
+cmbComp.Clear
+rsData.open "select iss_code mut_code,iss_name mut_name from Iss_master WHERE PROD_CODE='DT027' order by Iss_name", MyConn, adOpenForwardOnly
+While Not rsData.EOF
+    cmbComp.AddItem rsData("mut_name")
+    cmbComp.List(i, 1) = rsData("mut_code")
+    i = i + 1
+    rsData.MoveNext
+Wend
+rsData.Close
+
+cmbAssetClass.Clear
+cmbAsset.Clear
+cmbAssetClass.Enabled = False
+cmbAsset.Enabled = False
+cmbFund.Enabled = False
+cmdFund.Enabled = False
+vProdCode = "DT027"
+TxtAdvText.Text = 0
+TxtAdvText.Enabled = False
+RateFill
+End Sub
+
+Private Sub txtRate_KeyPress(KeyAscii As Integer)
+    Num_Dec_Validation KeyAscii, txtRate
+End Sub

@@ -1,0 +1,18 @@
+if country is other than India then user should be allowed to enter alpha-numeric values
+"Payment Details: 
+Invalid Grouping of Check/Draft/Cash Fresh Renewal radio buttons"
+it will just check that guest valid or not fill in branch (not like fpc)
+"Stop updating from frontend from un-authorized user access  i.e. Authenticate user 
+For example, duplicate mobile numbers can still be saved in the account opening form. "
+"(IPC) For Fresh DT Number ->  When we enter DT for IPC It should reflect Customer Name, Address, Mobile on the form
+DT -  20928887"
+EXIT CTA Button Navigation:  After click on EXIT button user log-out from appliaction
+"Server Error in '/' Application.
+The resource cannot be found."
+PAN Number is not mandatory in old interface, It should be optional for users 
+Blank value accepting under "Relation" drop down list of "Other Details"
+Design Issue:  Date picker not aligned on the form under "Investor Details"
+"Country" displaying under "State" drop down list, It should be shown States only to user
+Search Error: Input string was not in a correct format.
+"Incorrect data fetching after choosing investor from list, 
+Ex:  If we select newly created investor then data of existing investor is fetch on the form"

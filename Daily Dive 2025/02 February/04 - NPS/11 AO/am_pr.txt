@@ -1,0 +1,12 @@
+git add WM/Controllers/AssociateControllers.cs
+git add WM/Masters/associate_master.aspx
+git add WM/Masters/associate_master.aspx.cs
+git add WM/Masters/associate_master.aspx.designer.cs
+
+
+PSM_AM_GET_BY_DT_ID;
+PSM_AM_GET_AGENT_BY_ID;
+PSM_AM_INSERT_AGENT_MASTER;
+PSM_ASS_M_UPDATE_AGENT_MASTER;
+PSM_AM_BRANCH_MASTER_3;
+PSM_AM_Get_Location_List;

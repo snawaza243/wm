@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Insurance Renewal Letter</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 0;
+        }
+
+        .header {
+            text-align: left;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .header div {
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .table-container {
+            margin-top: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 10px;
+        }
+
+        th, td {
+            border: 1px solid black;
+            padding: 10px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        .footer {
+            margin-top: 10px;
+            font-size: 12px;
+        }
+
+        .footer .ref {
+            margin-top: 10px;
+        }
+
+        .footer .page-no {
+            text-align: right;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div>CLIENT_NAME</div>
+        <div>CLIENT_ADD1</div>
+        <div>CLIENT_ADD2, CLIENT_ADD3</div>
+        <div>CLIENT_ADD4, CLIENT_ADD5</div>
+        <div>CITY_NAME</div>
+        <div>STATE_NAME</div>
+        <div>PHONE 1:</div>
+        <div>PHONE 2:</div>
+    </div>
+
+    <div class="table-container">
+        <table>
+            <tr>
+                <th>Proposer Name</th>
+                <td>CLIENT_NAME</td>
+                <th>Life Insured Name</th>
+                <td>I_NAME</td>
+            </tr>
+            <tr>
+                <th>Insurer</th>
+                <td>COMPANY_NAME</td>
+                <th>Plan Name</th>
+                <td>PLAN_NAME</td>
+            </tr>
+            <tr>
+                <th>Policy Number</th>
+                <td>POLICY_NO</td>
+                <th>Payment Frequency</th>
+                <td>PREM_FREQ</td>
+            </tr>
+            <tr>
+                <th>Payment Mode</th>
+                <td>PAY_MODE</td>
+                <th>Basic Sum Assured</th>
+                <td>SA</td>
+            </tr>
+            <tr>
+                <th>Premium Amount</th>
+                <td>PREM_AMT</td>
+                <th>Premium Due Date</th>
+                <td>DUE_DATE</td>
+            </tr>
+            <tr>
+                <th>Service Unit Address</th>
+                <td>BRANCH_NAME</td>
+                <th>Cheque in favor of</th>
+                <td>FAVOUR_NAME</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="footer">
+        <div>* Please ensure to verify the exact premium amount with the Insurance Company on account of change in GST rates on Insurance Premium w.e.f. 1st Jul 2017</div>
+        <div class="ref">Ref No: @CL_REF_NO</div>
+        <div class="page-no">PAGE NO 1</div>
+    </div>
+</body>
+</html>

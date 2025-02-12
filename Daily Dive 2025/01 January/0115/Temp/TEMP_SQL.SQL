@@ -1,0 +1,2 @@
+
+alter trigger WEALTHMAKER.TRGBAJAJDUEDATA disable

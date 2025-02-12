@@ -1,0 +1,12 @@
+create or replace PROCEDURE PSM_LOGIN_DATA (
+    p_loginId IN VARCHAR2,
+    p_cursor OUT SYS_REFCURSOR
+)
+AS
+BEGIN
+    OPEN p_cursor FOR
+
+     SELECT '' AS DATA_FILTER, '' AS LOGIN_ID, ROLE_ID 
+        FROM USERDETAILS_Ji where LOGIN_ID = '38387' AND ROLE_ID  = 212 AND ROWNUM = 1;
+    
+END PSM_LOGIN_DATA;

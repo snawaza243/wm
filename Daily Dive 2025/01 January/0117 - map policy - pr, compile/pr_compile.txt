@@ -1,0 +1,12 @@
+psm_clean_table
+psm_mpn_export_data
+PSM_MPN_GET_COMPANY_MASTER
+PSM_MPN_InsertExcelPolicyData
+
+
+
+
+git add WM/Controllers/MapPolicyNumberController.cs
+git add WM/Masters/map_policy_number.aspx
+git add WM/Masters/map_policy_number.aspx.cs
+git add WM/Masters/map_policy_number.aspx.designer.cs
