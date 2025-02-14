@@ -1,0 +1,179 @@
+
+Private Sub cmdExit_Click()
+    Unload Me
+End Sub
+Private Sub cmdGo_Click()
+Dim rsFind As New ADODB.Recordset
+Dim strMF As String
+Dim CodeMF As String
+Dim strSearch As String
+Dim i As Integer
+        msfgSchemes.Rows = 1
+        msfgSchemes.Rows = 2
+        If txtFind.Text <> "" Then
+            strSearch = ConvertString(UCase(Trim(txtFind.Text)))
+            rsFind.open "Select name,PROD_CODE from product_master where nature_code='NT001'", MyConn, adOpenForwardOnly
+            strMF = rsFind("Name")
+            CodeMF = rsFind("prod_code")
+            rsFind.Close
+            'by vinod city scheme]
+            If rsFind.State = 1 Then rsFind.Close
+            If Trim(GlbroleId) = 1 Then
+                'rsFind.open "select max(sch_code)sch_code,max(sch_name)sch_name,max(Short_name)Short_name,max(mut_name)mut_name,max(upper(s.fund_name)) fund_name from scheme_info s,mut_fund m where UPPER(FUND_NAME) LIKE '%" & strSearch & "%' and s.mut_code=m.mut_code  group by fund_name ", MyConn, adOpenForwardOnly
+                'rsFind.open "select max(sch_code)sch_code,max(sch_name)sch_name,max(Short_name)Short_name,max(mut_name)mut_name,max(s.fund_name)fund_name from scheme_info s,mut_fund m where UPPER(FUND_NAME) LIKE '%" & strSearch & "%' and s.mut_code=m.mut_code and m.mut_code not in ('MF001','MF036','MF002','MF013','MF039','MF029','MF027','MF035','MF020') group by fund_name union all select max(osch_code) sch_code, max(m.iss_name) sch_name,''  Short_name,max(iss_name) mut_name,max(m.iss_name) fund_name from other_product s,iss_master m where UPPER(iss_NAME) LIKE '%" & strSearch & "%' and s.iss_code=m.iss_code group by UPPER(iss_NAME) ", MyConn, adOpenForwardOnly
+                strMF = ""
+                strMF = " select max(null)sch_code,max(null)sch_name,max(null)Short_name,max(mut_name)mut_name,max(upper(s.fund_name)) fund_name from scheme_info s,mut_fund m where "
+                strMF = strMF & " UPPER(FUND_NAME) LIKE '%" & strSearch & "%' and s.mut_code=m.mut_code "
+                strMF = strMF & " group by UPPER(FUND_NAME) "
+                rsFind.open strMF, MyConn, adOpenForwardOnly
+            Else
+                strMF = ""
+                strMF = " select max(sch_code)sch_code,max(sch_name)sch_name,max(Short_name)Short_name,max(mut_name)mut_name,max(upper(s.fund_name)) fund_name from scheme_info s,mut_fund m where "
+                strMF = strMF & " UPPER(FUND_NAME) LIKE '%" & strSearch & "%' and s.mut_code=m.mut_code "
+                strMF = strMF & " group by UPPER(FUND_NAME) "
+                
+                strMF = ""
+                strMF = " select max(null)sch_code,max(null)sch_name,max(null)Short_name,max(mut_name)mut_name,max(upper(s.fund_name)) fund_name from scheme_info s,mut_fund m where "
+                strMF = strMF & " UPPER(FUND_NAME) LIKE '%" & strSearch & "%' and s.mut_code=m.mut_code "
+                strMF = strMF & " group by UPPER(FUND_NAME) "
+                
+                'strMF = strMF & " union "
+                'strMF = strMF & " select max(osch_code) sch_code, max(m.iss_name) sch_name,''   Short_name,max(m.iss_name) mut_name, max(m.iss_name) fund_name from other_product s,iss_master m  where UPPER(iss_NAME) LIKE '%" & strSearch & "%' and s.iss_code=m.iss_code   AND s.osch_code IN (SELECT sch_code FROM sch_city_mapping WHERE (city_id IN ((SELECT DISTINCT city_id FROM branch_master WHERE branch_code IN (" & Branches & ") ))OR city_id = 'ALL') AND iss_code LIKE 'MF%') group by UPPER(iss_NAME)"
+                rsFind.open strMF, MyConn, adOpenForwardOnly
+            End If
+            i = 1
+            While Not rsFind.EOF
+                msfgSchemes.TextMatrix(i, 1) = "MF"
+                msfgSchemes.TextMatrix(i, 2) = IIf(IsNull(rsFind("fund_name")), "", rsFind("fund_name"))
+                'msfgSchemes.TextMatrix(i, 3) = IIf(IsNull(rsFind("sch_name")), "", rsFind("sch_name"))
+                msfgSchemes.TextMatrix(i, 4) = IIf(IsNull(rsFind("mut_name")), "", rsFind("mut_name"))
+                msfgSchemes.TextMatrix(i, 5) = CodeMF
+                'msfgSchemes.TextMatrix(i, 6) = IIf(IsNull(rsFind("sch_code")), "", rsFind("sch_code"))
+                i = i + 1
+                msfgSchemes.Rows = msfgSchemes.Rows + 1
+                rsFind.MoveNext
+            Wend
+            rsFind.Close
+            If msfgSchemes.Rows > 2 Then
+                msfgSchemes.Rows = msfgSchemes.Rows - 1
+                msfgSchemes.SetFocus
+            End If
+            AlignCols
+        Else
+            txtFind.SetFocus
+        End If
+        Set rsFind = Nothing
+'End If
+End Sub
+Private Sub cmdSelect_Click()
+    msfgSchemes_DblClick
+End Sub
+Private Sub Form_Load()
+    'Image1.Picture = LoadPicture(App.Path & "\logo1.JPG")
+    Me.Icon = LoadPicture(App.Path & "\W.ICO")
+    
+    Me.Top = ((Screen.Height - Me.Height) / 2) - 800
+    Me.Left = (Screen.width - Me.width) / 2
+    msfgSchemes.ColWidth(0) = 0
+    msfgSchemes.ColWidth(1) = 1000
+    msfgSchemes.ColWidth(2) = 3500
+    msfgSchemes.ColWidth(3) = 0
+    msfgSchemes.ColWidth(4) = 3500
+    msfgSchemes.ColWidth(5) = 0
+    msfgSchemes.ColWidth(6) = 0
+    msfgSchemes.ColWidth(7) = 0
+    msfgSchemes.TextMatrix(0, 1) = "Prod. Class"
+    msfgSchemes.TextMatrix(0, 2) = "Fund Name"
+    msfgSchemes.TextMatrix(0, 3) = "Long Name"
+    msfgSchemes.TextMatrix(0, 4) = "Issuer/MUT Fund"
+    msfgSchemes.TextMatrix(0, 6) = "Sch Code"
+End Sub
+Private Sub msfgSchemes_DblClick()
+On Error Resume Next
+Dim RowSel As Integer
+Dim rsDates As New ADODB.Recordset
+Dim AmcName As String
+Dim AmcCode As String
+Dim MyAmc As String
+Dim i As Integer
+    RowSel = msfgSchemes.Row
+    If msfgSchemes.TextMatrix(RowSel, 2) <> "" Then
+        If strscheme = "frmAppReceived" Then
+           sql = ""
+           sql = " select max(b.mut_name)mut_name,max(b.mut_code)mut_code from scheme_info a ,mut_fund b where  "
+           sql = sql & "  a.mut_code=b.mut_code and upper(fund_name)='" & UCase(msfgSchemes.TextMatrix(RowSel, 2)) & "' "
+           sql = sql & "  union select max(b.iss_name)mut_name,max(b.iss_code)mut_code  from other_product a,iss_master b  where  a.iss_code=b.iss_code and UPPER(iss_NAME) = '" & UCase(msfgSchemes.TextMatrix(RowSel, 2)) & "' "
+           rsDates.open sql, MyConn, adOpenStatic
+           If Not rsDates.EOF Then
+               AmcName = rsDates.Fields(0)
+               AmcCode = rsDates.Fields(1)
+               MyAmc = AmcName & Space(80) & "#" & AmcCode
+           End If
+           For i = 0 To frmAppReceived.CmbCompany.ListCount - 1
+                If UCase(frmAppReceived.CmbCompany.List(i)) = UCase(MyAmc) Then
+                    frmAppReceived.CmbCompany.Text = UCase(MyAmc)
+                    Exit For
+                End If
+            Next
+            For i = 0 To frmAppReceived.cmbscheme.ListCount - 1
+                If UCase(frmAppReceived.cmbscheme.List(i)) = UCase(msfgSchemes.TextMatrix(RowSel, 2)) Then
+                    frmAppReceived.cmbscheme.Text = UCase(msfgSchemes.TextMatrix(RowSel, 2))
+                    Exit For
+                End If
+            Next
+            frmAppReceived.cmbScheme_Click
+        End If
+        '--------------Paid---------------------
+        If strscheme = "frmAppPaid" Then
+           sql = ""
+           sql = " select max(b.mut_name)mut_name,max(b.mut_code)mut_code from scheme_info a ,mut_fund b where  "
+           sql = sql & "  a.mut_code=b.mut_code and upper(fund_name)='" & UCase(msfgSchemes.TextMatrix(RowSel, 2)) & "' "
+           sql = sql & "  union select max(b.iss_name)mut_name,max(b.iss_code)mut_code  from other_product a,iss_master b  where  a.iss_code=b.iss_code and UPPER(iss_NAME) = '" & UCase(msfgSchemes.TextMatrix(RowSel, 2)) & "' "
+           rsDates.open sql, MyConn, adOpenStatic
+           If Not rsDates.EOF Then
+               AmcName = rsDates.Fields(0)
+               AmcCode = rsDates.Fields(1)
+               MyAmc = AmcName & Space(80) & "#" & AmcCode
+           End If
+           For i = 0 To frmAppPaid.CmbCompany.ListCount - 1
+                If UCase(frmAppPaid.CmbCompany.List(i)) = UCase(MyAmc) Then
+                    frmAppPaid.CmbCompany.Text = UCase(MyAmc)
+                    Exit For
+                End If
+            Next
+            For i = 0 To frmAppPaid.cmbscheme.ListCount - 1
+                If UCase(frmAppPaid.cmbscheme.List(i)) = UCase(msfgSchemes.TextMatrix(RowSel, 2)) Then
+                    frmAppPaid.cmbscheme.Text = UCase(msfgSchemes.TextMatrix(RowSel, 2))
+                    Exit For
+                End If
+            Next
+            frmAppPaid.cmbScheme_Click
+        End If
+        
+        If strscheme = "frmNewMFBrok" Then
+           For i = 0 To frmNewMFBrokMaster.cmbfund.ListCount - 1
+                If UCase(frmNewMFBrokMaster.cmbfund.List(i)) = UCase(msfgSchemes.TextMatrix(RowSel, 2)) Then
+                    frmNewMFBrokMaster.cmbfund.ListIndex = i
+                    Exit For
+                End If
+            Next
+        End If
+        strscheme = ""
+        Unload Me
+    End If
+End Sub
+Private Sub msfgSchemes_KeyPress(KeyAscii As Integer)
+    If KeyAscii = 13 Then
+        msfgSchemes_DblClick
+    End If
+End Sub
+Private Sub txtFind_KeyPress(KeyAscii As Integer)
+
+If KeyAscii = 13 Then cmdGo_Click
+End Sub
+Private Sub AlignCols()
+    msfgSchemes.ColAlignment(0) = 1
+    msfgSchemes.ColAlignment(1) = 1
+    msfgSchemes.ColAlignment(2) = 1
+    msfgSchemes.ColAlignment(3) = 1
+End Sub
