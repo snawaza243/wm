@@ -143,6 +143,6 @@ BEGIN
        ' | Aadhar: ' || V_AADHAR AS message
 FROM dual;
 
-
+        
 
 END PSM_AO_MM_Valid_Insert;

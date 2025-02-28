@@ -1,0 +1,1 @@
+select * from investor_master where mobile='9311836873'

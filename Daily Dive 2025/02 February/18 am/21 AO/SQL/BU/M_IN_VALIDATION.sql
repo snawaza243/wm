@@ -136,7 +136,7 @@ BEGIN
     END IF;
 
         OPEN p_result FOR 
-        SELECT 'All Validaiton Pass' AS message
+        SELECT 'All Validation Pass' AS message
         FROM dual;
 
 END PSM_AO_MM_Valid_Insert;

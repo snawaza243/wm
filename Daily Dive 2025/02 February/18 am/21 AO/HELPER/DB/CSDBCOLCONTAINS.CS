@@ -1,0 +1,19 @@
+
+newRow["ExistingInvestor"] = row.Table.Columns.Contains("ExistingInvestor") ? row["ExistingInvestor"].ToString() : "";
+newRow["InvestorCode"] = row.Table.Columns.Contains("InvestorCode") ? row["InvestorCode"].ToString() : "";
+newRow["Salutation"] = row.Table.Columns.Contains("Salutation") ? row["Salutation"].ToString() : "";
+newRow["InvestorName"] = row.Table.Columns.Contains("InvestorName") ? row["InvestorName"].ToString() : "";
+newRow["Mobile"] = row.Table.Columns.Contains("Mobile") ? row["Mobile"].ToString() : "";
+newRow["Email"] = row.Table.Columns.Contains("Email") ? row["Email"].ToString() : "";
+newRow["PAN"] = row.Table.Columns.Contains("PAN") ? row["PAN"].ToString() : "";
+newRow["Aadhar"] = row.Table.Columns.Contains("Aadhar") ? row["Aadhar"].ToString() : "";
+newRow["DOB"] = row.Table.Columns.Contains("DOB") ? row["DOB"].ToString() : "";
+newRow["Gender"] = row.Table.Columns.Contains("Gender") ? row["Gender"].ToString() : "";
+newRow["GuardianPAN"] = row.Table.Columns.Contains("GuardianPAN") ? row["GuardianPAN"].ToString() : "";
+newRow["GuardianName"] = row.Table.Columns.Contains("GuardianName") ? row["GuardianName"].ToString() : "";
+newRow["Occupation"] = row.Table.Columns.Contains("Occupation") ? row["Occupation"].ToString() : "";
+newRow["Relation"] = row.Table.Columns.Contains("Relation") ? row["Relation"].ToString() : "";
+newRow["KYC"] = row.Table.Columns.Contains("KYC") ? row["KYC"].ToString() : "";
+newRow["Approved"] = row.Table.Columns.Contains("Approved") ? row["Approved"].ToString() : "";
+newRow["IsNominee"] = row.Table.Columns.Contains("IsNominee") ? row["IsNominee"].ToString() : "";
+newRow["Allocation"] = row.Table.Columns.Contains("Allocation") ? row["Allocation"].ToString() : "";

@@ -1,0 +1,8 @@
+git add WM/Controllers/AccountOpeningController.cs
+git add WM/Masters/AccountOpening.aspx
+git add WM/Masters/AccountOpening.aspx.cs
+git add WM/Masters/AccountOpening.aspx.designer.cs
+
+git add WM/Masters/AccountOpening.aspx
+git add WM/Masters/AccountOpening.aspx.cs
+
