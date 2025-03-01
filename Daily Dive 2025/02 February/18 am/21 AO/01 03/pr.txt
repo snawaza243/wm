@@ -1,0 +1,4 @@
+git add WM/Controllers/MapPolicyNumberController.cs
+git add WM/Masters/map_policy_number.aspx
+git add WM/Masters/map_policy_number.aspx.cs
+git add WM/Masters/map_policy_number.aspx.designer.cs
