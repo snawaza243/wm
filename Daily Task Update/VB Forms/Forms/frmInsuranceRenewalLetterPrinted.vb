@@ -4,17 +4,17 @@ Dim MyYear As Integer
 Dim comp() As String
 Dim MyCompCode As String
 Private Sub CmbMonth_Click()
-MyMonth = cmbMonth.ListIndex + 1
+MyMonth = CmbMonth.ListIndex + 1
 End Sub
 Private Sub Cmbyear_Click()
-    MyYear = cmbYear.List(cmbYear.ListIndex)
+    MyYear = CmbYear.List(CmbYear.ListIndex)
 End Sub
 
 Private Sub CmdMark_Click()
 If MsgBox("You are going to Mark", vbInformation + vbOKCancel, strBajaj) = vbCancel Then Exit Sub
-If CmbCompany.Text = "" Then
+If cmbCompany.Text = "" Then
 Else
-    comp = Split(CmbCompany.Text, "#")
+    comp = Split(cmbCompany.Text, "#")
     MyCompCode = comp(1)
 End If
 If MyCompCode <> "" Then
@@ -28,12 +28,12 @@ Form_Load
 End Sub
 Private Sub Command1_Click()
 On Error GoTo errr
-If CmbCompany.Text = "" Then
+If cmbCompany.Text = "" Then
 Else
-    comp = Split(CmbCompany.Text, "#")
+    comp = Split(cmbCompany.Text, "#")
     MyCompCode = comp(1)
 End If
-If MsgBox("You are going to Generate Renewal of " & Trim(Left(CmbCompany.Text, 80)), vbInformation + vbOKCancel, strBajaj) = vbCancel Then Exit Sub
+If MsgBox("You are going to Generate Renewal of " & Trim(Left(cmbCompany.Text, 80)), vbInformation + vbOKCancel, strBajaj) = vbCancel Then Exit Sub
 CrystalReport1.Reset
 CrystalReport1.Connect = MyConn
 CrystalReport1.LogOnServer "pdsodbc.dll", "test", "wealthmaker", "wealthmaker", DataBasePassword
@@ -47,7 +47,7 @@ Else
 End If
 CrystalReport1.SelectionFormula = Sel_Form
 CrystalReport1.ReportFileName = App.Path & "\lifereports\Insurance_Renewal Printed.rpt"
-CrystalReport1.ParameterFields(0) = "company_name;" & Trim(Left(CmbCompany.Text, 80)) & ";true"
+CrystalReport1.ParameterFields(0) = "company_name;" & Trim(Left(cmbCompany.Text, 80)) & ";true"
 CrystalReport1.ParameterFields(1) = " guserid; " & Glbloginid & "  ; true "
 CrystalReport1.WindowShowPrintSetupBtn = True
 Call SaveLogIn(Glbloginid, "Transaction>Insurance>Reports", Me.Name)
@@ -71,20 +71,20 @@ Me.Icon = LoadPicture(App.Path & "\w.ico")
 Form_name = "Transaction>Insurance>Reports>" & Me.Caption
 Dim RS As New ADODB.Recordset
 RS.open "select company_name,company_cd from bajaj_company_master where catagory='L' order by company_name", MyConn
-CmbCompany.Clear
+cmbCompany.Clear
 Do While Not RS.EOF
-    CmbCompany.AddItem RS(0) & Space(60) & "#" & RS(1)
+    cmbCompany.AddItem RS(0) & Space(60) & "#" & RS(1)
     RS.MoveNext
 Loop
 RS.Close
 Set RS = Nothing
-cmbMonth.Clear
+CmbMonth.Clear
 For i = 1 To 12
-    cmbMonth.AddItem MonthName(i)
+    CmbMonth.AddItem MonthName(i)
 Next
-cmbYear.Clear
+CmbYear.Clear
 For i = 0 To 6 Step 1
-    cmbYear.AddItem year(Now) - i + 1
+    CmbYear.AddItem year(Now) - i + 1
 Next
 Exit Sub
 errr:

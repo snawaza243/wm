@@ -24,8 +24,28 @@ if (exportDataFromTable.Rows.Count > 0)
         {
             ShowAlert(ex.Message);
         }
-
     }
+}
 
-
+public string ExtractDatePart(string dateString)
+{
+    try
+    {
+        // Split the date string by '/'
+        var parts = dateString.Split('/');
+        if (parts.Length == 3)
+        {
+            // Return the date part in "dd/mm/yyyy" format
+            return $"{parts[0]}/{parts[1]}/{parts[2]}";
+        }
+        else
+        {
+            throw new FormatException("Invalid date format.");
+        }
+    }
+    catch (Exception ex)
+    {
+        // Handle exceptions (e.g., log the error)
+        return $"Error: {ex.Message}";
+    }
 }
