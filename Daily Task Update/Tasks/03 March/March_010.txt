@@ -1,1 +1,37 @@
  
+git add WM/Masters/AccountOpening.aspx
+git add WM/Masters/AccountOpening.aspx.cs
+git add WM/Masters/AccountOpening.aspx.designer.cs
+git add WM/Masters/insurance_renewal_letter_printed.aspx
+git add WM/Masters/insurance_renewal_letter_printed.aspx.cs
+git add WM/Tree/frm_tree_mf.aspx
+git add WM/Tree/frm_tree_mf.aspx.cs
+
+
+
+PSM_IR_GENERATE_DATA
+PSM_AM_INSERT_AGENT_MASTER;
+PSM_AM_UPDATE_AGENT_MASTER; 
+PSM_AM_AGENT_SEARCH;
+PSM_GET_BRANCHES;
+PSM_ANA_SR_BR;
+PSM_ANA_Get_AGENTLIST;
+PSM_AO_UPDATE_CLIENT_DATA;
+PSM_AO_C_VALIDATE;
+PSM_AO_GET_CLIENTBYDT;
+PSM_AO_CLIENT_BY_GUEST;
+PSM_IR_GENERATE_DATA;
+
+
+
+
+PSM_IR_GENERATE_DATA
+PSM_AM_INSERT_AGENT_MASTER;
+PSM_AM_UPDATE_AGENT_MASTER; 
+PSM_ANA_Get_AGENTLIST;
+
+PSM_AO_UPDATE_CLIENT_DATA;
+PSM_AO_C_VALIDATE;
+PSM_AO_GET_CLIENTBYDT;
+PSM_AO_CLIENT_BY_GUEST;
+PSM_IR_GENERATE_DATA;

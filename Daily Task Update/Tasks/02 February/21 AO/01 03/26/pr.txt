@@ -1,0 +1,5 @@
+git add WM/Controllers/PsmController.cs
+git add wm/Masters/AccountOpening.aspx
+git add WM/Masters/AccountOpening.aspx.cs
+git add WM/Tree/
+        

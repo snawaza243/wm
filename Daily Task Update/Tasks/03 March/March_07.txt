@@ -1,1 +1,27 @@
  
+Form : insurance_renewal_letter_printed, map policy 
+
+tasks:
+
+bulk print sa bug 
+bulk print prem AMT
+bulk print HDFC
+bulk print hdfc 2
+
+
+map policy
+excel export without end response to avoid excel file corruption
+
+AGENT Masters
+SEARCH AGENT NEW MODULE
+SEARCH AGENT NEW 
+INSERT AGENT MASTER
+UPDTE AGENT MASTER
+
+
+pr 2
+git add WM/Masters/associate_master.aspx
+git add WM/Masters/associate_master.aspx.cs
+git add WM/Tree/frm_tree_mf.aspx
+git add WM/Tree/frm_tree_mf.aspx.cs
+git add WM/Tree/frm_tree_mf.aspx.designer.cs
