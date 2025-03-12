@@ -35,3 +35,18 @@ PSM_AO_C_VALIDATE;
 PSM_AO_GET_CLIENTBYDT;
 PSM_AO_CLIENT_BY_GUEST;
 PSM_IR_GENERATE_DATA;
+
+
+
+
+
+ENEVING
+
+PSM_AO_AR_INSERT
+
+git add WM/Masters/AccountOpening.aspx
+git add WM/Masters/AccountOpening.aspx.cs
+git add WM/Masters/associate_master.aspx
+git add WM/Masters/associate_master.aspx.cs
+git add WM/Masters/associate_master.aspx.designer.cs
+git add WM/Tree/frm_tree_mf.aspx.cs

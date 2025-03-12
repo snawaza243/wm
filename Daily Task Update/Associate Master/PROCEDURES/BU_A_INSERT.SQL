@@ -95,22 +95,11 @@ create or replace PROCEDURE             PSM_AM_INSERT_AGENT_MASTER(
     v_message               VARCHAR2(4000);  
     V_SOURCE_CODE           VARCHAR2(20); 
     ISACCESS                NUMBER:=0;
-    
-    v_bank_branch_name      VARCHAR2(100);
-
 BEGIN
     -- Validate the PAN, Mobile, and Email formats first
     ISVALIDPAN      := VALIDATEPAN(UPPER(TRIM(SUBSTR(P_PAN, 1, 10))));
     ISVALIDMOBILE   := VALIDATE_MOBILE(P_MOBILE);
     ISVALIDEMAIL    := VALIDATE_EMAIL(UPPER(P_EMAIL));
-
-
- IF P_BRANKBRANCHID IN ( 'Select Bank Branch', '') THEN
-        v_bank_branch_name := NULL;
-ELSE
-    v_bank_branch_name  :=P_BRANKBRANCHID;
-END IF;
-
 
     BEGIN -- Check ACCESS 
         SELECT COUNT(ROLE_ID)
@@ -209,7 +198,7 @@ begin
       P_TDS,                       P_ASSOCIATETYPE,         P_ASSOCIATETYPECATEGORY,  upper(P_CONTACTPERSONEMAILID), SYSDATE,              P_PHONE,                P_REMARKS,      
       P_SUPERANA,                  P_ONLINESUBSCRIPTIONCHECK, P_OFFLINEPLATFORMBLOCK, P_ONLINEPLATFORMBLOCK, P_ONLINEPLATFORMBLOCKREMARK, P_OFFLINEPLATFORMBLOCKREMARK, P_AUDITDATE,   
       P_AUDITCHECK,                P_PAYMENTMODEID,         P_ACCOUNTTYPEID,          P_ACCNO,                P_AFFECTEDFROM,       P_BANKID,               P_BANKCITYID,   
-      v_bank_branch_name, /*P_BRANKBRANCHID,*/             P_SMSFLAG,               P_GSTINNO,                P_DOB,                  P_AGENTTYPE,          P_PAN,                  P_DIST,     
+      P_BRANKBRANCHID,             P_SMSFLAG,               P_GSTINNO,                P_DOB,                  P_AGENTTYPE,          P_PAN,                  P_DIST,     
       trim(P_AADHARCARDNO),        P_POSPMARKING,           P_POSPTYPE,               P_POSPNOLI,             P_POSPNOGI,           P_POSPCERTIFIEDONLI,    P_POSPVALIDTILLLI,     
       P_POSPCERTIFIEDONGI,         P_POSPVALIDTILLGI,       P_VERIFIEDSTATUS,       /*  P_NEFTBANKNAME,         P_NEFTBRANCH,         P_NEFTIFSCCODE,         P_NEFTNAME,  */ 
       P_CERTPASSED,                P_CERTEXAMS,             P_CERTREGNO,              
