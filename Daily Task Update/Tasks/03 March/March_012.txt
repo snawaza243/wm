@@ -30,3 +30,11 @@ git add WM/Tree/frm_tree_mf.aspx.designer.cs
 PSM_IR_GENERATE_DATA
 psm_am_update_agent_master;
 psm_am_insert_agent_master;
+
+
+
+ 
+git add WM/Controllers/PsmController.cs
+git add WM/Masters/associate_master.aspx.cs
+git add WM/Masters/associate_master.aspx.designer.cs
+git add WM/Tree/frm_tree_mf.aspx.cs
