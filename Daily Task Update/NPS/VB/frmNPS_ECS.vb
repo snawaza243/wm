@@ -964,6 +964,8 @@ Dim flag As Boolean
         CheckFieldsVis = True
     End If
 End Function
+
+
 Private Function CheckFields(StrField As String) As Boolean
 Dim StrFields As Variant
 Dim StrFieldExcel As Variant
@@ -987,6 +989,8 @@ Else
 End If
 CheckFields = True
 End Function
+
+
 Public Function FieldsParametersName(txtFile As String) As String
 Dim FileObj As filesystemobject
 Dim FS As Object
@@ -996,6 +1000,7 @@ Set FS = FileObj.OpenTextFile(App.Path & "\life\insufld\PolicyInfo\" & txtFile)
 FieldsParametersName = FS.ReadLine
 Set FileObj = Nothing
 End Function
+
 Private Sub INSERT_RECORD(Sql As String)
 ''On Error GoTo err1
 MyConn.Execute (Sql)
@@ -1069,6 +1074,8 @@ ElseIf OptNPS.Value = True Then
     TxtFile_Name = "FieldParametersNPS.txt"
 End If
 End Sub
+
+
 Private Function CheckFieldMapping(data_Base_Fld As String, statusCode As String) As Boolean
 CheckFieldMapping = False
 If Comp_Cd = "D" Or Comp_Cd = "A" Or Comp_Cd = "B" Then
