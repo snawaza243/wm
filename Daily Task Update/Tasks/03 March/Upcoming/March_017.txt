@@ -1,1 +1,29 @@
  
+git add WM/Controllers/InsuranceRenewalLetterPrintedController.cs
+git add WM/Controllers/NpsTransactionPunchingController.cs
+git add WM/Controllers/PsmController.cs
+git add WM/Masters/AccountOpening.aspx.cs
+git add WM/Masters/DueAndPaidDataImporting.aspx.cs
+git add WM/Masters/InsuranceRenewalReminder.aspx
+git add WM/Masters/InsuranceRenewalReminder.aspx.cs
+git add WM/Masters/InsuranceRenewalReminder.aspx.designer.cs
+git add WM/Masters/NpsTransactionPunching.aspx
+git add WM/Masters/NpsTransactionPunching.aspx.cs
+git add WM/Masters/NpsTransactionPunching.aspx.designer.cs
+git add WM/Masters/map_policy_number.aspx.cs
+git add WM/Tree/frm_tree_mf.aspx.cs
+
+
+// new tree 
+git add WM/Tree/FindTransaction.aspx
+git add M/Tree/FindTransaction.aspx.cs
+git add M/Tree/FindTransaction.aspx.designer.cs
+git add M/Tree/ImportExportExcel.aspx
+git add M/Tree/ImportExportExcel.aspx.cs
+git add WM/Tree/ImportExportExcel.aspx.designer.cs
+
+
+PROCEDURES:
+PSM_IR_MANUAL;
+PSM_GET_TABLE_COLUMN;
+PSM_AO_UPDATE_CLIENT_DATA;
