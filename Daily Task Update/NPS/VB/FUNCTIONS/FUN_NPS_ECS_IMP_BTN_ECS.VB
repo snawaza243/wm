@@ -72,6 +72,7 @@ dataDaseField = Left(dataDaseField, Len(dataDaseField) - 1)
 'RsImport.Close
 'If CheckFieldsVis(FileFields, selectedFileField) = False Then Exit Sub
 If CheckFieldMapping(UCase(dataDaseField), UCase(Status_Chk)) = False Then Chk_OPENFORM = False: Exit Sub
+
 If OptLife.Value = True Then
     MyConn.Execute " delete from  Bajaj_PolicyInfo_Data " ' and already_import is null"
     Set RsImport = New ADODB.Recordset
@@ -158,6 +159,7 @@ If OptLife.Value = True Then
         Label5.Caption = Total_records
         DoEvents
     Loop
+
 ElseIf OptGeneral.Value = True Then
     MyConn.Execute " delete from  Bajaj_PolicyInfo_Data_gen " ' and already_import is null"
     Set RsImport = New ADODB.Recordset
@@ -244,6 +246,9 @@ ElseIf OptGeneral.Value = True Then
         Label5.Caption = Total_records
         DoEvents
     Loop
+
+
+
 ElseIf OptNPS.Value = True Then
     MyConn.Execute " insert into nps_ecs_tbl_imp_bk select * from  nps_ecs_tbl_imp" ' and already_import is null"
     MyConn.Execute " delete from  nps_ecs_tbl_imp " ' and already_import is null"
@@ -334,6 +339,8 @@ ElseIf OptNPS.Value = True Then
         DoEvents
     Loop
 End If
+
+
 Sql = "delete nps_ecs_tbl_imp where ref_tran_code is null"
 INSERT_RECORD Sql
 Label5.Caption = Label5.Caption - 1

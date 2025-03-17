@@ -13,6 +13,14 @@ git add WM/Masters/NpsTransactionPunching.aspx.designer.cs
 git add WM/Masters/map_policy_number.aspx.cs
 git add WM/Tree/frm_tree_mf.aspx.cs
 
+git add WM/Controllers/AccountOpeningController.cs
+git add WM/Masters/AccountOpening.aspx
+git add WM/Masters/AccountOpening.aspx.cs
+git add WM/Masters/AccountOpening.aspx.designer.cs
+
+
+
+
 
 // new tree 
 git add WM/Tree/FindTransaction.aspx
@@ -26,4 +34,12 @@ git add WM/Tree/ImportExportExcel.aspx.designer.cs
 PROCEDURES:
 PSM_IR_MANUAL;
 PSM_GET_TABLE_COLUMN;
-PSM_AO_UPDATE_CLIENT_DATA;
+psm_ao_ar_insert;
+
+
+
+ir printing size formating 
+
+psm_ao_insert 
+
+

@@ -1,1 +1,7 @@
  
+psm_ao_insert_client_data;
+psm_ao_mm_insert;
+psm_ao_mm_existing_inv_grid;
+PSM_AO_GET_CLIENTBYDT;
+
+update teh nri case fro mui
