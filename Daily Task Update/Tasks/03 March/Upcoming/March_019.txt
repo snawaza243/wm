@@ -1,1 +1,18 @@
  
+git WM/Masters/InsuranceRenewalReminder.aspx.cs
+git WM/Masters/insurance_renewal_letter_printed.aspx.cs
+ 
+ 
+
+git add WM/Controllers/AccountOpeningController.cs
+git add WM/Controllers/PsmController.cs
+git add WM/Masters/AccountOpening.aspx
+git add WM/Masters/AccountOpening.aspx.cs
+git add WM/Masters/AccountOpening.aspx.designer.cs
+
+
+
+git add WM/Tree/frm_tree_mf.aspx
+git add WM/Tree/frm_tree_mf.aspx.cs
+git add WM/Tree/frm_tree_mf.aspx.designer.cs
+
