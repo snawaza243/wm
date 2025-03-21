@@ -4,6 +4,7 @@ Dim clinfo As New ADODB.Recordset
 Dim i As Integer
 Dim reqq As Variant
 Dim reqcod As String
+
 rstb.open "select nvl(ar_code,'0'),nvl(INV_CODE,0),nvl(BUSI_BRANCH_CODE,0),nvl(BUSI_RM_CODE,0) from  tb_doc_upload where tran_type='FI' and common_id ='" & txtdocID.Text & "'", MyConn
 
 If Not rstb.EOF And Not rstb.BOF Then
