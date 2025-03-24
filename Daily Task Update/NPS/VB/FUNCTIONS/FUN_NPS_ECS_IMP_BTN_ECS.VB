@@ -48,20 +48,11 @@ If RsImport.Fields.count > 0 Then
 End If
 Call Get_Comp_TextFilePath(Trim(UCase(Split_Company(0))))
 str1 = FieldsParametersName(TxtFile_Name) 'Maping Fileds Are Shown In This Str1
-If Trim(str1) = "" Then
-    Chk_OPENFORM = False
-    RsImport.Close
-    Set RsImport = Nothing
-    importExcelcon.Close
-    Set importExcelcon = Nothing
-    XLW.Close
-    Set XLW = Nothing
-    XL.Quit
-    Set XL = Nothing
-    MsgBox "File Format Is Wrong", vbInformation
-    Exit Sub
-End If
-delComma = Split(str1, ","): selectedFileField = "": dataDaseField = ""
+
+delComma = Split(str1, ",")
+selectedFileField = ""
+dataDaseField = ""
+
 For i = 0 To UBound(delComma)
     delHash = Split(delComma(i), "#")
     selectedFileField = selectedFileField & delHash(1) & ","
@@ -73,183 +64,9 @@ dataDaseField = Left(dataDaseField, Len(dataDaseField) - 1)
 'If CheckFieldsVis(FileFields, selectedFileField) = False Then Exit Sub
 If CheckFieldMapping(UCase(dataDaseField), UCase(Status_Chk)) = False Then Chk_OPENFORM = False: Exit Sub
 
-If OptLife.Value = True Then
-    MyConn.Execute " delete from  Bajaj_PolicyInfo_Data " ' and already_import is null"
-    Set RsImport = New ADODB.Recordset
-    Set RsImport = importExcelcon.Execute("Select " & selectedFileField & " from [" & sheetName & "$] ")
-    Total_records = 0
-    Do While Not RsImport.EOF
-        Sql = ""
-        SqlChk = ""
-        Xls_Fld = ""
-        SqlChk = " select * from  Bajaj_PolicyInfo_Data where  "
-        For i = 0 To UBound(delComma)
-            delHash = Split(delComma(i), "#")
-            Xls_Fld = Replace(Replace(Replace(delHash(1), "[", ""), "]", ""), "'", "")
-            If InStr(1, Xls_Fld, "&") > 0 Then
-                Xls_Fld = Exc_Clent_FldName
-            End If
-            If RsImport("" & Xls_Fld & "").Type = 7 Then
-                Xls_Fld = Format(RsImport("" & Xls_Fld & "").Value, "dd-mmm-yyyy")
-                Xls_Fld = Replace(Xls_Fld, "'", "")
-                SqlChk = SqlChk & delHash(0) & "='" & Xls_Fld & "' "
-            ElseIf (RsImport(i).Type = 202 And Len(RsImport(i)) = 10 And InStr(1, RsImport(i), "/") = 3 And InStr(4, RsImport(i), "/") = 6) Or (RsImport(i).Type = 202 And Len(RsImport(i)) = 9 And InStr(1, RsImport(i), "/") = 3 And InStr(4, RsImport(i), "/") = 5) Then
-                If IsNull(RsImport("" & Xls_Fld & "").Value) = True Then
-                    Xls_Fld = "" ' RsImport("" & Xls_Fld & "").Value
-                    SqlChk = SqlChk & "(" & delHash(0) & " is null  )  "
-                Else
-                    Xls_Fld = RsImport("" & Xls_Fld & "").Value
-                    Xls_Fld = Replace(Xls_Fld, "'", "")
-                    SqlChk = SqlChk & delHash(0) & "='" & Format(Xls_Fld, "dd-mmm-yyyy") & "' "
-                End If
-            ElseIf RsImport("" & Xls_Fld & "").Type = 202 Then
-                If IsNull(RsImport("" & Xls_Fld & "").Value) = True Then
-                    Xls_Fld = "" ' RsImport("" & Xls_Fld & "").Value
-                    SqlChk = SqlChk & " (" & delHash(0) & "='" & UCase(Trim(Xls_Fld)) & "' or " & delHash(0) & " is null  )  "
-                Else
-                    Xls_Fld = RsImport("" & Xls_Fld & "").Value
-                    Xls_Fld = Replace(Xls_Fld, "'", "")
-                    SqlChk = SqlChk & delHash(0) & "='" & Xls_Fld & "' "
-                End If
-            Else
-                If IsNull(RsImport("" & Xls_Fld & "").Value) = True Then
-                    Xls_Fld = "0" ' RsImport("" & Xls_Fld & "").Value
-                    SqlChk = SqlChk & "(" & delHash(0) & "=" & Xls_Fld & " or " & delHash(0) & " is null  )  "
-                Else
-                    Xls_Fld = RsImport("" & Xls_Fld & "").Value
-                    Xls_Fld = Replace(Xls_Fld, "'", "")
-                    SqlChk = SqlChk & delHash(0) & "=" & Format(Xls_Fld, "######0") & " "
-                End If
-            End If
-            SqlChk = SqlChk & " and "
-        Next i
-        SqlChk = SqlChk & " Company_cd='" & Comp_Cd & "' "
-        SqlChk = newString(SqlChk)
-        Set rschk = MyConn.Execute(SqlChk)
-        'JIN FIELD SE MAPPING KI HAI UNHI FIELD SE CHECK KARTE HAI KI VO RECORD DATABASE KE ANDAR EXIST HAI YA NAHI
-        'AGAR NAHI HAI TO  Bajaj_PolicyInfo_Data KE ANDAR INSERT KARA DO
-        If rschk.EOF Then
-                countNull = 0
-                Already_Exist = 0
-                Sql = "Insert into  Bajaj_PolicyInfo_Data (" & dataDaseField & ",Company_cd,Import_dt,UserID)  Values("
-                For i = 0 To RsImport.Fields.count - 1
-                    If InStr(1, RsImport(i), "'") > 0 Then
-                        Value1 = Replace(RsImport(i), "'", "")
-                        Sql = Sql & "'" & Value1 & "',"
-                    Else
-                       If RsImport(i).Type = 7 Or (RsImport(i).Type = 202 And Len(RsImport(i)) = 10 And InStr(1, RsImport(i), "/") = 3 And InStr(4, RsImport(i), "/") = 6) Or (RsImport(i).Type = 202 And Len(RsImport(i)) = 10 And InStr(1, RsImport(i), "/") = 3 And InStr(4, RsImport(i), "/") = 6) Or (RsImport(i).Type = 202 And Len(RsImport(i)) = 9 And InStr(1, RsImport(i), "/") = 3 And InStr(4, RsImport(i), "/") = 5) Then
-                            Sql = Sql & "'" & Trim(Format(RsImport(i), "dd-mmm-yyyy")) & "',"
-                       Else
-                            Sql = Sql & "'" & Trim(RsImport(i)) & "',"
-                       End If
-                    End If
-                Next
-                Sql = Sql & "'" & Comp_Cd & "','" & Format(ServerDateTime, "dd-mmm-yyyy") & "','" & Glbloginid & "'"
-                Sql = Sql & ")"
-                Sql = Replace(Sql, "''", "Null")
-                Sql = newString(Sql)
-                INSERT_RECORD Sql
-            If countNull >= 50 Then Exit Do
-            Else
-                Already_Exist = Already_Exist + 1
-            End If
-        RsImport.MoveNext
-        Total_records = Total_records + 1
-       
-        Label5.Caption = Total_records
-        DoEvents
-    Loop
-
-ElseIf OptGeneral.Value = True Then
-    MyConn.Execute " delete from  Bajaj_PolicyInfo_Data_gen " ' and already_import is null"
-    Set RsImport = New ADODB.Recordset
-    Set RsImport = importExcelcon.Execute("Select " & selectedFileField & " from [" & sheetName & "$] ")
-    Total_records = 0
-    Do While Not RsImport.EOF
-        Sql = ""
-        SqlChk = ""
-        Xls_Fld = ""
-        SqlChk = " select * from  Bajaj_PolicyInfo_Data_gen where  "
-        For i = 0 To UBound(delComma)
-            delHash = Split(delComma(i), "#")
-            Xls_Fld = Replace(Replace(Replace(delHash(1), "[", ""), "]", ""), "'", "")
-            If InStr(1, Xls_Fld, "&") > 0 Then
-                Xls_Fld = Exc_Clent_FldName
-            End If
-            If RsImport("" & Xls_Fld & "").Type = 7 Then
-                Xls_Fld = Format(RsImport("" & Xls_Fld & "").Value, "dd-mmm-yyyy")
-                Xls_Fld = Replace(Xls_Fld, "'", "")
-                SqlChk = SqlChk & delHash(0) & "='" & Xls_Fld & "' "
-            ElseIf (RsImport(i).Type = 202 And Len(RsImport(i)) = 10 And InStr(1, RsImport(i), "/") = 3 And InStr(4, RsImport(i), "/") = 6) Or (RsImport(i).Type = 202 And Len(RsImport(i)) = 9 And InStr(1, RsImport(i), "/") = 3 And InStr(4, RsImport(i), "/") = 5) Then
-                If IsNull(RsImport("" & Xls_Fld & "").Value) = True Then
-                    Xls_Fld = "" ' RsImport("" & Xls_Fld & "").Value
-                    SqlChk = SqlChk & "(" & delHash(0) & " is null  )  "
-                Else
-                    Xls_Fld = RsImport("" & Xls_Fld & "").Value
-                    Xls_Fld = Replace(Xls_Fld, "'", "")
-                    SqlChk = SqlChk & delHash(0) & "='" & Format(Xls_Fld, "dd-mmm-yyyy") & "' "
-                End If
-            ElseIf RsImport("" & Xls_Fld & "").Type = 202 Then
-                If IsNull(RsImport("" & Xls_Fld & "").Value) = True Then
-                    Xls_Fld = "" ' RsImport("" & Xls_Fld & "").Value
-                    SqlChk = SqlChk & " (" & delHash(0) & "='" & UCase(Trim(Xls_Fld)) & "' or " & delHash(0) & " is null  )  "
-                Else
-                    Xls_Fld = RsImport("" & Xls_Fld & "").Value
-                    Xls_Fld = Replace(Xls_Fld, "'", "")
-                    SqlChk = SqlChk & delHash(0) & "='" & Xls_Fld & "' "
-                End If
-            Else
-                If IsNull(RsImport("" & Xls_Fld & "").Value) = True Then
-                    Xls_Fld = "0" ' RsImport("" & Xls_Fld & "").Value
-                    SqlChk = SqlChk & "(" & delHash(0) & "=" & Xls_Fld & " or " & delHash(0) & " is null  )  "
-                Else
-                    Xls_Fld = RsImport("" & Xls_Fld & "").Value
-                    Xls_Fld = Replace(Xls_Fld, "'", "")
-                    SqlChk = SqlChk & delHash(0) & "=" & Format(Xls_Fld, "######0") & " "
-                End If
-            End If
-            SqlChk = SqlChk & " and "
-        Next i
-        SqlChk = SqlChk & " Company_cd='" & Comp_Cd & "' "
-        SqlChk = newString(SqlChk)
-        Set rschk = MyConn.Execute(SqlChk)
-        'JIN FIELD SE MAPPING KI HAI UNHI FIELD SE CHECK KARTE HAI KI VO RECORD DATABASE KE ANDAR EXIST HAI YA NAHI
-        'AGAR NAHI HAI TO  Bajaj_PolicyInfo_Data KE ANDAR INSERT KARA DO
-        If rschk.EOF Then
-                countNull = 0
-                Already_Exist = 0
-                Sql = "Insert into  Bajaj_PolicyInfo_Data_gen (" & dataDaseField & ",Company_cd,Import_dt,UserID)  Values("
-                For i = 0 To RsImport.Fields.count - 1
-                    If InStr(1, RsImport(i), "'") > 0 Then
-                        Value1 = Replace(RsImport(i), "'", "")
-                        Sql = Sql & "'" & Value1 & "',"
-                    Else
-                       If RsImport(i).Type = 7 Or (RsImport(i).Type = 202 And Len(RsImport(i)) = 10 And InStr(1, RsImport(i), "/") = 3 And InStr(4, RsImport(i), "/") = 6) Or (RsImport(i).Type = 202 And Len(RsImport(i)) = 10 And InStr(1, RsImport(i), "/") = 3 And InStr(4, RsImport(i), "/") = 6) Or (RsImport(i).Type = 202 And Len(RsImport(i)) = 9 And InStr(1, RsImport(i), "/") = 3 And InStr(4, RsImport(i), "/") = 5) Then
-                            Sql = Sql & "'" & Trim(Format(RsImport(i), "dd-mmm-yyyy")) & "',"
-                       Else
-                            Sql = Sql & "'" & Trim(RsImport(i)) & "',"
-                       End If
-                    End If
-                Next
-                Sql = Sql & "'" & Comp_Cd & "','" & Format(ServerDateTime, "dd-mmm-yyyy") & "','" & Glbloginid & "'"
-                Sql = Sql & ")"
-                Sql = Replace(Sql, "''", "Null")
-                Sql = newString(Sql)
-                INSERT_RECORD Sql
-            If countNull >= 50 Then Exit Do
-            Else
-                Already_Exist = Already_Exist + 1
-            End If
-        RsImport.MoveNext
-        Total_records = Total_records + 1
-       
-        Label5.Caption = Total_records
-        DoEvents
-    Loop
 
 
-
-ElseIf OptNPS.Value = True Then
+If OptNPS.Value = True Then
     MyConn.Execute " insert into nps_ecs_tbl_imp_bk select * from  nps_ecs_tbl_imp" ' and already_import is null"
     MyConn.Execute " delete from  nps_ecs_tbl_imp " ' and already_import is null"
     Set RsImport = New ADODB.Recordset
