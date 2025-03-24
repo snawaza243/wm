@@ -1,6 +1,6 @@
 create or replace PROCEDURE PSM_ANA_MergeAgent(
     p_main_agent_exist_code IN VARCHAR2,
-    p_to_merge_agent_exist_codes IN VARCHAR2
+    p_to_merge_agent_exist_codes IN VARCHAR2 
 ) AS
     v_rm_code VARCHAR2(100);  
 BEGIN
