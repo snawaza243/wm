@@ -77,6 +77,7 @@ BEGIN
             UPDATE CLIENT_TEST
             SET
                 CLIENTCODE_OLD          = P_EXIST_CLIENT_CODE,
+                guest_code                = P_GUEST_CODE,  
                 BUSINESS_CODE           = P_RM_BUSINESS_CODE,
                 OCC_ID                  = P_OCCUPATION,
                 STATUS                  = P_TAX_STATUS ,
@@ -135,7 +136,8 @@ BEGIN
                 CM.CLIENT_TITLE         = P_SALUTATION1,  
                 CM.TITLE_FATHER_SPOUSE  = P_SALUTATION2,  
                 CM.CATEGORY_ID          = P_CLIENT_CAT,  
-                CM.INVESTOR_CODE        = P_STATUS_CAT,  
+                CM.INVESTOR_CODE        = P_STATUS_CAT,
+                CM.GUEST_CD             = P_GUEST_CODE,  
                 CM.CLIENT_NAME          = P_ACCOUNT_NAME,  
                 CM.FATHER_SPOUSE_NAME   = P_FATHER_NAME,  
                 CM.ADDRESS1             = P_MAILING_ADDRESS1,  

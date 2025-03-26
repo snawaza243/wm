@@ -46,6 +46,8 @@ Dim Members3 As String
             flag = True
             While Not RsData.EOF
                 'rsInv_check.open "Select inv_code from investor_master where source_id=" & msfgMain.TextMatrix(i, 2) & " and substr(trim(upper(investor_name)),1,6)='" & Left(Trim(UCase(rsData("investor_name"))), 6) & "'", myconn, adOpenForwardOnly
+
+                
                 rsInv_check.open "Select inv_code from investor_master where source_id=" & msfgMain.TextMatrix(1, 2) & " and substr(replace(replace(trim(upper(investor_name)),'.',''),' ',''),1,8) like '%" & Left(Replace(Replace(Trim(UCase(RsData("investor_name"))), ".", ""), " ", ""), 8) & "%' and instr(trim(upper(investor_name)),'HUF')=0  ", MyConn, adOpenForwardOnly
                 If rsInv_check.EOF = False Then
                     New_Inv_Code = rsInv_check("inv_code")
