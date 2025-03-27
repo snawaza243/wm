@@ -6,3 +6,10 @@ IMPORTING DATA AND EXPORTING
 
 MAP POLICY:
 EXPORTING 
+
+
+git add WM/Masters/ANA_Merging.aspx
+git add WM/Masters/ANA_Merging.aspx.cs
+git add WM/Masters/ANA_Merging.aspx.designer.cs
+
+After selection of country/state/city  the default pointer/cursor not visible on next tab, randomly shown on the form 

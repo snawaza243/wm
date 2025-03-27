@@ -1,1 +1,9 @@
  
+associate master:
+type of status 
+
+insurance renewal 
+client data 
+
+insurance renewal manual
+address pin
