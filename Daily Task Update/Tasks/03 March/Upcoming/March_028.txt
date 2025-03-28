@@ -1,1 +1,4 @@
  
+ass aadhar encrypt 
+
+Navigation of fields not correct:  Cursor pointer not correct in the form as not working in sequence, after press enter on any field navigate back to previous  field on top 

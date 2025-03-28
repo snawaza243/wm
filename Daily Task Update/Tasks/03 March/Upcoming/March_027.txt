@@ -1,9 +1,20 @@
- 
-associate master:
+ASSOCIATE MASTER:
 type of status 
 
-insurance renewal 
+INSURANCE RENEWAL:
 client data 
 
-insurance renewal manual
+INSURANCE RENEWAL MANUAL:
 address pin
+
+ACCOUNT OPENING: PR 
+flicker free, new nri enhancement, remain the last position on change
+
+git add WM/Masters/AccountOpening.aspx
+git add WM/Masters/AccountOpening.aspx.cs
+git add WM/Masters/AccountOpening.aspx.designer.cs
+
+
+DUE AND PAID:
+new way to save mapped string in db done
+and next have to work on bulk importing 
