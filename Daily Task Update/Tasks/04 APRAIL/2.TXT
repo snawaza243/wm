@@ -1,0 +1,21 @@
+git add WM/Controllers/PsmController.cs
+git add WM/Masters/AccountOpening.aspx
+git add WM/Masters/AccountOpening.aspx.cs
+git add WM/Masters/associate_master.aspx
+git add WM/Masters/associate_master.aspx.cs
+
+
+
+WEALTHMAKER.PSM_IR_MANUAL;
+WEALTHMAKER.PSM_IR_GENERATE_DATA;
+
+PSM_AM_GET_BY_DT_ID;
+PSM_AM_RM_BY_BRANCHDT;
+psm_am_insert_agent_master;
+psm_am_update_agent_master;
+
+
+psm_ao_insert_client_data;
+psm_ao_update_client_data;
+psm_ao_get_client_by_id;
+psm_ao_c_validate

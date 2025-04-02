@@ -1,0 +1,30 @@
+// In your ASPX page
+<asp:UpdatePanel ID="UpdatePanel1" runat="server" UpdateMode="Conditional">
+    <ContentTemplate>
+        <asp:Label ID="lblProgress" runat="server" Text="Processing: 0 records"></asp:Label>
+        <asp:Timer ID="Timer1" runat="server" Interval="1000" OnTick="Timer1_Tick"></asp:Timer>
+    </ContentTemplate>
+</asp:UpdatePanel>
+
+// In your code-behind
+private static int _currentCount = 0;
+
+protected void Timer1_Tick(object sender, EventArgs e)
+{
+    lblProgress.Text = $"Processing: {_currentCount} records";
+    UpdatePanel1.Update();
+}
+
+// In your import method
+foreach (DataRow row in excelData.Rows)
+{
+    // Your import logic here
+    _currentCount++;
+    
+    // Update UI periodically (every 10 records for example)
+    if (_currentCount % 10 == 0)
+    {
+        UpdatePanel1.Update();
+        System.Threading.Thread.Sleep(100); // Small delay to allow UI update
+    }
+}

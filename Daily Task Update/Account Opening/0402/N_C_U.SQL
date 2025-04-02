@@ -94,7 +94,7 @@ BEGIN
                 DOB                     = P_DOB,
                 ANNUAL_INCOME           = P_ANNUAL_INCOME,
                 CLIENT_PAN              = P_CLIENT_PAN,
-                LEAD_TYPE               = P_LEAD_TYPE,
+                LEAD_SOURCE               = P_LEAD_TYPE,
                 G_NAME                  = P_GUARDIAN_PERSON,
                 G_NATIONALITY           = P_GUARDIAN_PERSON_NATIONALITY,
                 G_PAN                   = P_GUARDIAN_PERSON_PAN,

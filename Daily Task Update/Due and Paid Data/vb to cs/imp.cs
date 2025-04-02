@@ -291,6 +291,7 @@ public partial class ImportPage : System.Web.UI.Page
                         SqlStr = SqlStr + ")";
                         SqlStr = SqlStr.Replace("''", "Null");
                         Rec_Count = Rec_Count + 1;
+
                         if (MyImportDataType == "LAPSEDDATA")
                         {
                             MyLapsedDate = MyLapsedDate;
@@ -333,6 +334,8 @@ public partial class ImportPage : System.Web.UI.Page
                             RsDueDate.Close();
                         }
                         MyConn.Execute(SqlStr);
+
+                        
                         if (MyImportDataType == "DUEDATA")
                         {
                             MyConn.Execute("update policy_details_master set FILE_NAME='" + TxtFileName.Text + "', PAYMENT_MODE='" + rsExcel.Fields[Excel_Payment_Mode].Value.ToString().ToUpper().Trim() + "',UPDATE_PROG='" + CmbDataType.SelectedItem.Text + "',UPDATE_USER='" + Glbloginid + "',UPDATE_DATE=TO_DATE('" + ServerDateTime.ToString("dd/MM/yyyy") + "','DD/MM/YYYY') WHERE UPPER(TRIM(POLICY_no))=UPPER (TRIM ('" + rsExcel.Fields[Excel_policy_no].Value.ToString().ToUpper().Trim() + "')) and upper(trim(company_cd))= '" + rsExcel.Fields[Excel_Comp].Value.ToString().ToUpper().Trim() + "'");
@@ -375,6 +378,8 @@ public partial class ImportPage : System.Web.UI.Page
                 }
                 rsExcel.MoveNext();
             } while (!rsExcel.EOF);
+
+
             SqlStr = " select  distinct policy_no from (select a.policy_no,a.sys_ar_Dt,a.company_Cd from bajaj_Ar_head a ,bajaj_due_Data b where";
             SqlStr = SqlStr + " upper(trim(a.COMPANY_CD)) = upper(trim(B.COMPANY_CD)) And a.Policy_No = B.Policy_No and mon_no = " + (CmbMonth.SelectedIndex + 1) + " and year_no=" + TxtYear.Text + " and importdatatype='" + MyImportDataType + "'";
             SqlStr = SqlStr + " group by a.policy_no,a.sys_ar_dt,a.company_Cd having count(a.policy_no)>1 and count(a.sys_ar_dt)>1 and count(a.company_Cd)>1)";

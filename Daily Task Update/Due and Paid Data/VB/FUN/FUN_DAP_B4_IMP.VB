@@ -256,6 +256,9 @@ If OptDue.Value = True Then
         MyConn.Execute " update bajaj_due_Data set dup_rec='Y' where policy_no in (SELECT POLICY_NO FROM DUP_POLICY) and mon_no =" & CmbMonth.ListIndex + 1 & " and year_no=" & TxtYear.Text & " and importdatatype='" & MyImportDataType & "' ", Rec_Del
     End If
     Rec_Count = Rec_Count - Rec_Del
+
+
+
 ElseIf OptPaid.Value = True Then
     Do While Not rsExcel.EOF
         If rsExcel("" & Excel_Comp & "").Value & "" <> "" Then

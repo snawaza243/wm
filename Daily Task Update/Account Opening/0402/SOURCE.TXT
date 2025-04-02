@@ -1,0 +1,3 @@
+SELECT LEAD_SOURCE FROM client_test
+
+CmbLeadSource.TEX
