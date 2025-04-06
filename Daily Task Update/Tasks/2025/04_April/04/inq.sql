@@ -1,0 +1,15 @@
+Insert into BAJAJ_DUE_DATA 
+(POLICY_NO,
+COMPANY_CD,
+PREM_AMT,
+STATUS_CD,
+LAST_UPDATE_DT,
+PREM_FREQ,
+DOC,
+Mon_no,
+Year_No,
+UserId,
+Import_Dt,
+ImportDataType,
+NEWINSERT,
+FORCE_FLAG) Values('55977606','BAJAJ A','3000','Paid','05-Nov-2024','12','04-Aug-2007',2, 2028, '38387', '04-Apr-2025', 'DUEDATA', NULL, 'FORCE FULL')
