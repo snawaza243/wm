@@ -16,3 +16,11 @@ git add WM/Masters/NpsTransactionPunching.aspx.cs
 git add WM/Masters/associate_master.aspx
 git add WM/Masters/associate_master.aspx.cs
 git add WM/Tree/frm_tree_mf.aspx.cs
+
+
+
+
+---- in office
+
+PSM_AM_INSERT_AGENT_MASTER;
+PSM_AM_UPDATE_AGENT_MASTER;
