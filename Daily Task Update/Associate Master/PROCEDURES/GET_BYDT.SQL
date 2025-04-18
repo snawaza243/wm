@@ -9,6 +9,7 @@ create or replace PROCEDURE PSM_AM_GET_BY_DT_ID (
     F_DT_PUN     NUMBER := 0;  -- DB COLUMN: punching_flag (0/1)
     F_DT_VERI    NUMBER := 0;  -- DB COLUMN: verification_flag (0/1)
     F_DT_TYPE    NUMBER := 0; -- DB COLUMN: tran_type (ANA)
+    F_DT_IN_AM   NUMBER := 0; -- CHECK DT IN AGENT_MASTER
 
 BEGIN
         -- Check if COMMON_ID exists
@@ -69,6 +70,18 @@ BEGIN
     FROM TB_DOC_UPLOAD 
     WHERE COMMON_ID = TRIM(p_common_id) 
       AND punching_flag = 1 AND UPPER(TRIM(tran_type)) = 'ANA' AND ROWNUM = 1;
+      
+    SELECT COUNT(DOC_ID) 
+    INTO F_DT_IN_AM
+    FROM AGENT_MASTER 
+    WHERE DOC_ID =  TRIM(p_common_id) AND ROWNUM = 1;
+    
+    IF F_DT_IN_AM > 0 THEN
+        OPEN p_cursor FOR
+        SELECT 'Invalid Data: DT ALREADY PUNCHED WITH ' || (SELECT AGENT_CODE || '/' || EXIST_CODE AS CODE FROM AGENT_MASTER WHERE DOC_ID = TRIM(p_common_id) AND ROWNUM = 1) AS message FROM dual;
+        RETURN;
+    END IF;
+    
 
     -- Check punching_flag
     --SELECT exist_code INTO F_DT_PUN FROM TB_DOC_UPLOAD  WHERE COMMON_ID = TRIM(p_common_id)  AND punching_flag = 1 AND UPPER(TRIM(tran_type)) = 'ANA';

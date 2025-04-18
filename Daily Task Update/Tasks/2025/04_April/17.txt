@@ -1,1 +1,46 @@
 2025-04-17 - Thursday
+
+ao: 
+new loader on full and partial post back 
+highlight member active grid,
+new active element border
+added new col to client search, investor search and agent search
+email in lover default
+
+
+nps :
+search ar popup
+maturity period, interest rate 
+pop registration charge 
+gst value on date change 
+
+
+
+
+
+PR:
+
+
+nawaz@AMPLE-VM MINGW64 /c/Shahnawaz_Bajaj/25 APRIL/vb6_migration (sam3)
+$ git status
+On branch sam3
+
+
+ 
+modified: WM/Controllers/AccountOpeningController.cs
+modified: WM/Controllers/PsmController.cs
+modified: WM/Masters/AccountOpening.aspx
+modified: WM/Masters/NpsTransactionPunching.aspx
+modified: WM/Masters/NpsTransactionPunching.aspx.cs
+modified: WM/Masters/NpsTransactionPunching.aspx.designer.cs
+modified: WM/Masters/associate_master.aspx
+modified: WM/Masters/associate_master.aspx.cs
+modified: WM/SampleFile/DuePaidMappedFieldPAID.txt
+modified: WM/Tree/FindTransaction.aspx
+modified: WM/Tree/FindTransaction.aspx.cs
+modified: WM/Tree/FindTransaction.aspx.designer.cs
+modified: WM/Tree/ImportExportExcel.aspx
+modified: WM/Tree/ImportExportExcel.aspx.cs
+modified: WM/Tree/frm_tree_mf.aspx
+modified: WM/Tree/frm_tree_mf.aspx.cs
+modified: WM/Tree/frm_tree_mf.aspx.designer.cs

@@ -1,1 +1,6 @@
 2025-04-18 - Friday
+
+
+Account opening:
+
+Details exist but account not created and this client will be search with only investor search.

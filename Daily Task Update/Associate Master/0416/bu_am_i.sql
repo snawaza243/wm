@@ -272,7 +272,10 @@ BEGIN
     AND mobile = p_mobile
     AND UPPER(pan) = UPPER(p_pan);
 
-    --UPDATE tb_doc_upload SET punching_flag = '1' WHERE common_id = p_dt_number AND tran_type = 'ANA';
+    UPDATE tb_doc_upload
+    SET punching_flag = '1'
+    WHERE common_id = p_dt_number
+    AND tran_type = 'ANA';
 
     OPEN p_result FOR
            SELECT 'Agent created successfully with EXIST_CODE: ' || (SELECT exist_code FROM agent_master WHERE agent_code = new_agent_code) || ' and ' || 'AGENT_CODE: ' || new_agent_code AS message FROM dual;

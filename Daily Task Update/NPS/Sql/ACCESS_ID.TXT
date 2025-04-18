@@ -1,0 +1,3 @@
+        /*'38387' -- punch(121397/212), modify(39006/146)   */
+        --WHERE LOGIN_ID = '121397' AND ROLE_ID  = 212 
+        --WHERE LOGIN_ID = '39006' AND ROLE_ID  = 146 

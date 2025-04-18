@@ -1,3 +1,4 @@
+
 Private Sub pic_import_Click()
 'On Error GoTo BOError
 Chk_OPENFORM = True

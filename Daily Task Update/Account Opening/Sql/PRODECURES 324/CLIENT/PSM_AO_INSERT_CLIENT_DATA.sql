@@ -171,7 +171,8 @@ IF LENGTH(TRIM(P_EXIST_CLIENT_CODE)) >= 11 THEN
         DOB = P_DOB,
         ANNUAL_INCOME = P_ANNUAL_INCOME,
         CLIENT_PAN = P_CLIENT_PAN,
-        LEAD_TYPE= P_LEAD_TYPE,
+        --LEAD_TYPE= P_LEAD_TYPE,
+        LEAD_SOURCE = P_LEAD_TYPE,
         G_NAME = P_GUARDIAN_PERSON,
         G_NATIONALITY = P_GUARDIAN_PERSON_NATIONALITY,
         G_PAN = P_GUARDIAN_PERSON_PAN,
@@ -353,7 +354,7 @@ IF LENGTH(TRIM(P_EXIST_CLIENT_CODE)) >= 11 THEN
         IM.G_PAN = P_GUARDIAN_PERSON_PAN,
         IM.MAR_STATUS = P_MARITAL_STATUS,
     IM.ADDRESS1            =     P_MAILING_ADDRESS1,                    
-    IM.ADDRESS2            =     P_MAILING_ADDRESS1,                    
+    IM.ADDRESS2            =     P_MAILING_ADDRESS2,                    
     IM.FAX         =     P_FAX_VALUE,                  
     IM.EMAIL           =     P_EMAIL_VALUE,                   
     IM.PAN         =     P_CLIENT_PAN,              
@@ -569,7 +570,7 @@ IF P_EXIST_CLIENT_CODE IS NULL OR P_EXIST_CLIENT_CODE = 0 THEN
         DOB,
         ANNUAL_INCOME,
         CLIENT_PAN,
-        LEAD_TYPE,
+        LEAD_SOURCE, --LEAD_TYPE,
         G_NAME,
         G_NATIONALITY,
         G_PAN,
@@ -682,7 +683,7 @@ IF P_EXIST_CLIENT_CODE IS NULL OR P_EXIST_CLIENT_CODE = 0 THEN
             P_GUARDIAN_PERSON_PAN,
             P_MARITAL_STATUS,
             P_MAILING_ADDRESS1,               -- address1
-            P_MAILING_ADDRESS1,               -- address2
+            P_MAILING_ADDRESS2,               -- address2
             P_FAX_VALUE,                    -- fax
             P_EMAIL_VALUE,                  -- email
             P_CLIENT_PAN,                   -- pan
