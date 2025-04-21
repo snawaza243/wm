@@ -1,65 +1,65 @@
 create or replace PROCEDURE PSM_AO_INSERT_CLIENT_DATA(
-    P_DT_NUMBER IN VARCHAR2,
-    P_EXIST_CLIENT_CODE IN NUMBER,
-    P_RM_BUSINESS_CODE IN VARCHAR2,
-    P_TAX_STATUS IN VARCHAR2,
-    P_OCCUPATION IN NUMBER,
-    P_STATUS_CAT IN VARCHAR2,
-    P_CLIENT_CAT IN VARCHAR2,
-    P_ACCOUNT_CAT IN NUMBER,
-    P_SALUTATION1 IN VARCHAR2,
-    P_ACCOUNT_NAME IN VARCHAR2,
-    P_SALUTATION2 IN VARCHAR2,
-    P_FATHER_NAME IN VARCHAR2,
-    P_ACCOUNT_OTHER IN VARCHAR2,
-    P_GENDER IN VARCHAR2,
-    P_MARITAL_STATUS IN VARCHAR2,
-    P_NATIONALITY IN VARCHAR2,
-    P_RESIDENT_NRI IN VARCHAR2,
-    P_DOB IN DATE,
-    P_ANNUAL_INCOME IN VARCHAR2,
-    P_CLIENT_PAN IN VARCHAR2,
-    P_LEAD_TYPE IN VARCHAR2,
-    P_GUARDIAN_PERSON IN VARCHAR2,
-    P_GUARDIAN_PERSON_NATIONALITY IN VARCHAR2,
-    P_GUARDIAN_PERSON_PAN IN VARCHAR2,
-    P_MAILING_ADDRESS1 IN VARCHAR2,
-    P_MAILING_ADDRESS2 IN VARCHAR2,
-    P_MAILING_STATE IN VARCHAR2,
-    P_MAILING_CITY IN VARCHAR2,
-    P_MAILING_PINCODE IN VARCHAR2,
-    P_PERMANENT_ADDRESS1 IN VARCHAR2,
-    P_PERMANENT_ADDRESS2 IN VARCHAR2,
-    P_PERMANENT_STATE IN VARCHAR2,
-    P_PERMANENT_CITY IN VARCHAR2,
-    P_PERMANENT_PINCODE IN VARCHAR2,
-    P_NRI_ADDRESS IN VARCHAR2,
-    P_FAX_VALUE IN VARCHAR2,
-    P_AADHAR_VALUE IN NUMBER,
-    P_EMAIL_VALUE IN VARCHAR2,
-    P_EMAIL_OFFICIAL_VALUE IN VARCHAR2,
-    P_PHONE_OFFICE_STD_VALUE IN VARCHAR2,
-    P_PHONE_OFFICE_NUMBER_VALUE IN VARCHAR2,
-    P_PHONE_RES_STD_VALUE IN VARCHAR2,
-    P_PHONE_RES_NUMBER_VALUE IN VARCHAR2,
-    P_MOBILE_NO_VALUE IN VARCHAR2,
-    P_REFERENCE_NAME1_VALUE IN VARCHAR2,
-    P_REFERENCE_NAME2_VALUE IN VARCHAR2,
-    P_REFERENCE_NAME3_VALUE IN VARCHAR2,
-    P_REFERENCE_NAME4_VALUE IN VARCHAR2,
-    P_MOBILE_NO1_VALUE IN NUMBER,
-    P_MOBILE_NO2_VALUE IN NUMBER,
-    P_MOBILE_NO3_VALUE IN NUMBER,
-    P_MOBILE_NO4_VALUE IN NUMBER,
-    P_LOGGED_IN_USER IN VARCHAR2,
-    P_GUEST_CODE IN VARCHAR2,
-    P_EMP_RM IN NUMBER,
-    P_EMP_SRC IN NUMBER,
-    P_RESULT OUT SYS_REFCURSOR 
+    P_DT_NUMBER                     IN VARCHAR2,
+    P_EXIST_CLIENT_CODE             IN NUMBER,
+    P_RM_BUSINESS_CODE              IN VARCHAR2,
+    P_TAX_STATUS                    IN VARCHAR2,
+    P_OCCUPATION                    IN NUMBER,
+    P_STATUS_CAT                    IN VARCHAR2,
+    P_CLIENT_CAT                    IN VARCHAR2,
+    P_ACCOUNT_CAT                   IN NUMBER,
+    P_SALUTATION1                   IN VARCHAR2,
+    P_ACCOUNT_NAME                  IN VARCHAR2,
+    P_SALUTATION2                   IN VARCHAR2,
+    P_FATHER_NAME                   IN VARCHAR2,
+    P_ACCOUNT_OTHER                 IN VARCHAR2,
+    P_GENDER                        IN VARCHAR2,
+    P_MARITAL_STATUS                IN VARCHAR2,
+    P_NATIONALITY                   IN VARCHAR2,
+    P_RESIDENT_NRI                  IN VARCHAR2,
+    P_DOB                           IN DATE,
+    P_ANNUAL_INCOME                 IN VARCHAR2,
+    P_CLIENT_PAN                    IN VARCHAR2,
+    P_LEAD_TYPE                     IN VARCHAR2,
+    P_GUARDIAN_PERSON               IN VARCHAR2,
+    P_GUARDIAN_PERSON_NATIONALITY   IN VARCHAR2,
+    P_GUARDIAN_PERSON_PAN           IN VARCHAR2,
+    P_MAILING_ADDRESS1              IN VARCHAR2,
+    P_MAILING_ADDRESS2              IN VARCHAR2,
+    P_MAILING_STATE                 IN VARCHAR2,
+    P_MAILING_CITY                  IN VARCHAR2,
+    P_MAILING_PINCODE               IN VARCHAR2,
+    P_PERMANENT_ADDRESS1            IN VARCHAR2,
+    P_PERMANENT_ADDRESS2            IN VARCHAR2,
+    P_PERMANENT_STATE               IN VARCHAR2,
+    P_PERMANENT_CITY                IN VARCHAR2,
+    P_PERMANENT_PINCODE             IN VARCHAR2,
+    P_NRI_ADDRESS                   IN VARCHAR2,
+    P_FAX_VALUE                     IN VARCHAR2,
+    P_AADHAR_VALUE                  IN NUMBER,
+    P_EMAIL_VALUE                   IN VARCHAR2,
+    P_EMAIL_OFFICIAL_VALUE          IN VARCHAR2,
+    P_PHONE_OFFICE_STD_VALUE        IN VARCHAR2,
+    P_PHONE_OFFICE_NUMBER_VALUE     IN VARCHAR2,
+    P_PHONE_RES_STD_VALUE           IN VARCHAR2,
+    P_PHONE_RES_NUMBER_VALUE        IN VARCHAR2,
+    P_MOBILE_NO_VALUE               IN VARCHAR2,
+    P_REFERENCE_NAME1_VALUE         IN VARCHAR2,
+    P_REFERENCE_NAME2_VALUE         IN VARCHAR2,
+    P_REFERENCE_NAME3_VALUE         IN VARCHAR2,
+    P_REFERENCE_NAME4_VALUE         IN VARCHAR2,
+    P_MOBILE_NO1_VALUE              IN NUMBER,
+    P_MOBILE_NO2_VALUE              IN NUMBER,
+    P_MOBILE_NO3_VALUE              IN NUMBER,
+    P_MOBILE_NO4_VALUE              IN NUMBER,
+    P_LOGGED_IN_USER                IN VARCHAR2,
+    P_GUEST_CODE                    IN VARCHAR2,
+    P_EMP_RM                        IN NUMBER,
+    P_EMP_SRC                       IN NUMBER,
+    P_RESULT                        OUT SYS_REFCURSOR 
 ) AS
 
-    DCT_FLAG                    NUMBER := 0;
-    DCM_FLAG                    NUMBER :=0;
+    DCT_FLAG                    NUMBER := 0; -- Duplicate account in client_test
+    DCM_FLAG                    NUMBER := 0;
     DT_FLAG                     NUMBER;
     MYCLIENTCODE                VARCHAR2(50);  
     MYMAINCLIENTCODE            VARCHAR2(50);  
@@ -68,18 +68,17 @@ create or replace PROCEDURE PSM_AO_INSERT_CLIENT_DATA(
     V_CHECK_DUPLICATE           NUMBER;
     SQL_QUERY                   VARCHAR2(4000);
 
-    V_GENERATED_CLIENT_CODE CLIENT_TEST.CLIENT_CODE%TYPE;
-    V_INV_CODE INVESTOR_MASTER.INV_CODE%TYPE;
-    V_MYSOURCEID CLIENT_MASTER.CLIENT_CODE%TYPE;
+    V_GENERATED_CLIENT_CODE     CLIENT_TEST.CLIENT_CODE%TYPE;
+    V_INV_CODE                  INVESTOR_MASTER.INV_CODE%TYPE;
+    V_MYSOURCEID                CLIENT_MASTER.CLIENT_CODE%TYPE;
 
     VCNT                        NUMBER; -- for inv pan validation
     CLIENT_MASTER_FLAG          NUMBER; -- Flag for CLIENT_MASTER validation
     CLIENT_TEST_FLAG            NUMBER; -- Flag for CLIENT_TEST validation
 
--- DT AND GUEST CODE VALIDATION LCOAL VARIABLES
-
-GUEST_CD_EXIST_FLAG         NUMBER:=0;
-DUP_GUEST_FLAG              NUMBER:=0;
+    -- DT AND GUEST CODE VALIDATION LCOAL VARIABLES
+    GUEST_CD_EXIST_FLAG         NUMBER:=0;
+    DUP_GUEST_FLAG              NUMBER:=0;
 
 
 
@@ -144,9 +143,9 @@ BEGIN
 END;
 
 IF LENGTH(TRIM(P_EXIST_CLIENT_CODE)) >= 11 THEN
+
     -- Check for Duplicate Account (DCT_FLAG)
-    SELECT COUNT(*)
-    INTO DCT_FLAG
+    SELECT COUNT(CLIENT_CODEKYC) INTO DCT_FLAG
     FROM CLIENT_TEST
     WHERE CLIENT_CODEKYC = P_EXIST_CLIENT_CODE;
 
@@ -155,240 +154,194 @@ IF LENGTH(TRIM(P_EXIST_CLIENT_CODE)) >= 11 THEN
         OPEN P_RESULT FOR
         SELECT 'Account Of This Main Investor Is Already Exist' AS MESSAGE FROM DUAL;
         RETURN;
-        
-        UPDATE CLIENT_TEST
-        SET
-            CLIENTCODE_OLD          = P_EXIST_CLIENT_CODE,
-            guest_code              = P_GUEST_CODE,  
-            BUSINESS_CODE           = P_RM_BUSINESS_CODE,
-            OCC_ID                  = P_OCCUPATION,
-            STATUS                  = P_TAX_STATUS ,
-            ACT_CAT                 = P_ACCOUNT_CAT,
-            TITLE                   = P_SALUTATION1,
-            CLIENT_NAME             = P_ACCOUNT_NAME,
-            TITLE_FATHER_SPOUSE     = P_SALUTATION2,
-            FATHER_SPOUSE_NAME      = P_FATHER_NAME,
-            OTHERS1                 = P_ACCOUNT_OTHER,
-            GENDER                  = P_GENDER,
-            MARITAL_STATUS          = P_MARITAL_STATUS,
-            NATIONALITY             = P_NATIONALITY,
-            RESIDENT_NRI            = P_RESIDENT_NRI,
-            DOB                     = P_DOB,
-            ANNUAL_INCOME           = P_ANNUAL_INCOME,
-            CLIENT_PAN              = P_CLIENT_PAN,
-            LEAD_SOURCE               = P_LEAD_TYPE,
-            G_NAME                  = P_GUARDIAN_PERSON,
-            G_NATIONALITY           = P_GUARDIAN_PERSON_NATIONALITY,
-            G_PAN                   = P_GUARDIAN_PERSON_PAN,
-            ADD1                    = P_MAILING_ADDRESS1,
-            ADD2                    = P_MAILING_ADDRESS2,
-            STATE_ID                = P_MAILING_STATE,
-            CITY_ID                 = P_MAILING_CITY,
-            PINCODE                 = P_MAILING_PINCODE,
-            OVERSEAS_ADD            = P_NRI_ADDRESS ,
-            FAX                     = P_FAX_VALUE ,
-            AADHAR_CARD_NO          = P_AADHAR_VALUE,
-            EMAIL                   = P_EMAIL_VALUE ,
-            STD1                    = NVL (SUBSTR(P_PHONE_OFFICE_STD_VALUE, 1, 5), NULL) ,
-            TEL1                    = P_PHONE_OFFICE_NUMBER_VALUE,
-            STD2                    = NVL (SUBSTR(P_PHONE_RES_STD_VALUE, 1, 5), NULL) ,
-            TEL2                    = P_PHONE_RES_NUMBER_VALUE ,
-            MOBILE_NO               = P_MOBILE_NO_VALUE,
-            MODIFY_DATE             = SYSDATE,
-            MODIFY_USER             = P_LOGGED_IN_USER
-        WHERE CLIENT_CODEKYC = P_EXIST_CLIENT_CODE; --P_SEARCH_CLIENT_CODE;
-        COMMIT;
-        
-        
-        
 
-    ELSE      
+    ELSE   
+
         INSERT INTO CLIENT_TEST (
-        CLIENT_CODE,
-        CLIENTCODE_OLD,
-        BUSINESS_CODE,
-        KYC_STATUS,
-        OCC_ID,
-        STATUS,
-        ACT_CAT,
-        TITLE,
-        CLIENT_NAME,
-        TITLE_OTHER,
-        OTHER,
-        OTHERS1,
-        GENDER,
-        MARITAL_STATUS,
-        NATIONALITY,
-        RESIDENT_NRI,
-        DOB,
-        ANNUAL_INCOME,
-        CLIENT_PAN,
-        LEAD_TYPE,
-        G_NAME,
-        G_NATIONALITY,
-        G_PAN,
-        ADD1,
-        ADD2,
-        STATE_ID,
-        CITY_ID,
-        PINCODE,
-        OVERSEAS_ADD,
-        FAX,
-        AADHAR_CARD_NO,
-        EMAIL,
-        STD1,
-        TEL1,
-        STD2,
-        TEL2,
-        MOBILE_NO,
-        LOGGEDUSERID,
-        TIMEST,
-        CLIENT_CODEKYC,
-        SOURCE_CODE,
-        MAIN_CODE,
-        BRANCH_CODE
+            CLIENT_CODE,
+            CLIENTCODE_OLD,
+            BUSINESS_CODE,
+            KYC_STATUS,
+            OCC_ID,
+            STATUS,
+            ACT_CAT,
+            TITLE,
+            CLIENT_NAME,
+            TITLE_OTHER,
+            OTHER,
+            OTHERS1,
+            GENDER,
+            MARITAL_STATUS,
+            NATIONALITY,
+            RESIDENT_NRI,
+            DOB,
+            ANNUAL_INCOME,
+            CLIENT_PAN,
+            LEAD_TYPE,
+            G_NAME,
+            G_NATIONALITY,
+            G_PAN,
+            ADD1,
+            ADD2,
+            STATE_ID,
+            CITY_ID,
+            PINCODE,
+            OVERSEAS_ADD,
+            FAX,
+            AADHAR_CARD_NO,
+            EMAIL,
+            STD1,
+            TEL1,
+            STD2,
+            TEL2,
+            MOBILE_NO,
+            LOGGEDUSERID,
+            TIMEST,
+            CLIENT_CODEKYC,
+            SOURCE_CODE,
+            MAIN_CODE,
+            BRANCH_CODE
         ) VALUES (
-        NULL, -- Assuming CLIENT_CODE is auto-generated
-        P_EXIST_CLIENT_CODE,
-        P_RM_BUSINESS_CODE,
-        NULL,
-        P_OCCUPATION,
-        P_STATUS_CAT,
-        P_ACCOUNT_CAT,
-        P_SALUTATION1,
-        P_ACCOUNT_NAME,
-        P_SALUTATION2,
-        P_FATHER_NAME,
-        P_ACCOUNT_OTHER,
-        P_GENDER,
-        P_MARITAL_STATUS,
-        P_NATIONALITY,
-        P_RESIDENT_NRI,
-        P_DOB,
-        P_ANNUAL_INCOME,
-        P_CLIENT_PAN,
-        P_LEAD_TYPE,
-        P_GUARDIAN_PERSON,
-        P_GUARDIAN_PERSON_NATIONALITY,
-        P_GUARDIAN_PERSON_PAN,
-        P_MAILING_ADDRESS1,
-        P_MAILING_ADDRESS2,
-        P_MAILING_STATE,
-        P_MAILING_CITY,
-        P_MAILING_PINCODE,
-        P_NRI_ADDRESS,
-        P_FAX_VALUE,
-        P_AADHAR_VALUE,
-        P_EMAIL_VALUE,
-        P_PHONE_OFFICE_STD_VALUE,
-        P_PHONE_OFFICE_NUMBER_VALUE,
-        P_PHONE_RES_STD_VALUE,
-        P_PHONE_RES_NUMBER_VALUE,
-        P_MOBILE_NO_VALUE,
-        P_LOGGED_IN_USER,
-        SYSDATE,
-        P_EXIST_CLIENT_CODE, --(SELECT concat(client_code, '001') FROM client_master WHERE pan = p_client_pan AND ROWNUM = 1 ),
-        NULL,
-        NULL,
-        P_EMP_SRC
+            NULL, -- Assuming CLIENT_CODE is auto-generated
+            P_EXIST_CLIENT_CODE,
+            P_RM_BUSINESS_CODE,
+            NULL,
+            P_OCCUPATION,
+            P_STATUS_CAT,
+            P_ACCOUNT_CAT,
+            P_SALUTATION1,
+            P_ACCOUNT_NAME,
+            P_SALUTATION2,
+            P_FATHER_NAME,
+            P_ACCOUNT_OTHER,
+            P_GENDER,
+            P_MARITAL_STATUS,
+            P_NATIONALITY,
+            P_RESIDENT_NRI,
+            P_DOB,
+            P_ANNUAL_INCOME,
+            P_CLIENT_PAN,
+            P_LEAD_TYPE,
+            P_GUARDIAN_PERSON,
+            P_GUARDIAN_PERSON_NATIONALITY,
+            P_GUARDIAN_PERSON_PAN,
+            P_MAILING_ADDRESS1,
+            P_MAILING_ADDRESS2,
+            P_MAILING_STATE,
+            P_MAILING_CITY,
+            P_MAILING_PINCODE,
+            P_NRI_ADDRESS,
+            P_FAX_VALUE,
+            P_AADHAR_VALUE,
+            P_EMAIL_VALUE,
+            P_PHONE_OFFICE_STD_VALUE,
+            P_PHONE_OFFICE_NUMBER_VALUE,
+            P_PHONE_RES_STD_VALUE,
+            P_PHONE_RES_NUMBER_VALUE,
+            P_MOBILE_NO_VALUE,
+            P_LOGGED_IN_USER,
+            SYSDATE,
+            P_EXIST_CLIENT_CODE, --(SELECT concat(client_code, '001') FROM client_master WHERE pan = p_client_pan AND ROWNUM = 1 ),
+            NULL,
+            NULL,
+            P_EMP_SRC
         ) RETURNING CLIENT_CODE INTO V_GENERATED_CLIENT_CODE;
         COMMIT; 
 
         UPDATE CLIENT_MASTER CM
-    SET 
-        CM.PER_STATE_ID =   P_PERMANENT_STATE,
-        CM.PER_PINCODE     =         P_PERMANENT_PINCODE, 
-        CM.OFFICE_EMAIL        =         P_EMAIL_OFFICIAL_VALUE,  
-        CM.PER_ADD1        =         P_PERMANENT_ADDRESS1,  
-        CM.PER_ADD2        =         P_PERMANENT_ADDRESS2,  
-        CM.REF_NAME1       =         P_REFERENCE_NAME1_VALUE,  
-        CM.REF_NAME2       =         P_REFERENCE_NAME2_VALUE,  
-        CM.REF_NAME3       =         P_REFERENCE_NAME3_VALUE,  
-        CM.REF_NAME4       =         P_REFERENCE_NAME4_VALUE,  
-        CM.REF_MOB1        =         P_MOBILE_NO1_VALUE,  
-        CM.REF_MOB2        =         P_MOBILE_NO2_VALUE,  
-        CM.REF_MOB3        =         P_MOBILE_NO3_VALUE,  
-        CM.REF_MOB4        =         P_MOBILE_NO4_VALUE,  
-        CM.CLIENT_TITLE        =         P_SALUTATION1,  
-        CM.TITLE_FATHER_SPOUSE     =         P_SALUTATION2,  
-        CM.CLIENT_LNAME        =         NULL,  
-        CM.CATEGORY_ID     =         P_CLIENT_CAT,  
-        CM.INVESTOR_CODE       =         1,  
-        CM.GUEST_CD        =         NULL,  
-        CM.CLIENT_NAME     =         P_ACCOUNT_NAME,  
-        CM.FATHER_SPOUSE_NAME      =         P_FATHER_NAME,  
-        CM.ADDRESS1        =         P_MAILING_ADDRESS1,  
-        CM.ADDRESS2        =         P_MAILING_ADDRESS2,  
-        CM.FAX     =         P_FAX_VALUE,  
-        CM.EMAIL       =         P_EMAIL_VALUE,  
-        CM.PAN     =         P_CLIENT_PAN,  
-        CM.DOB     =         P_DOB,  
-        CM.MOBILE      =         P_MOBILE_NO_VALUE,  
-        CM.PINCODE     =         P_MAILING_PINCODE,  
-        CM.GENDER      =         NVL (SUBSTR(P_GENDER, 1, 1), NULL),  
-        CM.MARITAL_STATUS      =         P_MARITAL_STATUS,  
-        CM.LEAD_SOURCE     =         P_LEAD_TYPE,  
-        CM.CITY_NAME       =         NVL ((SELECT CITY_NAME FROM CITY_MASTER WHERE CITY_ID = P_MAILING_CITY ), NULL ),  
-        CM.STD1                 =         NVL (SUBSTR(P_PHONE_OFFICE_STD_VALUE, 1, 5), NULL),  
-        CM.STD2                 =         NVL (SUBSTR(P_PHONE_RES_STD_VALUE, 1, 5), NULL),  
-        CM.PHONE1               =         P_PHONE_OFFICE_NUMBER_VALUE,  
-        CM.PHONE2               =         P_PHONE_RES_NUMBER_VALUE,  
-        CM.INVESTOR_CODE      =         P_STATUS_CAT,  
-        CM.OCC_ID      =         P_OCCUPATION,  
-        CM.CITY_ID     =         P_MAILING_CITY,  
-        CM.PER_CITY_ID     =         P_PERMANENT_CITY,  
-        CM.COMM_ID     =         NULL,  
-        CM.COMM_INT_ID     =         NULL,  
-        CM.KYC     =         NULL,  
-        CM.SOURCEID        =         P_EMP_SRC,  
-        CM.RM_CODE     =         P_EMP_RM,  
-        CM.LOGGEDUSERID        =         P_LOGGED_IN_USER,  
-        CM.ACT_CAT     =         P_ACCOUNT_CAT,  
-        CM.MODIFY_DATE  = SYSDATE,
-        CM.MODIFY_USER = P_LOGGED_IN_USER
-    WHERE CM.CLIENT_CODE = SUBSTR(P_EXIST_CLIENT_CODE,1,8);
-        COMMIT;    
+        SET 
+            CM.PER_STATE_ID         = P_PERMANENT_STATE,
+            CM.PER_PINCODE          = P_PERMANENT_PINCODE, 
+            CM.OFFICE_EMAIL         = P_EMAIL_OFFICIAL_VALUE,  
+            CM.PER_ADD1             = P_PERMANENT_ADDRESS1,  
+            CM.PER_ADD2             = P_PERMANENT_ADDRESS2,  
+            CM.REF_NAME1            = P_REFERENCE_NAME1_VALUE,  
+            CM.REF_NAME2            = P_REFERENCE_NAME2_VALUE,  
+            CM.REF_NAME3            = P_REFERENCE_NAME3_VALUE,  
+            CM.REF_NAME4            = P_REFERENCE_NAME4_VALUE,  
+            CM.REF_MOB1             = P_MOBILE_NO1_VALUE,  
+            CM.REF_MOB2             = P_MOBILE_NO2_VALUE,  
+            CM.REF_MOB3             = P_MOBILE_NO3_VALUE,  
+            CM.REF_MOB4             = P_MOBILE_NO4_VALUE,  
+            CM.CLIENT_TITLE         = P_SALUTATION1,  
+            CM.TITLE_FATHER_SPOUSE  = P_SALUTATION2,  
+            CM.CATEGORY_ID          = P_CLIENT_CAT,  
+            CM.INVESTOR_CODE        = P_STATUS_CAT,
+            CM.GUEST_CD             = P_GUEST_CODE,  
+            CM.CLIENT_NAME          = P_ACCOUNT_NAME,  
+            CM.FATHER_SPOUSE_NAME   = P_FATHER_NAME,  
+            CM.ADDRESS1             = P_MAILING_ADDRESS1,  
+            CM.ADDRESS2             = P_MAILING_ADDRESS2,  
+            CM.FAX                  = P_FAX_VALUE,  
+            CM.EMAIL                = P_EMAIL_VALUE,  
+            CM.PAN                  = P_CLIENT_PAN,  
+            CM.DOB                  = P_DOB,  
+            CM.MOBILE               = P_MOBILE_NO_VALUE,  
+            CM.PINCODE              = P_MAILING_PINCODE,  
+            CM.GENDER               = NVL (SUBSTR(P_GENDER, 1, 1), NULL),  
+            CM.MARITAL_STATUS       = P_MARITAL_STATUS,  
+            CM.LEAD_SOURCE          = P_LEAD_TYPE,  
+            CM.CITY_NAME            = NVL ((SELECT CITY_NAME FROM CITY_MASTER WHERE CITY_ID = P_MAILING_CITY ), NULL ),  
+            CM.STD1                 = NVL (SUBSTR(P_PHONE_OFFICE_STD_VALUE, 1, 5), NULL),  
+            CM.STD2                 = NVL (SUBSTR(P_PHONE_RES_STD_VALUE, 1, 5), NULL),  
+            CM.PHONE1               = P_PHONE_OFFICE_NUMBER_VALUE,  
+            CM.PHONE2               = P_PHONE_RES_NUMBER_VALUE,  
+            CM.STATUS               = P_TAX_STATUS,  
+            CM.OCC_ID               = P_OCCUPATION,   
+            CM.CITY_ID              = P_MAILING_CITY,  
+            CM.PER_CITY_ID          = P_PERMANENT_CITY,  
+            CM.SOURCEID             = P_EMP_SRC,  
+            CM.RM_CODE              = P_EMP_RM,  
+            CM.MODIFY_DATE          = SYSDATE,
+            CM.MODIFY_USER          = P_LOGGED_IN_USER
+        WHERE CM.CLIENT_CODE = SUBSTR(P_EXIST_CLIENT_CODE, 1, 8);
 
         UPDATE INVESTOR_MASTER IM
- SET
-    IM.INVESTOR_TITLE          =     P_SALUTATION1,                             
-    IM.BRANCH_CODE         =     P_EMP_SRC,                       
-    IM.INVESTOR_NAME           =     P_ACCOUNT_NAME,
-            IM.G_NAME = P_GUARDIAN_PERSON,
-        IM.G_PAN = P_GUARDIAN_PERSON_PAN,
-        IM.MAR_STATUS = P_MARITAL_STATUS,
-    IM.ADDRESS1            =     P_MAILING_ADDRESS1,                    
-    IM.ADDRESS2            =     P_MAILING_ADDRESS2,                    
-    IM.FAX         =     P_FAX_VALUE,                  
-    IM.EMAIL           =     P_EMAIL_VALUE,                   
-    IM.PAN         =     P_CLIENT_PAN,              
-    IM.DOB         =     P_DOB,                  
-    IM.MOBILE          =     P_MOBILE_NO_VALUE,                 
-    IM.AADHAR_CARD_NO          =     P_AADHAR_VALUE,                   
-    IM.PINCODE         =     P_MAILING_PINCODE,                
-    IM.GENDER          =     NVL (SUBSTR(P_GENDER, 1, 1), NULL),                 
-    IM.PHONE1          =     P_PHONE_OFFICE_NUMBER_VALUE,                 
-    IM.PHONE2          =     P_PHONE_RES_NUMBER_VALUE,                 
-    IM.STATUS          =     P_STATUS_CAT,                
-    IM.CITY_ID         =     P_MAILING_CITY,                
-    IM.KYC         =     NULL,                     
-    --IM.source_id           =     (select client_code from client_master where pan = p_client_pan),  
-    IM.RM_CODE         =     P_EMP_RM,                             
-    IM.REL_ID          =     NULL,                                
-    IM.OCCUPATION_ID           =     P_OCCUPATION,                                  
-    IM.TIMEST          =     SYSDATE,
-    IM.LOGGEDUSERID            =     P_LOGGED_IN_USER
-    WHERE INV_CODE = P_EXIST_CLIENT_CODE;
+        SET
+            IM.INVESTOR_TITLE       = P_SALUTATION1,                             
+            IM.BRANCH_CODE          = P_EMP_SRC,                       
+            IM.INVESTOR_NAME        = P_ACCOUNT_NAME,
+            IM.G_NAME               = P_GUARDIAN_PERSON,
+            IM.G_PAN                = P_GUARDIAN_PERSON_PAN,
+            IM.MAR_STATUS           = P_MARITAL_STATUS,
+            IM.ADDRESS1             = P_MAILING_ADDRESS1,                    
+            IM.ADDRESS2             = P_MAILING_ADDRESS2,                    
+            IM.FAX                  = P_FAX_VALUE,                  
+            IM.EMAIL                = P_EMAIL_VALUE,                   
+            IM.PAN                  = P_CLIENT_PAN,              
+            IM.DOB                  = P_DOB,                  
+            IM.MOBILE               = P_MOBILE_NO_VALUE,                 
+            IM.AADHAR_CARD_NO       = P_AADHAR_VALUE,                   
+            IM.PINCODE              = P_MAILING_PINCODE,                
+            IM.GENDER               = NVL (SUBSTR(P_GENDER, 1, 1), NULL),                 
+            IM.PHONE1               = P_PHONE_OFFICE_NUMBER_VALUE,                 
+            IM.PHONE2               = P_PHONE_RES_NUMBER_VALUE,                 
+            IM.STATUS               = P_TAX_STATUS,                
+            IM.CITY_ID              = P_MAILING_CITY,                
+            IM.RM_CODE              = P_EMP_RM,                             
+            --IM.rel_id          =     null,                                
+            IM.OCCUPATION_ID        = P_OCCUPATION, 
+            IM.CATEGORY_ID          = P_CLIENT_CAT, 
+            IM.MODIFY_DATE          = SYSDATE,
+            IM.MODIFY_USER          = P_LOGGED_IN_USER
+        WHERE INV_CODE = P_EXIST_CLIENT_CODE;
         COMMIT;
+    
+        UPDATE  CLIENT_TEST 
+        SET     MAIN_CODE= V_GENERATED_CLIENT_CODE
+        WHERE   CLIENT_CODE = V_GENERATED_CLIENT_CODE;
+        
+        -- UPDATE TB_COD_UPLAOD INV_CODE WITH INVESTOR CODE OF ADDED HEAD INVESTOR 
+        -- UPDATE  TB_DOC_UPLOAD SET     INV_CODE        = P_EXIST_CLIENT_CODE WHERE   COMMON_ID       = P_DT_NUMBER;
 
-        UPDATE CLIENT_TEST 
-        SET  MAIN_CODE= V_GENERATED_CLIENT_CODE,
-        CLIENT_CODEKYC = P_EXIST_CLIENT_CODE
-        WHERE CLIENT_CODE = V_GENERATED_CLIENT_CODE;
-
+        -- UPDATE INVESTOR_MASTER KYC = YEAS 
+        UPDATE INVESTOR_MASTER SET APPROVED = NULL, KYC = 'YES'
+        WHERE INV_CODE = V_INV_CODE;
+        COMMIT;
+        
         OPEN P_RESULT FOR
-            SELECT 'Account created successfully --> ' || V_GENERATED_CLIENT_CODE  AS MESSAGE FROM DUAL;
-        RETURN;
+            SELECT 'Data Inserted successfully --> ' || V_MYSOURCEID || ' | '  || V_GENERATED_CLIENT_CODE || ' | ' || V_INV_CODE AS MESSAGE FROM DUAL;
+            RETURN;
 
     END IF;
 END IF;
@@ -425,7 +378,7 @@ ELSIF LENGTH(P_EXIST_CLIENT_CODE) >= 11 AND SUBSTR(P_EXIST_CLIENT_CODE, -3) <> '
     WHERE CLIENT_CODE = MYSOURCEID;
 
     -- Update INVESTOR_MASTER
-    UPDATE INVESTOR_MASTER
+    UPDATE INVESTOR_MASTER 
     SET KYC = 'YES'
     WHERE INV_CODE = P_EXIST_CLIENT_CODE;
 
@@ -438,8 +391,7 @@ ELSIF LENGTH(P_EXIST_CLIENT_CODE) >= 11 AND SUBSTR(P_EXIST_CLIENT_CODE, -3) <> '
 END IF;
 
 
-
-IF P_EXIST_CLIENT_CODE IS NULL OR P_EXIST_CLIENT_CODE = 0 THEN -- FRESH ACCOUNT OPENNING
+IF P_EXIST_CLIENT_CODE IS NULL OR P_EXIST_CLIENT_CODE = 0 THEN -- FRESH ACCOUNT OPENING
 
     INSERT INTO CLIENT_MASTER (
         PER_PINCODE, -- PER_PINCODE
@@ -553,98 +505,100 @@ IF P_EXIST_CLIENT_CODE IS NULL OR P_EXIST_CLIENT_CODE = 0 THEN -- FRESH ACCOUNT 
         AND UPPER(TRIM(ADDRESS2))   = UPPER(TRIM(P_MAILING_ADDRESS2))   OR UPPER(TRIM(P_MAILING_ADDRESS2)) IS NULL
         AND UPPER(TRIM(MOBILE))     = UPPER(TRIM(P_MOBILE_NO_VALUE))    OR UPPER(TRIM(P_MOBILE_NO_VALUE)) IS NULL
         AND UPPER(TRIM(SOURCEID))   = UPPER(TRIM(P_EMP_SRC))            OR UPPER(TRIM(P_EMP_SRC)) IS NULL
-        AND UPPER(TRIM(RM_CODE))    = UPPER(TRIM(P_EMP_RM))             OR UPPER(TRIM(P_EMP_RM)) IS NULL;
+        AND UPPER(TRIM(RM_CODE))    = UPPER(TRIM(P_EMP_RM))             OR UPPER(TRIM(P_EMP_RM)) IS NULL
+    ;
     
+
     INSERT INTO CLIENT_TEST (
-    CLIENT_CODE,
-    CLIENTCODE_OLD,
-    BUSINESS_CODE,
-    KYC_STATUS,
-    OCC_ID,
-    STATUS,
-    ACT_CAT,
-    TITLE,
-    CLIENT_NAME,
-    TITLE_FATHER_SPOUSE,
-    FATHER_SPOUSE_NAME,
-    OTHERS1,
-    GENDER,
-    MARITAL_STATUS,
-    NATIONALITY,
-    RESIDENT_NRI,
-    DOB,
-    ANNUAL_INCOME,
-    CLIENT_PAN,
-    LEAD_SOURCE,
-    G_NAME,
-    G_NATIONALITY,
-    G_PAN,
-    GUEST_CODE,
-    ADD1,
-    ADD2,
-    STATE_ID,
-    CITY_ID,
-    PINCODE,
-    OVERSEAS_ADD,
-    FAX,
-    AADHAR_CARD_NO,
-    EMAIL,
-    STD1,
-    TEL1,
-    STD2,
-    TEL2,
-    MOBILE_NO,
-    LOGGEDUSERID,
-    TIMEST,
-    CLIENT_CODEKYC,
-    SOURCE_CODE,
-    MAIN_CODE,
-    BRANCH_CODE
+        CLIENT_CODE,
+        CLIENTCODE_OLD,
+        BUSINESS_CODE,
+        KYC_STATUS,
+        OCC_ID,
+        STATUS,
+        ACT_CAT,
+        TITLE,
+        CLIENT_NAME,
+        TITLE_FATHER_SPOUSE,
+        FATHER_SPOUSE_NAME,
+        OTHERS1,
+        GENDER,
+        MARITAL_STATUS,
+        NATIONALITY,
+        RESIDENT_NRI,
+        DOB,
+        ANNUAL_INCOME,
+        CLIENT_PAN,
+        LEAD_SOURCE,
+        G_NAME,
+        G_NATIONALITY,
+        G_PAN,
+        GUEST_CODE,
+        ADD1,
+        ADD2,
+        STATE_ID,
+        CITY_ID,
+        PINCODE,
+        OVERSEAS_ADD,
+        FAX,
+        AADHAR_CARD_NO,
+        EMAIL,
+        STD1,
+        TEL1,
+        STD2,
+        TEL2,
+        MOBILE_NO,
+        LOGGEDUSERID,
+        TIMEST,
+        CLIENT_CODEKYC,
+        SOURCE_CODE,
+        MAIN_CODE,
+        BRANCH_CODE
     ) VALUES (
-    NULL, -- Assuming CLIENT_CODE is auto-generated
-    P_EXIST_CLIENT_CODE,
-    P_RM_BUSINESS_CODE,
-    'YES',
-    P_OCCUPATION,
-    P_TAX_STATUS ,
-    P_ACCOUNT_CAT,
-    P_SALUTATION1,
-    P_ACCOUNT_NAME,
-    P_SALUTATION2,
-    P_FATHER_NAME,
-    P_ACCOUNT_OTHER,
-    P_GENDER,
-    P_MARITAL_STATUS,
-    P_NATIONALITY,
-    P_RESIDENT_NRI,
-    P_DOB,
-    P_ANNUAL_INCOME,
-    P_CLIENT_PAN,
-    P_LEAD_TYPE,
-    P_GUARDIAN_PERSON,
-    P_GUARDIAN_PERSON_NATIONALITY,
-    P_GUARDIAN_PERSON_PAN,
-    P_GUEST_CODE,
-    P_MAILING_ADDRESS1,
-    P_MAILING_ADDRESS2,
-    P_MAILING_STATE,
-    P_MAILING_CITY,
-    P_MAILING_PINCODE,
-    P_NRI_ADDRESS,
-    P_FAX_VALUE,
-    P_AADHAR_VALUE,
-    P_EMAIL_VALUE,
-    P_PHONE_OFFICE_STD_VALUE,
-    P_PHONE_OFFICE_NUMBER_VALUE,
-    P_PHONE_RES_STD_VALUE,
-    P_PHONE_RES_NUMBER_VALUE,
-    P_MOBILE_NO_VALUE,
-    P_LOGGED_IN_USER,
-    SYSDATE,
-    P_EXIST_CLIENT_CODE, 
-    NULL, -- SOURCE_CODE WILL BE AUTO UPDATE ON CLIENT_CODEKYC UPDATION IN CILENT_TEST
-    NULL, -- MAIN_CODE WILL BE UPDATE AFTER AH CODE GENERATED AND FOR CLIENT HEAD MAIN_CODE WILL BE UDPATED WITH GENERATD AH CLIENT_CODE 
-    P_EMP_SRC
+        NULL, -- Assuming CLIENT_CODE is auto-generated
+        P_EXIST_CLIENT_CODE,
+        P_RM_BUSINESS_CODE,
+        'YES',
+        P_OCCUPATION,
+        P_TAX_STATUS ,
+        P_ACCOUNT_CAT,
+        P_SALUTATION1,
+        P_ACCOUNT_NAME,
+        P_SALUTATION2,
+        P_FATHER_NAME,
+        P_ACCOUNT_OTHER,
+        P_GENDER,
+        P_MARITAL_STATUS,
+        P_NATIONALITY,
+        P_RESIDENT_NRI,
+        P_DOB,
+        P_ANNUAL_INCOME,
+        P_CLIENT_PAN,
+        P_LEAD_TYPE,
+        P_GUARDIAN_PERSON,
+        P_GUARDIAN_PERSON_NATIONALITY,
+        P_GUARDIAN_PERSON_PAN,
+        P_GUEST_CODE,
+        P_MAILING_ADDRESS1,
+        P_MAILING_ADDRESS2,
+        P_MAILING_STATE,
+        P_MAILING_CITY,
+        P_MAILING_PINCODE,
+        P_NRI_ADDRESS,
+        P_FAX_VALUE,
+        P_AADHAR_VALUE,
+        P_EMAIL_VALUE,
+        P_PHONE_OFFICE_STD_VALUE,
+        P_PHONE_OFFICE_NUMBER_VALUE,
+        P_PHONE_RES_STD_VALUE,
+        P_PHONE_RES_NUMBER_VALUE,
+        P_MOBILE_NO_VALUE,
+        P_LOGGED_IN_USER,
+        SYSDATE,
+        P_EXIST_CLIENT_CODE, 
+        NULL, -- SOURCE_CODE WILL BE AUTO UPDATE ON CLIENT_CODEKYC UPDATION IN CILENT_TEST
+        NULL, -- MAIN_CODE WILL BE UPDATE AFTER AH CODE GENERATED AND FOR CLIENT HEAD MAIN_CODE WILL BE UDPATED WITH GENERATD AH CLIENT_CODE 
+        P_EMP_SRC
     ) RETURNING CLIENT_CODE INTO V_GENERATED_CLIENT_CODE;
     COMMIT; 
     

@@ -4,3 +4,4 @@
 Account opening:
 
 Details exist but account not created and this client will be search with only investor search.
+correct in new loader prevent to show loader on the client side button press.
