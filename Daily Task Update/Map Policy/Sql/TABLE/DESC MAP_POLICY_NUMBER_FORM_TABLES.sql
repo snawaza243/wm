@@ -1,0 +1,586 @@
+
+BEGIN  -- BRANCH_MASTER
+    Name                 Null?    Type          
+    -------------------- -------- ------------- 
+    BRANCH_CODE          NOT NULL NUMBER(8)     
+    BRANCH_NAME                   VARCHAR2(100) 
+    ADDRESS1                      VARCHAR2(200) 
+    ADDRESS2                      VARCHAR2(200) 
+    CITY_ID                       VARCHAR2(5)   
+    PHONE                         VARCHAR2(100) 
+    MOBILE                        NUMBER(12)    
+    FAX                           NUMBER(12)    
+    EMAIL                         VARCHAR2(50)  
+    CONTACTPER                    VARCHAR2(100) 
+    CATEGORY_ID                   NUMBER(4)     
+    BRANCH_TYPE_ID                NUMBER(3)     
+    CPEMAILID                     VARCHAR2(100) 
+    BANKID                        NUMBER(3)     
+    ACCTYPEID                     NUMBER(2)     
+    WEBSITE                       VARCHAR2(50)  
+    PAYMENTMODEID                 NUMBER(2)     
+    REMARK                        VARCHAR2(200) 
+    ACCNO                         VARCHAR2(30)  
+    BRANCHCREDATE                 DATE          
+    STATUS                        CHAR(2)       
+    LOCATION_ID                   VARCHAR2(8)   
+    EXIST_CODE                    VARCHAR2(3)   
+    REGION_ID                     VARCHAR2(3)   
+    ZONE_ID                       VARCHAR2(5)   
+    PREFIX                        VARCHAR2(2)   
+    ACC_BR                        VARCHAR2(1)   
+    LOGGEDUSERID                  VARCHAR2(10)  
+    TIMEST                        DATE          
+    BRANCH_RM                     NUMBER(10)    
+    BRANCH_TAR_CAT                NUMBER(5)     
+    AC_BRANCH                     VARCHAR2(3)   
+    WEEKLY_OFF                    VARCHAR2(10)  
+    NAVISION_CODE                 VARCHAR2(20)  
+    BRANCH_NICKNAME               VARCHAR2(100) 
+    SUB_JV                        CHAR(1)       
+    CC_NAVISION                   NUMBER(8)     
+    WM_INCOME                     NUMBER(8)     
+    BRANCH_TYPE                   VARCHAR2(8)   
+    BRANCH_NAME1                  VARCHAR2(100) 
+    NSDL_NO                       VARCHAR2(20)  
+    BRANCH_DEACTIVATE_DT          DATE          
+    B15_CREDIT                    CHAR(1)       
+    PINCODE                       NUMBER(6)     
+    GST_ADD1                      VARCHAR2(200) 
+    GST_ADD2                      VARCHAR2(200) 
+    GST_PIN                       NUMBER(6)     
+    REGIONAL_HEAD                 VARCHAR2(200) 
+    ZONAL_HEAD                    VARCHAR2(200) 
+    CHANNEL_HEAD                  VARCHAR2(200) 
+    KARVY_NSDL_NO                 VARCHAR2(20)  
+    SEQ_NO                        NUMBER        
+    BRANCH_LOCATOR_ADD1           VARCHAR2(200) 
+    BRANCH_LOCATOR_ADD2           VARCHAR2(200) 
+    AREA                          VARCHAR2(25)  
+    BRANCH_TYPE1                  VARCHAR2(20)  
+
+END;
+
+
+Name            Null?    Type         
+--------------- -------- ------------ 
+ZONE_ID         NOT NULL VARCHAR2(5)  
+ZONE_NAME                VARCHAR2(25) 
+ZONEDESCRIPTION          VARCHAR2(50) 
+REGION_ID                VARCHAR2(4)  
+LOGGEDUSERID             VARCHAR2(10) 
+TIMEST                   DATE         
+ZONE_RM_CODE             NUMBER(8)    
+
+Name       Null? Type          
+---------- ----- ------------- 
+POLICY_NO        VARCHAR2(255) 
+COMPANY_CD       VARCHAR2(10)  
+SYS_AR_NO        NUMBER(12)    
+
+Name                       Null?    Type           
+-------------------------- -------- -------------- 
+SYS_AR_NO                  NOT NULL NUMBER(12)     
+SYS_AR_DT                           DATE           
+AR_NO                               NUMBER(12)     
+AR_DT                               DATE           
+BRANCH_CD                           NUMBER(8)      
+EMP_NO                              NUMBER(12)     
+REF_EMP_NO                          NUMBER(12)     
+CLIENT_CD                           VARCHAR2(13)   
+APP_NO                              VARCHAR2(40)   
+APP_DT                              DATE           
+P_NAME                              VARCHAR2(55)   
+I_NAME                              VARCHAR2(55)   
+N_NAME                              VARCHAR2(55)   
+P_DOB                               DATE           
+I_DOB                               DATE           
+N_DOB                               DATE           
+P_OCC_CD                            NUMBER(2)      
+I_OCC_CD                            NUMBER(2)      
+N_OCC_CD                            NUMBER(2)      
+RELATION_CD                         NUMBER(2)      
+ADD1                                VARCHAR2(500)  
+ADD2                                VARCHAR2(500)  
+CITY                                VARCHAR2(40)   
+STATE_CD                            NUMBER(5)      
+PIN                                 VARCHAR2(12)   
+IADD1                               VARCHAR2(200)  
+IADD2                               VARCHAR2(100)  
+ICITY                               VARCHAR2(40)   
+ISTATE_CD                           NUMBER(5)      
+IPIN                                VARCHAR2(12)   
+STD_RESI                            VARCHAR2(8)    
+PHONE_RESI                          VARCHAR2(50)   
+STD_OFF                             VARCHAR2(8)    
+PHONE_OFF                           VARCHAR2(30)   
+MOBILE                              VARCHAR2(30)   
+EMAIL                               VARCHAR2(60)   
+COMPANY_CD                          VARCHAR2(10)   
+PLAN_NO                             NUMBER(6)      
+SA                                  NUMBER(14,2)   
+PLY_TERM                            NUMBER(3)      
+PREM_TERM                           NUMBER(3)      
+PREM_FREQ                           NUMBER(2)      
+PREM_AMT                            NUMBER(14,2)   
+RIDER_PREM                          NUMBER(14,2)   
+XRT                                 NUMBER(14,2)   
+TOTAL_PREM                          NUMBER(14,2)   
+ANUAL_PREM                          NUMBER(14,2)   
+BACK_PREM                           NUMBER(14,2)   
+EXPENSE                             NUMBER(14,2)   
+WT_PREM                             NUMBER(14,2)   
+WT_ANUAL_PREM                       NUMBER(14,2)   
+PAYMENT_MODE                        VARCHAR2(20)   
+CHQ_NO                              VARCHAR2(50)   
+CHQ_DT                              DATE           
+BANK_BRANCH                         VARCHAR2(45)   
+FRESH_RENEWAL                       NUMBER(2)      
+POLICY_NO                           VARCHAR2(45)   
+LOGIN_DT                            DATE           
+DOC                                 DATE           
+PLY_ISSUE_DT                        DATE           
+NEXT_DUE_DT                         DATE           
+NEXT_ACTION_DT                      DATE           
+STATUS_CD                           VARCHAR2(2)    
+USERID                              VARCHAR2(50)   
+ENTRY_DT                            DATE           
+COMM                                NUMBER(14,2)   
+HO                                  VARCHAR2(1)    
+BRANCH_CLIENT_CD                    VARCHAR2(10)   
+BRANCH_SYS_AR_NO                    NUMBER(12)     
+MANAGER_NO                          NUMBER(12)     
+PTYPE                               VARCHAR2(5)    
+REMARKS                             VARCHAR2(255)  
+FINANCE_PLAN                        CHAR(1)        
+REC_FLAG                            VARCHAR2(1)    
+RECO_MMYYYY                         DATE           
+REMARKRECO                          VARCHAR2(1000) 
+COMM_RECEIVE                        NUMBER(10)     
+OPE_RECEIVE                         NUMBER(10,2)   
+RECO_CAN_DATE                       DATE           
+HISTORY_FLAG                        VARCHAR2(5)    
+DIRECT_SALE                         VARCHAR2(10)   
+LAST_UPDATE                         DATE           
+MODIFIED_USER                       VARCHAR2(10)   
+FPF_DATE                            DATE           
+FAMILY_HEAD                         NUMBER(13)     
+FPL_DATE                            DATE           
+GROSS_PREM                          NUMBER(16,2)   
+VOUCHER_NO                          NUMBER(10)     
+INTENDED_PREM                       NUMBER(3)      
+CHEQ_AMT                            NUMBER(16,2)   
+CROR_PLANNO                         VARCHAR2(200)  
+PLAN_TYPE                           VARCHAR2(50)   
+SIP_ADV_FLAG                        CHAR(1)        
+MODAL_PREM                          CHAR(1)        
+BEF_PREM_AMT                        NUMBER(14,2)   
+TD_ID                               NUMBER(5)      
+CHQ_DEP_DATE                        DATE           
+GUEST_CD                            VARCHAR2(12)   
+PITCH_BOOK_NO                       VARCHAR2(20)   
+AUDIT_FPDATE                        DATE           
+MATCHED_CD                          VARCHAR2(20)   
+LAST_UPDATE_DT                      DATE           
+MATCHED_COMM_CD                     VARCHAR2(20)   
+RECO_USER                           VARCHAR2(30)   
+RECO_DATE                           DATE           
+VERIFY_AR                           NUMBER(1)      
+P_CODE                              VARCHAR2(15)   
+N_CODE                              VARCHAR2(15)   
+VERIFY_USER                         VARCHAR2(10)   
+VERIFY_DT                           DATE           
+LAPSED_FLAG                         VARCHAR2(1)    
+NR_FLAG                             VARCHAR2(2)    
+NR_DATE                             DATE           
+I_NAME1                             VARCHAR2(55)   
+P_NAME1                             VARCHAR2(55)   
+FP_STATUS                           CHAR(1)        
+MANUF_ID                            NUMBER         
+MODEL_ID                            NUMBER         
+VARIENT_ID                          NUMBER         
+MODEL_NAME                          VARCHAR2(30)   
+VARIENT_NAME                        VARCHAR2(40)   
+MANUF_YEAR                          NUMBER         
+EXPENSE_NEW                         NUMBER         
+MODIFY_TALISMA                      DATE           
+STATUS_CD_REN                       VARCHAR2(50)   
+MODIFY_COMM_USER                    VARCHAR2(10)   
+LAST_UPDATE_COMM                    DATE           
+LAST_UPDATE_DT_COMM                 DATE           
+REC_COMM_FLAG                       VARCHAR2(2)    
+COMM_AMT                            NUMBER(14,2)   
+TRAN_SRC                            VARCHAR2(10)   
+REMARKRECO1                         VARCHAR2(50)   
+MATCHED_CD1                         VARCHAR2(20)   
+MODIFIED_USER1                      VARCHAR2(10)   
+LAST_UPDATE1                        DATE           
+LAST_UPDATE_DT1                     DATE           
+REC_FLAG1                           VARCHAR2(1)    
+REMARKS1                            VARCHAR2(100)  
+OLD_POLICY_NO                       VARCHAR2(50)   
+ANARENEW                            VARCHAR2(2)    
+OD_SLAB                             NUMBER(5)      
+AUTO_RECO                           DATE           
+TRAN_TYPE                           VARCHAR2(15)   
+REGISTRATION_DATE                   DATE           
+FAMILY_DOC                          VARCHAR2(20)   
+DISEASE                             VARCHAR2(20)   
+MATERNITY_COVER                     VARCHAR2(6)    
+DISEASE_COVER                       VARCHAR2(6)    
+CON1                                VARCHAR2(100)  
+CON2                                VARCHAR2(100)  
+CON3                                VARCHAR2(100)  
+AMOUNT_CLAIMED                      NUMBER(16,2)   
+PROPOSAL_FORMNO                     NUMBER(10)     
+PRE_POLICY_NO                       VARCHAR2(15)   
+PERIOD_INSURANCE                    DATE           
+INSURER_NAME                        VARCHAR2(50)   
+DIV_OFF_NO                          VARCHAR2(20)   
+BR_ADD                              VARCHAR2(250)  
+CPNAME                              VARCHAR2(25)   
+CPNO                                VARCHAR2(20)   
+SYS_ENTRY_DT                        DATE           
+PDR_NO                              VARCHAR2(20)   
+PDR_DATE                            DATE           
+PDR_AMT                             NUMBER         
+MOBILE2                             NUMBER(12)     
+ESA_SA                              NUMBER(20,2)   
+ESA_PREMIUM                         NUMBER(20,2)   
+REC_DUP_FLAG                        VARCHAR2(5)    
+MYRECO_USER                         VARCHAR2(10)   
+MYRECO_DATE                         DATE           
+AMOUNT_DIFF                         NUMBER(20,2)   
+CHASIS_NO                           VARCHAR2(30)   
+ENGINE_NO                           VARCHAR2(25)   
+GI_RECO                             CHAR(1)        
+GI_RECO_DATE                        DATE           
+CALL_CENTER_RM                      NUMBER(10)     
+CALL_CENTER_BRANCH                  NUMBER(8)      
+ACT_SYS_AR_DT                       DATE           
+RENEWAL_RECO                        VARCHAR2(20)   
+NO_OF_PASSENGER                     NUMBER         
+TOTAL_LICENSED_AMT                  NUMBER(12,2)   
+TERM                                VARCHAR2(10)   
+NOS                                 NUMBER(5)      
+FRESH_RENEWAL_MONTH                 NUMBER         
+TRAN_SOURCE                         VARCHAR2(2)    
+OWNER_DRIVER                        NUMBER(5,2)    
+PAID_DRIVER                         NUMBER(5,2)    
+UNNAMED_PA                          NUMBER(10,2)   
+ISSUED_USER_ID                      VARCHAR2(100)  
+ISSUED_USER_DATE                    DATE           
+RECO_GI_FLAG                        VARCHAR2(5)    
+RECO_GI_USER                        VARCHAR2(10)   
+RECO_GI_DATE                        DATE           
+GROSS_PREM_AMT                      NUMBER(14,2)   
+RENEWAL_PAY                         VARCHAR2(2)    
+P_MOBILE                            NUMBER(13)     
+BASE_UPD                            VARCHAR2(1)    
+PAID_TO_COM                         NUMBER(2)      
+APPROVE_NON_ECS                     CHAR(1)        
+P_EMAIL                             VARCHAR2(50)   
+COLLECTED_RENEWAL_PREM              NUMBER(14,2)   
+RENEWAL_STATUS                      VARCHAR2(2)    
+PORTABLE_COMPANY_NO                 VARCHAR2(45)   
+PORTABLE_POLICY_NO                  VARCHAR2(45)   
+TEMPAR_NO                           VARCHAR2(15)   
+LAPSED_DATE                         DATE           
+LAPSED_MNTHS                        NUMBER(5)      
+DOC_ID                              VARCHAR2(50)   
+POLICY_DISPATCH_DATE                DATE           
+MAP_UNMAP                           VARCHAR2(1)    
+REVERSE                             CHAR(1)        
+CLIENT_TYPE                         VARCHAR2(50)   
+EXPENSE_PER                         NUMBER(20,3)   
+INTRO_EXP                           NUMBER(4,2)    
+SUPER_ANA_CODE                      NUMBER(10)     
+EIAFORM                             VARCHAR2(15)   
+IRNAME                              VARCHAR2(10)   
+EIAAC                               NUMBER(15)     
+POSP_TRAN                           CHAR(1)        
+LEAD_ID                             VARCHAR2(50)   
+POSP_EXPENSE                        NUMBER(14,2)   
+UPD_API                             CHAR(1)        
+THIRD_PARTY_PREM                    NUMBER(14,2)   
+CONVERSION                          CHAR(1)        
+BACKDATED_FLAG                      CHAR(1)        
+CON_BCODE                           VARCHAR2(10)   
+OD_RATE                             NUMBER(6,4)    
+OD_EXPENSE                          NUMBER(14,2)   
+TP_RATE                             NUMBER(6,4)    
+TP_EXPENSE                          NUMBER(14,2)   
+PREMIUM_TYPE_ID                     NUMBER(5)      
+PLY_EXPIRYDATE_TP                   DATE           
+POLICY_DOCUMENT_TYPE                VARCHAR2(100)  
+GST_ODRIVER                         NUMBER(14,2)   
+GST_PAIDDRIVER                      NUMBER(14,2)   
+GST_UNNAMEDPA                       NUMBER(14,2)   
+GST_OD                              NUMBER(14,2)   
+GST_TP                              NUMBER(14,2)   
+OD_PREM_REST                        NUMBER(14,2)   
+IRDA_RM                             VARCHAR2(10)   
+IRDA_BRANCH                         VARCHAR2(10)   
+PROPOSER_NAME_MISDATA               VARCHAR2(100)  
+STATE_ID                            VARCHAR2(150)  
+RTO_CODE                            VARCHAR2(500)  
+FUEL_ID                             VARCHAR2(50)   
+INSURER_VARIANTNAME                 VARCHAR2(100)  
+IS_OD_RENEWAL                       CHAR(1)        
+FUTURE_MODE                         VARCHAR2(10)   
+ISSUPERTOPUP                        CHAR(1)        
+DEDUCTIBLE                          NUMBER(14,2)   
+PLAN_CATEGORY                       VARCHAR2(10)   
+IS_RETIREMENT_PLANNING              CHAR(1)        
+ORIG_DOC_ID                         VARCHAR2(20)   
+IS_INTERNAL_PORT                    CHAR(1)        
+IS_STANDALONE_TP                    CHAR(1)        
+TON                                 NUMBER(10,2)   
+IS_PRE_RETIREMENT_PLANNING          CHAR(1)        
+NONPOSP_EXPENSE                     NUMBER(14,2)   
+AGENT_CODE_CHILD                    NUMBER(13)     
+NEW_SYS_AR_NO                       NUMBER(12)     
+PREM_AMT_TERR                       NUMBER(14,2)   
+PET_TYPE_ID                         NUMBER         
+BREED_CAT_ID                        NUMBER         
+BREED_ID                            NUMBER         
+PET_VACC_STATUS                     CHAR(1)        
+PET_GENDER                          VARCHAR2(6)    
+PET_AGE                             NUMBER         
+DISEASES_ID                         NUMBER         
+SOURCE                              VARCHAR2(10)   
+TOTAL_GROSS_COLLECTION              NUMBER(16,2)   
+
+Name                   Null?    Type          
+---------------------- -------- ------------- 
+INV_CODE               NOT NULL NUMBER(13)    
+INVESTOR_NAME                   VARCHAR2(100) 
+ADDRESS1                        VARCHAR2(250) 
+ADDRESS2                        VARCHAR2(250) 
+CITY_ID                         VARCHAR2(5)   
+PHONE                           VARCHAR2(100) 
+FAX                             VARCHAR2(15)  
+EMAIL                           VARCHAR2(100) 
+SOURCE_ID                       NUMBER(8)     
+CATEGORY_ID                     NUMBER(4)     
+CONTECT_PER_NAME                VARCHAR2(50)  
+CONTECT_PER_PHONE               NUMBER(12)    
+CONTECT_PER_EMAIL               VARCHAR2(30)  
+ACC_NUMBER                      VARCHAR2(20)  
+RM_CODE                         NUMBER(8)     
+PAYMENTMODEID                   NUMBER(2)     
+INVESTOR_CODE                   NUMBER(3)     
+TYPE                            NUMBER(20)    
+BRANCH_CODE                     NUMBER(8)     
+MOBILE                          NUMBER(20)    
+LOCATION_ID                     VARCHAR2(25)  
+PREFIX                          VARCHAR2(2)   
+DOB                             DATE          
+PAN                             VARCHAR2(50)  
+MAPIN                           VARCHAR2(30)  
+PINCODE                         VARCHAR2(20)  
+REL_ID                          NUMBER(2)     
+OCCUPATION_ID                   NUMBER(3)     
+ORAGANISATION                   VARCHAR2(30)  
+DESG                            VARCHAR2(100) 
+ANN_DATE                        DATE          
+LOGGEDUSERID                    VARCHAR2(30)  
+TIMEST                          DATE          
+NEW_RM_CODE                     NUMBER(8)     
+NEW_BRANCH_CODE                 NUMBER(8)     
+OLD_RM_CODE                     NUMBER(8)     
+NEW_RM_CODE1                    NUMBER(8)     
+NEW_BRANCH_CODE1                NUMBER(8)     
+OLD_BRANCH_CODE                 NUMBER(8)     
+FLAG                            CHAR(1)       
+FROM_RM_CODE                    NUMBER(8)     
+FROM_SOURCEID                   NUMBER(8)     
+DEPENDENT                       CHAR(1)       
+LIFE_INSURANCE_COVER            NUMBER(10)    
+HEALTH_INSURANCE_COVER          NUMBER(10)    
+LIFE_PREMIUM                    NUMBER(7)     
+GENERAL_PREMIUM                 NUMBER(7)     
+FP                              CHAR(1)       
+FPF_DATE                        DATE          
+FPL_DATE                        DATE          
+GENDER                          CHAR(1)       
+GOVT                            CHAR(1)       
+MAR_STATUS                      VARCHAR2(10)  
+FAMILY_HEAD                     NUMBER(13)    
+TAX                             NUMBER(2)     
+STATUS                          VARCHAR2(50)  
+AUDIT_DATE                      DATE          
+IMPLEMENTED_DATE                DATE          
+FAMILY_GROUP                    NUMBER(13)    
+DP_ID                           VARCHAR2(20)  
+DP_NAME                         VARCHAR2(100) 
+CLIENT_ID                       VARCHAR2(20)  
+DEPOSIT_TYPE                    CHAR(1)       
+MOB_CHK_VALUE                   NUMBER        
+MOB_REL_NAME                    VARCHAR2(50)  
+MOB_NAME_REL                    VARCHAR2(50)  
+MIN_NO                          VARCHAR2(20)  
+MODIFY_USER                     VARCHAR2(30)  
+MODIFY_DATE                     DATE          
+VTIGER_FLAG                     CHAR(1)       
+SUBANA                          VARCHAR2(15)  
+EMPID                           VARCHAR2(10)  
+KYC                             VARCHAR2(5)   
+KYCG                            VARCHAR2(5)   
+INVESTOR_TITLE                  VARCHAR2(20)  
+INVESTOR_LNAME                  VARCHAR2(50)  
+G_NAME                          VARCHAR2(50)  
+G_PAN                           VARCHAR2(10)  
+APPROVED                        VARCHAR2(6)   
+DIFFER_FLAG                     VARCHAR2(10)  
+LAST_TRAN_DT_1                  DATE          
+ACTIVE_DATE                     DATE          
+FLAG_INACTIVE                   CHAR(1)       
+LAST_TRAN_DT_1_PRE              DATE          
+FP_POTENTIAL                    VARCHAR2(1)   
+FP_REASON_ID                    VARCHAR2(10)  
+PHONE1                          VARCHAR2(30)  
+PHONE2                          VARCHAR2(15)  
+CRADD                           VARCHAR2(150) 
+CRADD2                          VARCHAR2(150) 
+P_PINCODE                       VARCHAR2(10)  
+SMS_SENT_STATUS                 CHAR(1)       
+SMS_DATE                        DATE          
+MFTECH_USERID                   VARCHAR2(20)  
+MFTECH_OPENDATE                 DATE          
+LOCATIONS                       VARCHAR2(50)  
+CLIENT_TYPE                     VARCHAR2(20)  
+MOBILE2                         NUMBER(12)    
+AADHAR_CARD_NO                  NUMBER(16)    
+MANDATE_FLAG                    CHAR(1)       
+CAMS_FLAG                       CHAR(1)       
+CORPORATE_NAME                  VARCHAR2(100) 
+MIN_TR_DATE                     DATE          
+SOURCE_OF_CLIENT                VARCHAR2(50)  
+EMAIL_VERIFY                    VARCHAR2(25)  
+
+Name                  Null?    Type             
+--------------------- -------- ---------------- 
+RM_CODE               NOT NULL NUMBER(8)        
+RM_NAME                        VARCHAR2(60)     
+ADDRESS1                       VARCHAR2(2000)   
+ADDRESS2                       VARCHAR2(100)    
+CITY_ID                        VARCHAR2(5)      
+PIN                            NUMBER(6)        
+PHONE                          VARCHAR2(100)    
+MOBILE                         NUMBER(10)       
+FAX                            NUMBER(12)       
+EMAIL                          VARCHAR2(50)     
+JOININGDATE                    DATE             
+LEAVINGDATE                    DATE             
+CATEGORY_ID                    NUMBER(4)        
+TYPE                           VARCHAR2(10)     
+SOURCE                         NUMBER(8)        
+AMFICERT                       CHAR(1)          
+AMFIEXTYPE                     NUMBER(2)        
+AMFIID                         VARCHAR2(20)     
+DESGID                         NUMBER(10)       
+REMARK                         VARCHAR2(200)    
+SEGMENTID                      NUMBER(2)        
+PAYROLL_ID                     VARCHAR2(10)     
+REPORTING_TO                   NUMBER(8)        
+PREFIX                         VARCHAR2(2)      
+PROD_CODE                      VARCHAR2(5)      
+DOB                            DATE             
+MARITAL_STATUS                 VARCHAR2(20)     
+ANN_DATE                       DATE             
+SPOUSE_NAME                    VARCHAR2(50)     
+SPOUSE_DOB                     DATE             
+LOCATION_ID                    VARCHAR2(8)      
+COMP_CODE                      VARCHAR2(2)      
+EMP_CODE                       VARCHAR2(8)      
+LOGGEDUSERID                   VARCHAR2(10)     
+TIMEST                         DATE             
+NEW_SOURCE                     NUMBER(8)        
+SOURCE1                        NUMBER(8)        
+DCMS_FLAG                      CHAR(1)          
+INCENTIVE_CAL_LEVEL            VARCHAR2(10)     
+BANK_NAME                      VARCHAR2(40)     
+ACC_NO                         VARCHAR2(15)     
+NICK_NAME                      VARCHAR2(25)     
+HOUSE_FLAG                     VARCHAR2(2)      
+DT_MOD_DATE                    DATE             
+DES_LEVEL                      VARCHAR2(10)     
+TMP_RESIGN                     CHAR(1)          
+TDA_BATCH                      VARCHAR2(30)     
+FATHER_NAME                    VARCHAR2(80)     
+LAST_INCREMENT_DT              DATE             
+INCR_AMT                       NUMBER(10,2)     
+REPORTING_1                    VARCHAR2(10)     
+REPORTING_2                    VARCHAR2(10)     
+REPORTING_3                    VARCHAR2(10)     
+REPORTING_4                    VARCHAR2(10)     
+DESIGNATION_LEVEL              VARCHAR2(50)     
+DT_TEMP_RESIGN                 DATE             
+ATTEN_ONLINE                   CHAR(1)          
+LATEEARLYFLAG                  CHAR(1)          
+GRADE                          VARCHAR2(10)     
+EUIN                           VARCHAR2(20)     
+EXPERIENCE                     NUMBER(38)       
+SALARIED                       VARCHAR2(5 CHAR) 
+DEPT_DESC                      VARCHAR2(200)    
+EUIN_EXPIRY                    DATE             
+PAN_NO                         VARCHAR2(15)     
+HRMS_CREATIONDATE              DATE             
+REPORTING_MANAGER              VARCHAR2(10)     
+REASON_LEAVING                 VARCHAR2(100)    
+ADD_REPLACE                    VARCHAR2(100)    
+SOURCE_HIRING                  VARCHAR2(100)    
+PROF_EXP                       VARCHAR2(100)    
+GENDER                         CHAR(1)          
+EMP_STIPEND                    NUMBER           
+NISM_STATUS                    VARCHAR2(50)     
+REPORTING_PAYROLL_ID           VARCHAR2(10)     
+HIGHEST_QUALIFICATION          VARCHAR2(3000)   
+CITY_NAME                      VARCHAR2(300)    
+
+Name              Null?    Type          
+----------------- -------- ------------- 
+REGION_ID         NOT NULL VARCHAR2(4)   
+REGION_NAME                VARCHAR2(100) 
+REGIONDESCRIPTION          VARCHAR2(50)  
+HO_ID                      VARCHAR2(3)   
+LOGGEDUSERID               VARCHAR2(10)  
+TIMEST                     DATE          
+ACTIVE                     VARCHAR2(1)   
+
+Name              Null?    Type         
+----------------- -------- ------------ 
+STATE_ID          NOT NULL NUMBER(3)    
+STATE_NAME                 VARCHAR2(50) 
+LOGGEDUSERID               VARCHAR2(10) 
+TIMEST                     DATE         
+ZONE_ID                    VARCHAR2(3)  
+COUNTRY_ID                 NUMBER(5)    
+DEL_FLAG                   VARCHAR2(5)  
+NPS_STATE_ID               VARCHAR2(4)  
+GST_STATE_TYPE             VARCHAR2(6)  
+GST_STATE_CODE             VARCHAR2(10) 
+GST_ARN_NO                 VARCHAR2(10) 
+GSTIN                      VARCHAR2(50) 
+STATE_CD                   VARCHAR2(3)  
+STATE_COST_CENTER          VARCHAR2(8)  
+NAVISION_CODE              VARCHAR2(10) 
+GL_NAME                    VARCHAR2(40) 
+VENDOR_CODE                VARCHAR2(10) 
+VENDOR_NAME                VARCHAR2(40) 
+
+Name         Null?    Type         
+------------ -------- ------------ 
+CITY_ID      NOT NULL VARCHAR2(5)  
+CITY_NAME             VARCHAR2(50) 
+PINCODE               NUMBER(6)    
+ZONE_ID               VARCHAR2(3)  
+STATE_ID              NUMBER(3)    
+LOGGEDUSERID          VARCHAR2(10) 
+TIMEST                DATE         
+CC_SUPPORT            CHAR(1)      
+BRANCH_EXIST          CHAR(1)      
+B2B_CITY_ID           NUMBER       
+DEL_FLAG              VARCHAR2(5)  
+REMARKS               VARCHAR2(20) 
