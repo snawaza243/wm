@@ -6,3 +6,5 @@ CREATE TABLE WEALTHMAKER.PSM_GLOBAL_WORKING_DATA (
     LOGGEDUSER      VARCHAR2(10),
     TIMEST          DATE DEFAULT SYSDATE -- Automatically capture current timestamp
 );
+
+this table is updated
