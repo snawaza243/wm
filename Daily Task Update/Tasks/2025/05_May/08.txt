@@ -1,1 +1,6 @@
 2025-05-08 - Thursday
+
+
+enc/dec aadhar in ao
+rm active by bss_code from ct
+validate bss_code 
