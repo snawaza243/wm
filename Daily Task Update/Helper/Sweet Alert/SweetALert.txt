@@ -1,0 +1,30 @@
+<!-- Include SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script type="text/javascript">
+    function confirmImport() {
+        var ddl = document.getElementById('<%= companySelect.ClientID %>');
+        var selectedText = ddl.options[ddl.selectedIndex].text;
+
+        var htmlMessage = (selectedText === "Select Company")
+            ? "You are importing data for <strong>All Companies</strong> from sheet. Do you want to proceed?"
+            : "You are importing data for <strong>" + selectedText + "</strong> company from sheet. Do you want to proceed?";
+
+        Swal.fire({
+            title: 'Confirm Import',
+            html: htmlMessage,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, proceed',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                showClientLoader();
+                document.getElementById('<%= btnImport.ClientID %>').click(); // or form.submit()
+            }
+        });
+
+        return false; // prevent default submit, we'll trigger it manually
+    }
+
+</script>
