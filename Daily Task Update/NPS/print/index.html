@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+  <body>
+                    <style>
+                    body {
+                        font-family: Arial, sans-serif;
+                        padding: 20px;
+                        font-size: 12px;
+                    }
+                    .header {
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: flex-start;
+                        margin-bottom: 30px;
+                        border-bottom: 1px solid black;
+                    }
+                    .logo-section {
+                        display: flex;
+                        align-items: center;
+                    }
+                    .logo {
+                        width: 50px;
+                        height: 50px;
+                        margin-right: 10px;
+                    }
+                    .title-section {
+                        text-align: left;
+                    }
+                    .user-info {
+                        text-align: right;
+                    }
+                    .main-content {
+                        border: 1px solid black;
+                        padding: 20px;
+                        margin-top: 20px;
+                    }
+                    .field-row {
+                        margin: 10px 0;
+                        display: flex;
+                    }
+                    .field-label {
+                        width: 200px;
+                        font-weight: normal;
+                    }
+                    .field-value {
+                        flex: 1;
+                        border-bottom: 1px solid black;
+                        min-height: 18px;
+                    }
+                    .title {
+                        font-size: 14px;
+                        font-weight: bold;
+                    }
+                    @media print {
+                        body {
+                            print-color-adjust: exact;
+                            -webkit-print-color-adjust: exact;
+                        }
+                    }
+                </style>
+                <div class=""header"">
+                    <div class=""logo-section"">
+                        <img src={"logo.jpes"} alt=""WealthMaker"" class=""logo"">
+                        <div class=""title-section"">
+                            <div class=""title"">NPS Transaction Receipt</div>
+                        </div>
+                    </div>
+                    <div class=""user-info"">
+                        User Id: {pc.currentLoginID()}<br>
+                        Run Date: {DateTime.Now.ToString("dd/MM/yyyy")}
+                    </div>
+                </div>
+
+                <div class=""main-content"">
+                    <div class=""field-row"">
+                        <span class=""field-label"">SOF_BO No :</span>
+                        <span class=""field-value"">{TranID}</span>
+                    </div>
+                    
+                    <div class=""field-row"">
+                        <span class=""field-label"">Request Type :</span>
+                        <span class=""field-value"">{TranType}</span>
+                    </div>
+                    
+                    <div class=""field-row"">
+                        <span class=""field-label"">Type of BR Subscriber :</span>
+                        <span class=""field-value"">{TranSRC}</span>
+                    </div>
+                    
+                    <div class=""field-row"">
+                        <span class=""field-label"">Individual/Non-BR/KYC :</span>
+                        <span class=""field-value"">{BSSRMCODE}</span>
+                    </div>
+                    
+                    <div class=""field-row"">
+                        <span class=""field-label"">Mode of Payment :</span>
+                        <span class=""field-value"">{PayMode}</span>
+                    </div>
+
+                     <div class=""field-row"">
+     <span class=""field-label"">Receipt Number :</span>
+     <span class=""field-value"">{UNIQUE_ID}</span>
+ </div>
+                    
+                    <div class=""field-row"">
+                        <span class=""field-label"">Cheque/DD No :</span>
+                        <span class=""field-value""></span>
+                                           <div class=""field-row"">
+    <span class=""field-label"">Date :</span>
+    <span class=""field-value"">{newTranDate}</span>
+</div> <span class=""field-value""></span>
+                    </div>
+                    
+                    <div class=""field-row"">
+                        <span class=""field-label"">Amount Received Tier 1 :</span>
+                        <span class=""field-value"">{AMOUNT1}</span>
+                    </div>
+                    
+                    <div class=""field-row"">
+                        <span class=""field-label"">Amount Received Tier 2 :</span>
+                        <span class=""field-value"">{AMOUNT2}</span>
+                    </div>
+                </div>
+            </body>
+</html>
