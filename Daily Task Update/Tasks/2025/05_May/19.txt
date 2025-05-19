@@ -1,1 +1,6 @@
 2025-05-19 - Monday
+
+git add WM/.vs/WM.csproj.dtbcache.json
+git add WM/Controllers/PsmController.cs
+git add WM/Masters/DueAndPaidDataImporting.aspx.cs
+git add WM/Tree/global_mapping_interface.aspx.cs
