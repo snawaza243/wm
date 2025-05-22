@@ -4,3 +4,12 @@ git add WM/Controllers/PsmController.cs
 git add WM/Masters/AccountOpening.aspx
 git add WM/Masters/DueAndPaidDataImporting.aspx.cs
 git add WM/Tree/global_mapping_interface.aspx.cs
+
+
+
+SELECT CORPORATE_NAME,ref_tran_code,manual_arno,BANK_NAME,folio_no,APP_NO,PAYMENT_MODE,INVESTOR_TYPE,TR_DATE,CLIENT_CODE,MUT_CODE,SCH_CODE,TRAN_TYPE,AMOUNT, BRANCH_CODE,SOURCE_CODE,RMCODE,BUSINESS_RMCODE,BUSI_BRANCH_CODE,cheque_no,CHEQUE_DATE,remark,doc_id
+     FROM transaction_sttemp;    
+
+ select CORPORATE_NAME,tran_code,manual_arno,BANK_NAME,folio_no,APP_NO,PAYMENT_MODE,INVESTOR_TYPE,TR_DATE,CLIENT_CODE,MUT_CODE,SCH_CODE,TRAN_TYPE,0, BRANCH_CODE,SOURCE_CODE,RMCODE,BUSINESS_RMCODE,BUSI_BRANCH_CODE,cheque_no,CHEQUE_DATE,remark From transaction_sttemp where tran_code=
+    SELECT * FROM WEALTHMAKER.TRANSACTION_ST WHERE TR_DATE>'01-JAN-2025' AND APP_NO IN('11','12') AND CLIENT_CODE='41934057001';
+

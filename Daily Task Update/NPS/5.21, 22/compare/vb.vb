@@ -21,7 +21,7 @@ Dim Vclientcategory As String
 Dim i As Integer
 Dim Xmin As Variant
 Dim Xmax As Variant
-If cmbProduct.Text = "" Then
+If cmbproduct.Text = "" Then
    Exit Sub
 End If
 Dim j As Variant
@@ -30,159 +30,48 @@ Dim Y As Variant
 Dim M As Integer
 Dim Z As Variant
 
+'If Index = 0 Then
+'    If GlbroleId = "212" Or GlbroleId = "1" Then
+'    Else
+'        MsgBox "Only Punching Team can punch the transaction.", vbInformation
+'        Exit Sub
+'    End If
+'ElseIf Index = 4 Then
+'    If GlbroleId = "146" Or GlbroleId = "1" Then
+'    Else
+'        MsgBox "Only NPS Team can modify the transaction.", vbInformation
+'        Exit Sub
+'    End If
+'End If
 
 If txtdocID.Text = "" Then
     MsgBox "DT No can not be left blank", vbInformation
     Exit Sub
 End If
 
-If Index = 0 Then
-    If OptCorporate.Value = True Then
-        If txtcorporatename.Text = "" Then
-            MsgBox "Corporate name cannot be left blank.", vbInformation
-            txtcorporatename.SetFocus
-            Exit Sub
-        End If
-    End If
-    
-    If chkUnfreeze.Value = 0 Then
-        If txtPRAN.Text <> " " Then
-            If SqlRet("SELECT COUNT(*) FROM NPS_FATCA_NON_COMPLIANT WHERE PRAN_NO='" & txtPRAN.Text & "'") >= 1 Then
-                 MsgBox "FATCA for this PRAN is non compliant.Please contact product team for the same", vbInformation
-                 Exit Sub
-            End If
-        End If
-    Else
-        MyConn.Execute "delete from NPS_FATCA_NON_COMPLIANT WHERE PRAN_NO=trim('" & txtPRAN.Text & "')"
-    End If
-End If
+'FATCA VALIDATION
+ 
+'Duplicate Cheque Number: VINIT 05-DEC-2015
 
-'VINIT 05-DEC-2015
-If Index = 0 Or Index = 4 Then
-    Vclientcategory = SqlRet("select category_id from client_master where client_code='" & Mid(txtINV_CD.Text, 1, 8) & "' ")
-    If Vclientcategory <> "4004" Then
-        If lbtrancode.Caption = "0" Then
-            rsGet.open "select count(*) from ( select TRAN_CODE from transaction_st where mut_code='IS02520' and cheque_no='" & Trim(txtChqNo.Text) & "' and tr_date >= add_months(sysdate,-6) Union All select TRAN_CODE from transaction_sttemp where mut_code='IS02520' and cheque_no='" & Trim(txtChqNo.Text) & "' and tr_date >= add_months(sysdate,-6) )", MyConn, adOpenForwardOnly
-            If rsGet(0) > 0 Then
-                MsgBox "Duplicate Cheque Number !", vbInformation
-                Exit Sub
-            End If
-            rsGet.Close
-         Else
-            If ReqCode = "11" Then
-                rsGet.open "select count(*) from ( select TRAN_CODE from transaction_st where TRAN_CODE <> " & lbtrancode.Caption & " and  mut_code='IS02520' and cheque_no='" & Trim(txtChqNo.Text) & "' and tr_date >= add_months(sysdate,-6) AND REF_TRAN_CODE IS NULL Union All select TRAN_CODE from transaction_sttemp where mut_code='IS02520' and cheque_no='" & Trim(txtChqNo.Text) & "' and tr_date >= add_months(sysdate,-6) AND TRAN_CODE <> " & lbtrancode.Caption & ")", MyConn, adOpenForwardOnly
-                If rsGet(0) > 0 Then
-                    MsgBox "Duplicate Cheque Number !", vbInformation
-                    Exit Sub
-                End If
-                rsGet.Close
-            Else
-                rsGet.open "select count(*) from ( select TRAN_CODE from transaction_st where TRAN_CODE <> " & lbtrancode.Caption & " and  mut_code='IS02520' and cheque_no='" & Trim(txtChqNo.Text) & "' and tr_date >= add_months(sysdate,-6) Union All select TRAN_CODE from transaction_sttemp where mut_code='IS02520' and cheque_no='" & Trim(txtChqNo.Text) & "' and tr_date >= add_months(sysdate,-6) AND TRAN_CODE <> " & lbtrancode.Caption & ")", MyConn, adOpenForwardOnly
-                If rsGet(0) > 0 Then
-                    MsgBox "Duplicate Cheque Number !", vbInformation
-                    Exit Sub
-                End If
-                rsGet.Close
-            End If
-        End If
-    End If
-End If
-'-----------------
-    
-If Index <> 3 And Index <> 1 Then
-    If txtregistrationno.Text = "" Then
-       MsgBox "Please Select NSDL Branch First", vbInformation
-       Exit Sub
-    End If
-End If
-If cboRequestType.Text <> "" Then
-    Req = Split(cboRequestType.Text, "#")
-    ReqCode = Req(1)
-End If
+'NSDL Branch on txtregistrationno
+ 
+'ReqCode = Req(1)
 
-Busi_Branch_cd = ""
-If cmbBusiBranch.Text <> "" Then
-    br_cd = Split(cmbBusiBranch.Text, "#")
-    Busi_Branch_cd = br_cd(1)
-End If
-Busi_Rm_Cd = SqlRet("select payroll_id from employee_master where payroll_id='" & txtrmbusicode & "'")
-If Index = 1 Then
-    Unload Me
-    Exit Sub
-End If
-If txtINV_CD.Text <> "" Then
-    If rsGet.State = 1 Then rsGet.Close
-    rsGet.open "select rm_code,branch_code from investor_master where inv_code='" & txtINV_CD.Text & "'", MyConn, adOpenKeyset
-    If Not rsGet.EOF Then
-       ClientBranchCode = rsGet.Fields("branch_code")
-       ClientRmCode = rsGet.Fields("rm_code")
-    End If
-End If
-If rsGet.State = 1 Then rsGet.Close
-If Index = 3 Then
-    Call Clear
-End If
-If Index = 4 Then   ''Modification
-    If OptCorporate.Value = True Then
-        If txtcorporatename.Text = "" Then
-            MsgBox "Corporate name cannot be left blank.", vbInformation
-            txtcorporatename.SetFocus
-            Exit Sub
-        End If
-    End If
-    If lbtrancode.Caption = "0" Then
-        MsgBox "Please Select a Transaction to Modify", vbInformation
-        Exit Sub
-    End If
-    If chkSaveValidation(False, True) = False Then
-        Exit Sub
-    End If
-    Busi_Branch_cd = ""
-    br_cd = Split(cmbBusiBranch.Text, "#")
-    Busi_Branch_cd = br_cd(1)
-    paymode = ""
-    If optcheque.Value = True Then
-        paymode = "C"
-    ElseIf optdraft.Value = True Then
-        paymode = "D"
-    ElseIf optcash.Value = True Then
-        paymode = "H"
-    ElseIf OptEcs.Value = True Then
-        paymode = "E"
-    ElseIf OptOthers.Value = True Then
-        paymode = "R"
-    ElseIf OptCorNECS.Value = True Then
-        paymode = "M"
-    End If
-    rsTran.open "select * from transaction_st where tran_code='" & lbtrancode.Caption & "'", MyConn, adOpenDynamic, adLockPessimistic
-    MyTranCode = rsTran.Fields("Tran_code")
-    rsTran("tr_date") = DtDate.Value
-    rsTran("client_Code") = Trim(txtINV_CD.Text)
-    rsTran("source_code") = Left(Trim(txtINV_CD.Text), 8)
-    rsTran("BUSI_BRANCH_CODE") = Busi_Branch_cd
-    rsTran("BUSINESS_RMCODE") = Busi_Rm_Cd
-    rsTran("mut_code") = MutCode
-    rsTran("sch_code") = SCHCODE
-    rsTran("amount") = Trim(txtAmountInvest.Text)
-    rsTran("folio_no") = Trim(txtregistrationno.Text)
-    rsTran("app_no") = ReqCode
-    rsTran("PAYMENT_MODE") = paymode
-    If paymode <> "M" Then
-        rsTran("CHEQUE_DATE") = dtChqDate.Text
-        rsTran("cheque_no") = Trim(txtChqNo.Text)
-        rsTran("BANK_NAME") = cmbBankName.Text
-    End If
-    rsTran("manual_arno") = Trim(txtPRAN.Text)
-    rsTran("corporate_name") = Trim(txtcorporatename.Text)
-    rsTran("unique_id") = txtrectno.Text
-    rsTran("MODIFY_USER") = Glbloginid
-    rsTran("MODIFY_DATE") = Format(ServerDateTime, "dd/mm/yyyy")
-    rsTran.Update
-    rsTran.Close
+'Busi_Branch_cd = ""
+ 
+'Busi_Rm_Cd = SqlRet("select payroll_id from employee_master where payroll_id='" & txtrmbusicode & "'")
     
-    MyConn.Execute "update nps_transaction set amount1=" & Val(TxtTire1.Text) & ",amount2=" & Val(TxtTire2.Text) & ",REG_CHARGE=" & Val(txtpopregistration1.Text) & ",Tran_CHARGE=" & Val(txtpopregistration2.Text) & ",SERVICETAX=" & Val(txtServiceAmount.Text) & ",remark='" & TxtRemark.Text & "' where tran_code='" & Trim(lbtrancode.Caption) & "'"
-    MsgBox "Transaction Updated Sucessfully", vbInformation
-End If
+'Unload Me
+
+'ClientBranchCode
+'ClientRmCode
+
+' Clear form
+
+'index = 4 : corp, ar on update, checkSaveValidation, update nps_transaction
+
+ 
+
 If Index = 0 Then   ''save
     If chkSaveValidation(True, False) = False Then
         Exit Sub
@@ -274,7 +163,7 @@ If Index = 0 Then   ''save
     '--------------------------DOUBLE TRANSACTION OF CONTRIBUTION WHEN REGISTRATION----------------------
     If ReqCode = "11" And OptIndividual.Value = True Then
         sql = ""
-        sql = " insert into transaction_sttemp (CORPORATE_NAME,ref_tran_code,manual_arno,BANK_NAME,folio_no,APP_NO,PAYMENT_MODE,INVESTOR_TYPE,TR_DATE,CLIENT_CODE,MUT_CODE,SCH_CODE,TRAN_TYPE,AMOUNT, BRANCH_CODE,SOURCE_CODE,RMCODE,BUSINESS_RMCODE,BUSI_BRANCH_CODE,cheque_no,CHEQUE_DATE,remark,doc_id) select CORPORATE_NAME,tran_code,manual_arno,BANK_NAME,folio_no,APP_NO,PAYMENT_MODE,INVESTOR_TYPE,TR_DATE,CLIENT_CODE,MUT_CODE,SCH_CODE,TRAN_TYPE,0, BRANCH_CODE,SOURCE_CODE,RMCODE,BUSINESS_RMCODE,BUSI_BRANCH_CODE,cheque_no,CHEQUE_DATE,remark,''  from transaction_sttemp where tran_code='" & MyTranCode & "'"
+        sql = " insert into transaction_sttemp (CORPORATE_NAME,ref_tran_code,manual_arno,BANK_NAME,folio_no,APP_NO,PAYMENT_MODE,INVESTOR_TYPE,TR_DATE,CLIENT_CODE,MUT_CODE,SCH_CODE,TRAN_TYPE,AMOUNT, BRANCH_CODE,SOURCE_CODE,RMCODE,BUSINESS_RMCODE,BUSI_BRANCH_CODE,cheque_no,CHEQUE_DATE,remark,doc_id) select CORPORATE_NAME,tran_code,manual_arno,BANK_NAME,folio_no,APP_NO,PAYMENT_MODE,INVESTOR_TYPE,TR_DATE,CLIENT_CODE,MUT_CODE,SCH_CODE,TRAN_TYPE,0, BRANCH_CODE,SOURCE_CODE,RMCODE,BUSINESS_RMCODE,BUSI_BRANCH_CODE,cheque_no,CHEQUE_DATE,remark,'' from transaction_sttemp where tran_code='" & MyTranCode & "'"
         MyConn.Execute sql
         MyTranCode1 = SqlRet("select max(tran_code) from temp_tran where branch_code=" & ClientBranchCode & " and substr(tran_code,1,2)='07' ")
         sql = " update tb_doc_upload set ar_code='" & MyTranCode1 & "' where common_id='" & Trim(txtdocID.Text) & "'"
