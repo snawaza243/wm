@@ -71,7 +71,7 @@ If Index = 0 Then
     End If
 End If
 
-'VINIT 05-DEC-2015
+'VINIT 05-DEC-2015: DUP CHEQUE NUMBER VALIDATION
 If Index = 0 Or Index = 4 Then
     Vclientcategory = SqlRet("select category_id from client_master where client_code='" & Mid(txtINV_CD.Text, 1, 8) & "' ")
     If Vclientcategory <> "4004" Then
@@ -101,8 +101,8 @@ If Index = 0 Or Index = 4 Then
         End If
     End If
 End If
-'-----------------
-    
+
+
 If Index <> 3 And Index <> 1 Then
     If txtregistrationno.Text = "" Then
        MsgBox "Please Select NSDL Branch First", vbInformation

@@ -785,6 +785,7 @@ Public Sub DataFilterWithDatesforINs(ins_pre_day As Integer, ins_pre_type As Int
 Dim GetCurYeardateFRTO As ADODB.Recordset
 Dim FinYearStartDate As Date
 Dim ActaulStartDate As Date
+
 If ins_pre_type = 1 And ins_next_type = 1 Then
     Glbins_previousdate = DateAdd("d", "-" & ins_pre_day, Format(ServerDateTime, "dd-mm-yyyy"))
     Glbins_nextdate = DateAdd("d", ins_next_day - 1, Format(ServerDateTime, "dd-mm-yyyy"))

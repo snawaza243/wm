@@ -80,7 +80,8 @@ If FrSave = True And FrMody = False Then
     End If
 End If
 If FrSave = False And FrMody = True Then
-    If (CDate(Format(DtDate, "dd-mm-yyyy")) < CDate(Format(Glbup_previousdate, "DD-MM-YYYY"))) Or (CDate(Format(DtDate, "dd-mm-yyyy")) > CDate(Format(Glbup_nextdate, "DD-MM-YYYY"))) Then
+    If (CDate(Format(DtDate, "dd-mm-yyyy")) < CDate(Format(Glbup_previousdate, "DD-MM-YYYY"))) Or
+     (CDate(Format(DtDate, "dd-mm-yyyy")) > CDate(Format(Glbup_nextdate, "DD-MM-YYYY"))) Then
         MsgBox "Security restrictions for date range"
         chkSaveValidation = False
         Exit Function

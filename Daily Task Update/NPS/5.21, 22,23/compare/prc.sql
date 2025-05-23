@@ -51,7 +51,6 @@ CREATE OR REPLACE PROCEDURE WEALTHMAKER.PSM_NPS_INSERT_UPDATE_PRA(
     V_GENERATED_TR              NUMBER;
     MyTranCode1                 VARCHAR2(100);
     MySecReq                    VARCHAR2(100);
-
     GLBROLEID                   NUMBER:=0;
     GLBROLEID2                  NUMBER:=0;
     V_COUNT_FATCA               NUMBER;     -- FACTA VALIDATION
@@ -82,38 +81,91 @@ CREATE OR REPLACE PROCEDURE WEALTHMAKER.PSM_NPS_INSERT_UPDATE_PRA(
     V_4_unique_id               VARCHAR2(100):= NULL; 
     V_4_MODIFY_USER             VARCHAR2(100):= NULL; 
     V_4_MODIFY_DATE             VARCHAR2(100):= NULL; 
-    V_COUNT_DUP_TRAN            NUMBER := 0;
+    V_COUNT_DUP_TRAN            NUMBER       := 0;
+    V_TRAN_CODE_INSERTION       VARCHAR2(50) := NULL;
+    V_GST_NO_INSERTION          VARCHAR2(50) := NULL;
+    v_count_fam_h               NUMBER       :=0;
+    v_found_fam_h               VARCHAR(20)  :=NULL;
+    V_null_value                VARCHAR2(100):= NULL;
+    v_return_message            VARCHAR2(200):= NULL;
 
-    V_TRAN_CODE_INSERTION       VARCHAR2(50):= NULL;
-    V_GST_NO_INSERTION          VARCHAR2(50):= NULL;
-    v_count_fam_h               NUMBER:=0;
-    v_found_fam_h               VARCHAR(20) :=NULL;
-    V_null_value                VARCHAR2(100) := NULL;
-    v_return_message           VARCHAR2(1000);
+    -- CHECK SAVE VALIDATION VARIABLES
+    CSV_GEt_busiRMCode          VARCHAR2(100):=NULL;
+    CSV_MyRs_validate           VARCHAR2(100):=NULL;
+    CSV_manual_arno             VARCHAR2(100):=NULL;
+    CSV_MyRs_validate1          VARCHAR2(100):=NULL;
 
+    ServerDateTime              DATE         := SYSDATE; 
+    ins_next_day                NUMBER;
+    Glbins_nextdate             DATE;
 
--- CHECK SAVE VALIDATION VARIABLES
-CSV_GEt_busiRMCode VARCHAR2(100):=NULL;
-CSV_MyRs_validate VARCHAR2(100):=NULL;
-CSV_manual_arno VARCHAR2(100):=NULL;
-CSV_MyRs_validate1 VARCHAR2(100):=NULL;
+    -- Variables for role_master columns
+    V_UP_PRE_DUR                NUMBER;
+    V_UP_NEXT_DUR               NUMBER;
+    V_IN_PRE_DUR                NUMBER;
+    V_IN_NEXT_DUR               NUMBER;
+    V_UP_PRE_DUR_TYPE           NUMBER;
+    V_UP_NEXT_DUR_TYPE          NUMBER;
+    V_IN_PRE_DUR_TYPE           NUMBER;
+    V_IN_NEXT_DUR_TYPE          NUMBER;
 
-    ServerDateTime    DATE := SYSDATE;  -- or some input date
-    ins_next_day      NUMBER;
-    Glbins_nextdate   DATE;
+    -- Date calculation variables
+    V_GLBINS_PREVIOUSDATE       DATE;
+    V_GLBINS_NEXTDATE           DATE;
+    V_GLBUP_PREVIOUSDATE        DATE;
+    V_GLBUP_NEXTDATE            DATE;
 
+    V_FY_START                  DATE;
+    V_FY_END                    DATE;
+    V_ACTUAL_DATE               DATE;
+    ServerDateTime              DATE    := SYSDATE;
+    chkSaveValidation           BOOLEAN := TRUE;
 
+    V_MyTranCode                VARCHAR2(100):= NULL;
+    V_MyGSTNO                   VARCHAR2(100):=NULL;
+    V_MyTranCode1               VARCHAR2(100):=NULL;
+    V_MySecReq                  VARCHAR2(100):=NULL; 
 
 BEGIN
 
+BEGIN -- Fetch the fiscal year start and end dates
+    SELECT UP_PRE_DUR, UP_NEXT_DUR, IN_PRE_DUR, IN_NEXT_DUR,
+           UP_PRE_DUR_TYPE, UP_NEXT_DUR_TYPE, IN_PRE_DUR_TYPE, IN_NEXT_DUR_TYPE
+    INTO   V_UP_PRE_DUR, V_UP_NEXT_DUR, V_IN_PRE_DUR, V_IN_NEXT_DUR,
+           V_UP_PRE_DUR_TYPE, V_UP_NEXT_DUR_TYPE, V_IN_PRE_DUR_TYPE, V_IN_NEXT_DUR_TYPE
+    FROM   ROLE_MASTER
+    WHERE  ROLE_ID = P_ROLE_ID;
 
-BEGIN -- FORM THE GLBINS_NEXTDATE
-    Glbins_nextdate := TRUNC(SYSDATE) + ins_next_day;
-    SELECT TO_CHAR(Glbins_nextdate, 'DD/MM/YYYY')
-    INTO CSV_GEt_busiRMCode
-    FROM DUAL;
+    IF V_IN_PRE_DUR_TYPE = 1 AND V_IN_NEXT_DUR_TYPE = 1 THEN
+        V_GLBINS_PREVIOUSDATE := SYSDATE - V_IN_PRE_DUR;
+        V_GLBINS_NEXTDATE := SYSDATE + (V_IN_NEXT_DUR - 1);
+
+    ELSIF V_IN_PRE_DUR_TYPE = 1 AND V_IN_NEXT_DUR_TYPE = 2 THEN
+        V_GLBINS_PREVIOUSDATE := SYSDATE - V_IN_PRE_DUR;
+        V_GLBINS_NEXTDATE := ADD_MONTHS(SYSDATE, V_IN_NEXT_DUR - 1);
+
+    ELSIF V_IN_PRE_DUR_TYPE = 1 AND V_IN_NEXT_DUR_TYPE = 3 THEN
+        V_ACTUAL_DATE := SYSDATE - V_IN_PRE_DUR;
+        IF V_FY_START >= V_ACTUAL_DATE THEN
+            V_GLBINS_PREVIOUSDATE := V_FY_START;
+        ELSE
+            V_GLBINS_PREVIOUSDATE := V_ACTUAL_DATE;
+        END IF;
+        V_GLBINS_NEXTDATE := ADD_MONTHS(V_FY_END, 12 * (V_IN_NEXT_DUR - 1)); -- year add
+    END IF;
 
 
+
+    IF V_UP_PRE_DUR_TYPE = 1 AND V_UP_NEXT_DUR_TYPE = 1 THEN
+        V_GLBUP_PREVIOUSDATE := SYSDATE - V_UP_PRE_DUR;
+        V_GLBUP_NEXTDATE := SYSDATE + (V_UP_NEXT_DUR - 1);
+
+    ELSIF V_UP_PRE_DUR_TYPE = 2 AND V_UP_NEXT_DUR_TYPE = 2 THEN
+        V_GLBUP_PREVIOUSDATE := ADD_MONTHS(SYSDATE, -V_UP_PRE_DUR);
+        V_GLBUP_NEXTDATE := ADD_MONTHS(SYSDATE, V_UP_NEXT_DUR - 1);
+
+    -- Add other combinations here
+    END IF;
 END;
 
 BEGIN -- Fetch ISS_CODE for the provided P_SCHEME_CODE
@@ -130,11 +182,7 @@ BEGIN -- Fetch ISS_CODE for the provided P_SCHEME_CODE
     END;
 END;
 
-
-
--- FIND FAMILY HEAD CODE
-BEGIN 
-
+BEGIN -- FIND FAMILY HEAD CODE
     SELECT COUNT(*) INTO v_count_fam_h
     FROM CLIENT_TEST WHERE SOURCE_CODE = SUBSTR(P_INVESTOR_CODE, 1, 8) AND CLIENT_CODE = MAIN_CODE;  
 
@@ -145,54 +193,7 @@ BEGIN
     END IF;
 END;
 
-
--- For testing procedure value
-/*
-OPEN P_RESULT FOR  
-SELECT 
-    'P_MARK --> ' || P_MARK || ', ' ||
-    'P_PRODUCT_CLASS --> ' || P_PRODUCT_CLASS || ', ' ||
-    'P_INVESTOR_TYPE --> ' || P_INVESTOR_TYPE || ', ' ||
-    'P_CORPORATE_NAME --> ' || P_CORPORATE_NAME || ', ' ||
-    'P_DT_NUMBER --> ' || P_DT_NUMBER || ', ' ||
-    'P_TRAN_CODE --> ' || P_TRAN_CODE || ', ' ||
-    'P_INVESTOR_CODE --> ' || P_INVESTOR_CODE || ', ' ||
-    'P_SCHEME_CODE --> ' || P_SCHEME_CODE || ', ' ||
-    'P_CRA --> ' || P_CRA || ', ' ||
-    'P_CRA_BRANCH --> ' || P_CRA_BRANCH || ', ' ||
-    'P_FOLIO_NUMBER --> ' || P_FOLIO_NUMBER || ', ' ||
-    'P_BUSINESS_RM --> ' || P_BUSINESS_RM || ', ' ||
-    'P_BUSINESS_BRANCH --> ' || P_BUSINESS_BRANCH || ', ' ||
-    'P_RECEIPT_NO --> ' || P_RECEIPT_NO || ', ' ||
-    'P_PAYMENT_MODE --> ' || P_PAYMENT_MODE || ', ' ||
-    'P_CHEQUE_NO --> ' || P_CHEQUE_NO || ', ' ||
-    'P_BANK_NAME --> ' || P_BANK_NAME || ', ' ||
-    'P_APP_NO --> ' || P_APP_NO || ', ' ||
-    'P_CHEQUE_DATE --> ' || P_CHEQUE_DATE || ', ' ||
-    'P_DATE --> ' || P_DATE || ', ' ||
-    'P_TIME --> ' || P_TIME || ', ' ||
-    'P_COMBINED_DATETIME --> ' || P_COMBINED_DATETIME || ', ' ||
-    'P_SUBSCRIBER_NAME --> ' || P_SUBSCRIBER_NAME || ', ' ||
-    'P_MANUAL_AR_NO --> ' || P_MANUAL_AR_NO || ', ' ||
-    'P_UNFREEZE --> ' || P_UNFREEZE || ', ' ||
-    'P_AMOUNT_T1 --> ' || P_AMOUNT_T1 || ', ' ||
-    'P_AMOUNT_T2 --> ' || P_AMOUNT_T2 || ', ' ||
-    'P_RECHARGE1 --> ' || P_RECHARGE1 || ', ' ||
-    'P_RECHARGE2 --> ' || P_RECHARGE2 || ', ' ||
-    'P_GST_TAX --> ' || P_GST_TAX || ', ' ||
-    'P_COLLECTION_AMOUNT --> ' || P_COLLECTION_AMOUNT || ', ' ||
-    'P_AMOUNT_INVESTED --> ' || P_AMOUNT_INVESTED || ', ' ||
-    'P_AMOUNT_INVESTED2 --> ' || P_AMOUNT_INVESTED2 || ', ' ||
-    'P_REMARK --> ' || P_REMARK || ', ' ||
-    'P_ZERO_COM --> ' || P_ZERO_COM || ', ' ||
-    'P_LOGGEDIN_USER --> ' || P_LOGGEDIN_USER 
-AS STATUS FROM DUAL;
-
-RETURN;
-
-*/
-
-BEGIN -- VALIDATE PUNCHING AND MIDIFICATION TEAM
+BEGIN -- VALIDATE PUNCHING AND MODIFICATION TEAM
      IF P_MARK = 0 THEN -- 0 FOR PUNCING , 4 FOR MODIFYING
         /*'38387' -- (121397/212), (39006/146) */ 
 
@@ -223,7 +224,7 @@ BEGIN -- VALIDATE PUNCHING AND MIDIFICATION TEAM
 END;
 
 BEGIN -- DT NUMBER IS REQUIRED AND RETURN    
-    IF TRIM(P_DT_NUMBER) IS NULL  AND TRIM(P_MARK) = '0' THEN 
+    IF TRIM(P_MARK) = '0' AND TRIM(P_DT_NUMBER) IS NULL THEN 
         OPEN P_RESULT FOR SELECT 'DT No cannot be left blank.' AS STATUS FROM DUAL;
         RETURN; 
     END IF;
@@ -261,7 +262,7 @@ BEGIN -- FATCA_VALIDATION : P_CORPORATE_NAME, P_UNFREEZE, DELETE FROM NPS_FATCA_
 END ;
 
 BEGIN -- CHECK_DUPLICATE_CHEQUE
-    IF P_MARK = 0 OR P_MARK = 4 THEN
+    IF P_MARK = '0' OR P_MARK = '4' THEN
         -- Fetch Client Category
         SELECT CATEGORY_ID INTO V_CLIENT_CAT_DUP_CHEQUE
         FROM CLIENT_MASTER WHERE CLIENT_CODE = SUBSTR(P_INVESTOR_CODE, 1, 8);
@@ -357,9 +358,6 @@ BEGIN -- CHECK_DUPLICATE_CHEQUE
     -- p_Duplicate_Found := 0;
 END ;
 
-
-
-
 BEGIN -- NSDL Branch on P_RECEIPT_NO
     IF P_MARK  <> 3 AND P_MARK  <> 4 THEN
         IF P_RECEIPT_NO IS NULL OR TRIM(P_RECEIPT_NO) = '' THEN
@@ -369,38 +367,27 @@ BEGIN -- NSDL Branch on P_RECEIPT_NO
     END IF;
 END;
 
-/*  ReqCode         is P_APP_NO
-    Busi_Branch_cd  is P_BUSINESS_BRANCH IS
-    Busi_Rm_Cd      is P_BUSINESS_RM
-*/
+-- ReqCode         is P_APP_NO
+-- Busi_Branch_cd  is P_BUSINESS_BRANCH IS
+-- Busi_Rm_Cd      is P_BUSINESS_RM
 
-BEGIN -- Get payroll_id from employee_master
+BEGIN -- Get payroll_id BY BUSINESS_RM
     select payroll_id 
     INTO V_Busi_Rm_Cd    
     from employee_master where payroll_id=P_BUSINESS_RM;
 END;
 
-/*  --VB CODE: Unload form
-    If Index = 1 Then
-        Unload Me
-        Exit Sub
-    End If
-*/
+-- UNLOAD FORM IF INDEX = 1 AND RETURN
 
-BEGIN -- Get RM Code and Branch Code from investor_master
+BEGIN -- Get RM Code and Branch Code BY P_INVESTOR_CODE
     If P_INVESTOR_CODE <> "" Then
         select rm_code,branch_code 
         INTO V_ClientBranchCode, V_ClientRmCode
-        from investor_master where inv_code=P_INVESTOR_CODE
+        from investor_master where inv_code=P_INVESTOR_CODE;
     End If
 END;
 
-
-/*  --VB CODE clear form
-    If Index = 3 Then
-        Call Clear
-    End If
-*/
+-- CALL CLEAR FORM IF INDEX = 3
 
 BEGIN -- Modify(4): corp, ar on update, checkSaveValidation, update nps_transaction
     IF P_MARK = 4 THEN -- 4 FOR MODIFYING
@@ -416,7 +403,7 @@ BEGIN -- Modify(4): corp, ar on update, checkSaveValidation, update nps_transact
             RETURN; 
         END IF;
 
-        -- chkSaveValidation
+        -- chkSaveValidation(False, True)
         -- Busi_Branch_cd   ---> P_BUSINESS_BRANCH 
         -- P_PAYMENT_MODE HAVE C, D, H, E, R, M THAT IS PAYMODE
 
@@ -445,14 +432,12 @@ BEGIN -- Modify(4): corp, ar on update, checkSaveValidation, update nps_transact
         COMMIT;
 
         v_return_message := 'Transaction Updated Successfully';
+
     END IF;
 END;
 
-
-
-BEGIN -- SAVE(0) : CHECK_DUPLICATE_CHEQUE
-    IF P_MARK = 0 THEN
-
+BEGIN -- SAVE(0) : CHECK_DUPLICATE_CHEQUE, Vclientcategory
+    IF P_MARK = '0' THEN
         BEGIN -- chkSaveValidation
             IF P_PRODUCT_CLASS IS NULL OR TRIM(P_PRODUCT_CLASS) = '' THEN
                 OPEN P_RESULT FOR SELECT 'Please select a Product Class.' AS STATUS FROM DUAL; 
@@ -521,9 +506,17 @@ BEGIN -- SAVE(0) : CHECK_DUPLICATE_CHEQUE
 
             -- Check if the transaction date is within the allowed range
             IF P_MARK = 0 THEN
-                IF TO_DATE(P_DATE, 'DD/MM/YYYY') < TO_DATE('01/01/1980', 'DD/MM/YYYY') OR 
-                TO_DATE(P_DATE, 'DD/MM/YYYY') > TO_DATE('31/12/2099', 'DD/MM/YYYY') THEN
-                    OPEN P_RESULT FOR SELECT 'Transaction Date is out of allowed range.' AS STATUS FROM DUAL; 
+                IF TO_DATE(P_DATE, 'DD/MM/YYYY') < TO_DATE(sysdate, 'DD/MM/YYYY') OR 
+                TO_DATE(P_DATE, 'DD/MM/YYYY') > TO_DATE(v_Glbins_nextdate, 'DD/MM/YYYY') THEN
+                    OPEN P_RESULT FOR SELECT 'Security restrictions for date range' AS STATUS FROM DUAL; 
+                    RETURN;
+                END IF;
+            END IF;
+
+            IF P_MARK = 4 THEN
+                IF TO_DATE(P_DATE, 'DD/MM/YYYY') < TO_DATE(v_Glbup_previousdate, 'DD/MM/YYYY') OR 
+                TO_DATE(P_DATE, 'DD/MM/YYYY') > TO_DATE(v_Glbup_nextdate, 'DD/MM/YYYY') THEN
+                    OPEN P_RESULT FOR SELECT 'Security restrictions for date range' AS STATUS FROM DUAL; 
                     RETURN;
                 END IF;
             END IF;
@@ -534,16 +527,7 @@ BEGIN -- SAVE(0) : CHECK_DUPLICATE_CHEQUE
                 RETURN;
             END IF;
 
-            -- Validate Payment Mode
-            /* Payment Mode Codes
-                Cheque = C
-                Draft = D
-                Cash = H
-                ECS = E
-                Corporate = M
-                Others = R
-            */
-
+            -- Payment Mode Codes: Cheque = C, Draft = D, Cash = H, ECS = E, Corporate = M, Others = R
             IF P_PAYMENT_MODE IS NULL OR TRIM(P_PAYMENT_MODE) = '' THEN
                 OPEN P_RESULT FOR SELECT 'Please Select a Payment Mode.' AS STATUS FROM DUAL; 
                 RETURN;
@@ -695,11 +679,8 @@ BEGIN -- SAVE(0) : CHECK_DUPLICATE_CHEQUE
 
                     IF CSV_MyRs_validate IS NOT NULL THEN
                         OPEN P_RESULT FOR SELECT 'Please Enter Different PRAN No.' AS STATUS FROM DUAL; 
-
                     END IF;
-
                 END IF;
-
                 OPEN P_RESULT FOR SELECT 'Please select a transaction code to Modify.' AS STATUS AS STATUS FROM DUAL; 
                 RETURN; 
             END IF;
@@ -726,156 +707,128 @@ BEGIN -- SAVE(0) : CHECK_DUPLICATE_CHEQUE
             END IF;
         END; -- chkSaveValidation
 
-        IF V_CLIENT_CAT_DUP_CHEQUE <> '4004' THEN
-            -- Count matching transactions
-            SELECT COUNT(*) 
-            INTO V_COUNT_TRAN_DUP_CHEQUE
+        BEGIN -- CHECK DUP CHEQUE ON V_CLIENT_CAT_DUP_CHEQUE
+            IF V_CLIENT_CAT_DUP_CHEQUE <> '4004' THEN
+                -- Count matching transactions
+                SELECT COUNT(*) 
+                INTO V_COUNT_TRAN_DUP_CHEQUE
+                FROM TRANSACTION_ST
+                WHERE CHEQUE_NO = TRIM(P_CHEQUE_NO)
+                AND TRIM(BANK_NAME) = TRIM(P_BANK_NAME)
+                AND TRAN_TYPE IN ('PURCHASE', 'REINVESTMENT', 'SWITCH IN');
+
+                -- If duplicates exist, return error message
+                IF V_COUNT_TRAN_DUP_CHEQUE > 0 THEN
+                    OPEN P_RESULT FOR SELECT 'Duplicate Cheque Number!' AS STATUS FROM DUAL; 
+                    RETURN;
+                END IF;
+            END IF;
+        END; -- CHECK DUP CHEQUE ON V_CLIENT_CAT_DUP_CHEQUE
+
+        BEGIN -- Check for duplicate transaction in 'PURCHASE', 'REINVESTMENT', 'SWITCH IN' transactions
+            SELECT COUNT(*) INTO V_COUNT_DUP_TRAN
             FROM TRANSACTION_ST
-            WHERE CHEQUE_NO = TRIM(P_CHEQUE_NO)
-            AND TRIM(BANK_NAME) = TRIM(P_BANK_NAME)
+            WHERE CLIENT_CODE = P_INVESTOR_CODE
+            AND SCH_CODE = P_SCHEME_CODE
+            AND APP_NO = P_APP_NO
+            AND AMOUNT = P_AMOUNT_INVESTED
+            AND CHEQUE_NO = P_CHEQUE_NO
+            AND TRIM(BANK_NAME) = P_BANK_NAME
             AND TRAN_TYPE IN ('PURCHASE', 'REINVESTMENT', 'SWITCH IN');
 
-            -- If duplicates exist, return error message
-            IF V_COUNT_TRAN_DUP_CHEQUE > 0 THEN
-                OPEN P_RESULT FOR SELECT 'Duplicate Cheque Number!' AS STATUS FROM DUAL; 
+            IF V_COUNT_DUP_TRAN > 0 THEN
+                OPEN P_RESULT FOR SELECT 'Duplicate Transaction!' AS STATUS FROM DUAL; 
                 RETURN;
             END IF;
-        END IF;
+        END; -- Check for duplicate transaction in 'PURCHASE', 'REINVESTMENT', 'SWITCH IN' transactions
 
-        select count(*) INTO V_COUNT_DUP_TRAN
-        from transaction_st 
-        where CLIENT_code= P_INVESTOR_CODE
-        and sch_code=P_SCHEME_CODE 
-        and app_no = P_APP_NO 
-        and amount= P_AMOUNT_INVESTED 
-        and cheque_no=P_CHEQUE_NO
-        And Trim(bank_name) = P_BANK_NAME 
-        and tran_type in ('PURCHASE','REINVESTMENT','SWITCH IN');
-        
-        if V_COUNT_DUP_TRAN > 0 then
-            OPEN P_RESULT FOR SELECT 'Duplicate Transaction!' AS STATUS FROM DUAL; 
-            RETURN;
-        END IF;
+        -- P_PAYMENT_MODE HAVE C, D, H, E, R, M THAT IS PAYMODE
 
+        -- Insert into transaction_sttemp
+        INSERT INTO TRANSACTION_STTEMP (
+            CORPORATE_NAME, MANUAL_ARNO, BANK_NAME, FOLIO_NO, APP_NO, PAYMENT_MODE, INVESTOR_TYPE, 
+            TR_DATE, CLIENT_CODE, MUT_CODE, SCH_CODE, TRAN_TYPE, AMOUNT, BRANCH_CODE, SOURCE_CODE, 
+            RMCODE, BUSINESS_RMCODE, BUSI_BRANCH_CODE, CHEQUE_NO, CHEQUE_DATE, REMARK, DOC_ID, 
+            MATURITY_PERIOD, FAMILY_hEAD
+        ) VALUES (
+            P_CORPORATE_NAME, P_MANUAL_AR_NO, P_BANK_NAME, P_FOLIO_NUMBER, P_APP_NO, P_PAYMENT_MODE, P_INVESTOR_TYPE, 
+            P_DATE, P_INVESTOR_CODE, MYMUTCODE, P_SCHEME_CODE, 'PURCHASE', P_AMOUNT_INVESTED, P_BUSINESS_BRANCH, P_CRA_BRANCH, 
+            P_BUSINESS_RM, P_BUSINESS_RM, P_BUSINESS_BRANCH, P_CHEQUE_NO, P_CHEQUE_DATE, P_REMARK, P_DT_NUMBER,
+            '58', v_found_fam_h
+        );
 
-        IF TRIM(P_INVESTOR_CODE) IS NULL THEN
-             OPEN P_RESULT FOR SELECT 'Please select a Investor!' AS STATUS FROM DUAL; 
-            RETURN;
-        END IF;
+        BEGIN -- RETRIVE RECENT TRAN_CODE AND GST_NO
+            SELECT MAX(TRAN_CODE) 
+            INTO V_MyTranCode
+            FROM TEMP_TRAN
+            WHERE BRANCH_CODE = P_BUSINESS_BRANCH
+            AND SUBSTR(TRAN_CODE, 1, 2) = '07';
 
-        IF TRIM(P_APP_NO) IS NULL THEN
-             OPEN P_RESULT FOR SELECT 'Please Select a Request Id!' AS STATUS FROM DUAL; 
-            RETURN;
-        END IF;
-
-
-        IF P_DATE IS NULL THEN
-            OPEN P_RESULT FOR SELECT 'Please enter a correct Transaction Date!' AS STATUS FROM DUAL; 
-            RETURN;
-        END IF;
-
-        
-        IF TO_DATE(P_DATE, 'DD/MM/YYYY') < TO_DATE('01/01/1980', 'DD/MM/YYYY') THEN 
-            OPEN P_RESULT FOR SELECT 'Please enter a correct transaction date! ' AS STATUS FROM DUAL; 
-            RETURN;
-        END IF; 
-
-        -- Validate if the transaction date is greater than the current date
-        IF TO_DATE(P_DATE, 'DD/MM/YYYY') > SYSDATE THEN
-            OPEN P_RESULT FOR SELECT 'Transaction Date Cannot Be Greater than Current Date' AS STATUS FROM DUAL; 
-            RETURN;
-        END IF;
-
-        -- Validate Payment Mode
-        IF P_PAYMENT_MODE IS NULL OR TRIM(P_PAYMENT_MODE) = '' THEN
-            OPEN P_RESULT FOR SELECT 'Please Select a Payment Mode.' AS STATUS FROM DUAL; 
-            RETURN;
-        END IF;
-
-
-        -- Validate Cheque Payment Mode
-        IF P_PAYMENT_MODE = 'C' THEN
-            -- Validate Bank Name
-            IF P_BANK_NAME IS NULL OR TRIM(P_BANK_NAME) = '' THEN
-                OPEN P_RESULT FOR SELECT 'Please Select a Bank Name' AS STATUS FROM DUAL;
-                RETURN;
-            END IF;
-
-            -- Validate Cheque Number
-            IF P_CHEQUE_NO IS NULL OR TRIM(P_CHEQUE_NO) = '' THEN
-                OPEN P_RESULT FOR SELECT 'Please Insert a Cheque Number' AS STATUS FROM DUAL;
-                RETURN;
-            END IF;
-
-            -- Validate Cheque Date
-            IF P_CHEQUE_DATE IS NULL OR TRIM(P_CHEQUE_DATE) = '' THEN
-                OPEN P_RESULT FOR SELECT 'Please Insert a Cheque Date' AS STATUS FROM DUAL;
-                RETURN;
-            END IF;
-        END IF;
-
-        -- Validate Payment Mode Conditions
-        IF P_PAYMENT_MODE = 'D' THEN -- Draft Payment
-            IF P_CHEQUE_NO IS NULL OR TRIM(P_CHEQUE_NO) = '' THEN
-                OPEN P_RESULT FOR SELECT 'Please Insert a Draft Number' AS STATUS FROM DUAL;
-                RETURN;
-            END IF;
-
-            IF P_CHEQUE_DATE IS NULL OR TRIM(P_CHEQUE_DATE) = '' THEN
-                OPEN P_RESULT FOR SELECT 'Please Insert a Draft Date' AS STATUS FROM DUAL;
-                RETURN;
-            END IF;
-        END IF;
-
-
-
-        -- Validate Amount Input
-        IF P_AMOUNT_INVESTED IS NULL OR TRIM(P_AMOUNT_INVESTED) = '' THEN
-            OPEN P_RESULT FOR SELECT 'Please enter amount.' AS STATUS FROM DUAL;
-            RETURN;
-        END IF;
-
-        IF NOT REGEXP_LIKE(P_AMOUNT_INVESTED, '^[0-9]+(\.[0-9]+)?$') THEN
-            OPEN P_RESULT FOR SELECT 'Please enter a correct amount.' AS STATUS FROM DUAL;
-            RETURN;
-        END IF;
-
-        -- Validate RM Business Code
-        IF P_BUSINESS_RM IS NULL OR LENGTH(TRIM(P_BUSINESS_RM)) < 5 THEN
-            OPEN P_RESULT FOR SELECT 'Not a Valid RM Business Code' AS STATUS FROM DUAL;
-            RETURN;
-        END IF;
-
-        -- Check if RM Business Code exists in employee_master
-        DECLARE
-            V_RM_CODE VARCHAR2(100);
-        BEGIN
-            SELECT RM_CODE INTO V_RM_CODE
-            FROM EMPLOYEE_MASTER
-            WHERE PAYROLL_ID = TRIM(P_BUSINESS_RM)
-            AND ROWNUM = 1;
-
-        EXCEPTION
-            WHEN NO_DATA_FOUND THEN
-                OPEN P_RESULT FOR SELECT 'Not a Valid RM Business Code' AS STATUS FROM DUAL;
-                RETURN;
+            -- Retrieve the invoice_no from transaction_sttemp based on the tran_code
+            SELECT INVOICE_NO
+            INTO V_MyGSTNO
+            FROM TRANSACTION_STTEMP
+            WHERE TRAN_CODE = V_MyTranCode;        
         END;
 
-        -- Check for duplicate transaction in 'PURCHASE', 'REINVESTMENT', 'SWITCH IN' transactions
-        SELECT COUNT(*) INTO V_COUNT_TRAN_DUP_CHEQUE
-        FROM TRANSACTION_ST
-        WHERE CLIENT_CODE = TRIM(P_INVESTOR_CODE)
-          AND SCH_CODE = P_SCHEME_CODE
-          AND APP_NO = P_APP_NO
-          AND AMOUNT = P_AMOUNT_INVESTED
-          AND CHEQUE_NO = TRIM(P_CHEQUE_NO)
-          AND TRIM(BANK_NAME) = TRIM(P_BANK_NAME)
-          AND TRAN_TYPE IN ('PURCHASE', 'REINVESTMENT', 'SWITCH IN');
+        -- Insert into transaction_st
+        INSERT INTO TRANSACTION_ST (
+            DOC_ID, INVOICE_NO, CORPORATE_NAME, MANUAL_ARNO, BANK_NAME, FOLIO_NO, APP_NO, 
+            PAYMENT_MODE, TRAN_CODE, INVESTOR_TYPE, TR_DATE, CLIENT_CODE, MUT_CODE, SCH_CODE, TRAN_TYPE, 
+            AMOUNT, BRANCH_CODE, SOURCE_CODE, RMCODE, BUSINESS_RMCODE, BUSI_BRANCH_CODE, 
+            CHEQUE_NO, CHEQUE_DATE, REMARK, LOGGEDUSERID, INV_NAME,
+            MATURITY_PERIOD, FAMILY_hEAD
+        ) VALUES ( 
+            P_DT_NUMBER, V_MyGSTNO , P_CORPORATE_NAME, P_MANUAL_AR_NO, P_BANK_NAME, P_FOLIO_NUMBER, P_APP_NO, 
+            P_PAYMENT_MODE, V_MyTranCode, P_INVESTOR_TYPE, SYSDATE,P_INVESTOR_CODE /*NewClientCode*/, MYMUTCODE, P_SCHEME_CODE, 'PURCHASE', 
+            P_AMOUNT_INVESTED, P_BUSINESS_BRANCH, SUBSTR(P_INVESTOR_CODE, 1, 8), P_BUSINESS_RM, P_BUSINESS_RM, P_BUSINESS_BRANCH, 
+            P_CHEQUE_NO, P_CHEQUE_DATE, 'NPS', P_LOGGEDIN_USER, P_SUBSCRIBER_NAME,
+            '58', v_found_fam_h
+        ); 
 
-        -- If duplicates found, return error message
-        IF V_COUNT_TRAN_DUP_CHEQUE > 0 THEN
+        -- Insert into nps_transaction
+        INSERT INTO NPS_TRANSACTION (TRAN_CODE, AMOUNT1, AMOUNT2, REG_CHARGE, TRAN_CHARGE, SERVICETAX, REMARK) 
+        VALUES (V_MyTranCode, P_AMOUNT_T1, P_AMOUNT_T2, P_RECHARGE1, P_RECHARGE2, P_GST_TAX, P_REMARK);
+        COMMIT;
 
-            OPEN P_RESULT FOR SELECT 'Duplicate Transaction!' AS STATUS FROM DUAL;
+        v_return_message := 'Your Transaction No Is ' || V_MyTranCode || ' and Your Recpt No Is ' || (select unique_id from transaction_st where tran_code=V_MyTranCode);
+
+        --DOUBLE TRANSACTION OF CONTRIBUTION WHEN REGISTRATION AND INV_TYPE IS OptIndividual
+        IF P_REQUEST_ID = '11' AND P_INVESTOR_TYPE = '0' THEN
+            insert into transaction_sttemp (CORPORATE_NAME,ref_tran_code,manual_arno,BANK_NAME,folio_no,APP_NO,PAYMENT_MODE,INVESTOR_TYPE,TR_DATE,CLIENT_CODE,MUT_CODE,SCH_CODE,TRAN_TYPE,AMOUNT, BRANCH_CODE,SOURCE_CODE,RMCODE,BUSINESS_RMCODE,BUSI_BRANCH_CODE,cheque_no,CHEQUE_DATE,remark,doc_id) 
+            select CORPORATE_NAME,tran_code,manual_arno,BANK_NAME,folio_no,APP_NO,PAYMENT_MODE,INVESTOR_TYPE,TR_DATE,CLIENT_CODE,MUT_CODE,SCH_CODE,TRAN_TYPE,0, BRANCH_CODE,SOURCE_CODE,RMCODE,BUSINESS_RMCODE,BUSI_BRANCH_CODE,cheque_no,CHEQUE_DATE,remark,'' from transaction_sttemp where tran_code= V_MyTranCode;
+            COMMIT;
+
+            BEGIN -- Retrieve the maximum tran_code from temp_tran where branch_code matches the input
+                select max(tran_code) into V_MyTranCode1
+                from temp_tran where branch_code=P_BUSINESS_BRANCH and substr(tran_code,1,2)='07'
+            END;
+
+            UPDATE TB_DOC_UPLOAD SET AR_CODE = V_MyTranCode1 WHERE COMMON_ID = P_DT_NUMBER;
+            COMMIT;
+
+            insert into transaction_st (ref_tran_code,manual_arno,BANK_NAME,FOLIO_NO,APP_NO,PAYMENT_MODE,TRAN_CODE,INVESTOR_TYPE,TR_DATE,CLIENT_CODE,MUT_CODE,SCH_CODE,TRAN_TYPE,AMOUNT, BRANCH_CODE,SOURCE_CODE,RMCODE,BUSINESS_RMCODE,BUSI_BRANCH_CODE,cheque_no,CHEQUE_DATE,remark,LOGGEDUSERID,doc_id) 
+            select ref_tran_code,manual_arno,BANK_NAME,FOLIO_NO,12,PAYMENT_MODE,TRAN_CODE,INVESTOR_TYPE,TR_DATE,CLIENT_CODE,MUT_CODE,SCH_CODE,TRAN_TYPE,AMOUNT, BRANCH_CODE,SOURCE_CODE,RMCODE,BUSINESS_RMCODE,BUSI_BRANCH_CODE,cheque_no,CHEQUE_DATE,remark,LOGGEDUSERID,doc_id from transaction_sttemp where tran_code=V_MyTranCode1;
+            COMMIT;
+
+            insert into nps_transaction (TRAN_CODE,AMOUNT1,AMOUNT2,REG_CHARGE,TRAN_CHARGE,SERVICETAX,REMARK) values (V_MyTranCode1,0,0,0,0,0,P_REMARK);
+            COMMIT;
+
+            DELETE FROM TRANSACTION_STTEMP WHERE TRAN_CODE=V_MyTranCode1;
+
+            select unique_id into V_MySecReq
+            from transaction_st where tran_code=V_MyTranCode1;
+
+            v_return_message := "Your Duplicate Transaction No Is " || V_MyTranCode1 || " and Your Recpt No IS " ||  MySecReq;
+        END IF;
+        DELETE FROM TRANSACTION_STTEMP WHERE TRAN_CODE = V_MyTranCode;
+        COMMIT;
+
+        -- CHEK v_return_message IS NOT NULL MEAN HASING ANY SUCCESS MESSAGE THEN OPEN P_RESULT
+        IF v_return_message IS NOT NULL THEN
+            OPEN P_RESULT FOR
+            --SELECT 'Your Duplicate Transaction No Is ' ||(V_TRAN_CODE_INSERTION) || ' and Your Recpt No Is ' ||  (SELECT UNIQUE_ID FROM TRANSACTION_ST WHERE TRAN_CODE = V_TRAN_CODE_INSERTION) AS STATUS
+            SELECT 'TRANSACTION PUNCHED SUCCESSFULLY: ' || v_return_message AS STATUS FROM DUAL;
             RETURN;
         END IF;
     END IF;
@@ -1004,6 +957,7 @@ IF P_MARK = '0' THEN
         --SELECT 'Your Duplicate Transaction No Is ' ||(V_TRAN_CODE_INSERTION) || ' and Your Recpt No Is ' ||  (SELECT UNIQUE_ID FROM TRANSACTION_ST WHERE TRAN_CODE = V_TRAN_CODE_INSERTION) AS STATUS
         select v_return_message from dual;
     RETURN;
+
 
 
 ELSIF P_MARK = '4' THEN

@@ -2,13 +2,14 @@
 
 
 select up_pre_dur, up_next_dur, in_pre_dur, in_next_dur, up_pre_dur_type, up_next_dur_type, in_pre_dur_type 
+from role_master where role_id='212';
+ 
 into GlbUpdatePre, Glbupdatenext, GlbINSPre, GlbINSnext, GlbUpdatePreType, GlbupdatenextType, GlbINSnextType
 
 -- Call DataFilterWithDatesforINs(Val(GlbINSPre), Val(GlbINSPreType), Val(GlbINSnext), Val(GlbINSnextType))
 
 
 -- Glbins_nextdate, Glbup_previousdate
-from role_master where role_id='212';
 
 /*
             GlbUpdatePre = Trim(RsData!up_pre_dur)
