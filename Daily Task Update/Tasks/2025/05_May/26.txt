@@ -1,1 +1,5 @@
 2025-05-26 - Monday
+
+
+git add WM/Masters/map_policy_number.aspx.cs
+git add WM/Tree/global_mapping_interface.aspx.cs
