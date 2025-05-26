@@ -1,0 +1,5 @@
+tranType: DropDownList4
+sipstp: sipStp
+folio 1: TextBox13
+folio 2: TextBox2
+folio 3: TextBox12

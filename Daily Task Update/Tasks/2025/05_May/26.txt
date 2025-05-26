@@ -3,3 +3,31 @@
 
 git add WM/Masters/map_policy_number.aspx.cs
 git add WM/Tree/global_mapping_interface.aspx.cs
+
+
+
+NPS REQUIRED TABLES
+*TABLES TO SYNC:*
+TRANSACTION_ST
+TRANSACTION_STTEMP
+TEMP_TRAN
+CLIENT_MASTER
+INVESTOR_MASTER
+CLIENT_TEST
+
+*PROCEDURE TO UPDATE:*
+PSM_NPS_INSERT_UPDATE_PRA
+
+
+
+------------- AO Gender
+UPDATE member insert and update for gender in client_test 
+
+
+
+
+------------- MF Folio case 
+
+git add WM/Masters/Mf_Punching.aspx
+
+
