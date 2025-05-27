@@ -30,4 +30,4 @@ UPDATE member insert and update for gender in client_test
 
 git add WM/Masters/Mf_Punching.aspx
 
-
+Fixed: folio validation on add 
