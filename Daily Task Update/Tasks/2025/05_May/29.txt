@@ -1,1 +1,13 @@
 2025-05-29 - Thursday
+
+nps:
+reset on punch 
+
+
+git add WM/Masters/Mf_Punching.aspx
+git add WM/Masters/Mf_Punching.aspx.cs
+git add WM/Masters/Mf_Punching.aspx.designer.cs
+git add WM/Masters/NpsTransactionPunching.aspx.cs
+
+git add WM/Masters/DueAndPaidDataImporting.aspx.cs
+

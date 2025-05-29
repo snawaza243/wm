@@ -1,0 +1,30 @@
+
+0. jQuery Syntax
+The jQuery syntax is tailor-made for selecting HTML elements and performing some action on the element(s).
+
+Basic syntax is: $(selector).action()
+
+A $ sign to define/access jQuery
+A (selector) to "query (or find)" HTML elements
+A jQuery action() to be performed on the element(s)
+
+
+1. Selectors:
+
+
+elements: p.h...
+$("p")
+
+class/id: #id_name, .class_name
+$("#id_name")
+$(".class_name")
+
+* all elements
+$("*")
+
+attributes
+$("[href]")
+
+odd table rows 
+$("tr:odd)
+
