@@ -1585,6 +1585,9 @@ If VSFCommGrdE.Rows > 1 Then
 End If
 CheckMandatory = DupMan
 End Function
+
+
+
 Private Sub cmdAdd_Click()
 On Error Resume Next
 Dim rs_city As New ADODB.Recordset
