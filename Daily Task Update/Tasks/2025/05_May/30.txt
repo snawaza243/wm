@@ -5,3 +5,9 @@ AO
 
 IM 
 STATUS = CMBSTATUS = TAX STATUS
+
+
+git add WM/Masters/AccountOpening.aspx
+git add WM/Masters/AccountOpening.aspx.cs
+git add WM/Masters/Mf_Punching.aspx.cs
+git add WM/Masters/map_policy_number.aspx.cs
