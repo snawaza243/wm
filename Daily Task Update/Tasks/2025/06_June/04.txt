@@ -1,1 +1,3 @@
 2025-06-04 - Wednesday
+
+global mapping interface dynamic options for mapping for due, paid, lapsed, reins
