@@ -1,1 +1,8 @@
 2025-06-12 - Thursday
+
+
+git add WM/Masters/AccountOpening.aspx
+git add WM/Masters/AccountOpening.aspx.cs
+
+partial account + ipc 
+
