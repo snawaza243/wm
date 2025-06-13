@@ -1,1 +1,5 @@
 2025-06-13 - Friday
+
+git add WM/Masters/NpsTransactionPunching.aspx
+git add WM/Masters/NpsTransactionPunching.aspx.cs
+git add WM/Masters/NpsTransactionPunching.aspx.designer.cs
