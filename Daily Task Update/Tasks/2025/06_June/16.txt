@@ -1,1 +1,5 @@
 2025-06-16 - Monday
+
+
+correct the procedure of ACCOUNT OPENning get client by id 
+
