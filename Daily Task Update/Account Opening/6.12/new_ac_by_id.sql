@@ -25,7 +25,7 @@ BEGIN
                     IM.PAN                             AS CLIENT_PAN,
                     IM.INV_CODE                        AS EXISTING_INV,
                     IM.SOURCE_ID                       AS SOURCE_CODE,
-                    NVL(CT.CLIENT_CODEKYC,'')          AS CLIENT_CODEKYC,
+                    IM.INV_CODE                        AS CLIENT_CODEKYC,
                     NVL(CT.APPROVED,'')                AS APPROVED,
                     NVL(CT.APPROVED_FLAG, '')          AS APPROVED_FLAG,
                     CT.BUSINESS_CODE                   AS BUSINESS_CODE,    -- EM.PAYROLL_ID
@@ -124,7 +124,7 @@ BEGIN
                     NVL(CT.MAIN_CODE,'')               AS MAIN_CODE,
                     IM.PAN                             AS CLIENT_PAN,
                     IM.INV_CODE                        AS EXISTING_INV,
-                    ''                                 AS CLIENT_CODEKYC,
+                    IM.INV_CODE                        AS CLIENT_CODEKYC,
                     IM.SOURCE_ID                       AS SOURCE_CODE,
                     NVL(CT.APPROVED,'')                AS APPROVED,
                     NVL(CT.APPROVED_FLAG, '')          AS APPROVED_FLAG,
