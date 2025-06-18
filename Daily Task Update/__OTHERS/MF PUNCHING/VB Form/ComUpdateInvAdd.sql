@@ -37,8 +37,27 @@ V_IS_FAM_HEAD VARCHAR2(20)  :=NULL;
 
 BEGIN
 
+IF P_ACTION = '0' THEN
+    IF P_TYPE = 'frmARGeneral' THEN
+    
+    OPEN P_CURSOR FOR
+    select nvl(a.address1,' '),
+    nvl(a.address2,' '),
+    nvl(b.city_id,' '),
+    nvl(to_char(c.state_id),''),
+    nvl(a.mobile,0),
+    nvl(a.email,' '),
+    nvl(a.pincode,' '),
+    nvl(upper(a.pan),' '),
+    a.aadhar_card_no,
+    A.DOB,investor_name  
+    from investor_master a,
+    city_master b, 
+    state_master c 
+    where a.city_id=b.city_id(+) 
+    and b.state_id=c.state_id(+) and a.inv_code=P_INV;
 
-if p_type = 'UPDATE' THEN
+ELSIF P_ACTION = '1' THEN
 
     IF P_ROLE = '1' THEN
         V_MSG:= 'You are not authorised to update the details.';
@@ -112,16 +131,24 @@ if p_type = 'UPDATE' THEN
     END IF;
          
     
+    IF V_MSG IS NOT NULL THEN
+        OPEN P_CURSOR FOR 
+            SELECT V_MSG FROM DUAL
+            RETURN;
+    END IF;
+    
+    
+    
     IF SUBSTR(P_INV,1,1) = '3' THEN
         UPDATE INVESTOR_MASTER SET 
         MODIFY_USER     = P_LOGIN,
         MODIFY_DATE     = SYSDATE,
-        AADHAR_CARD_N0  = P_AADHAR,
+        aadhar_card_no  = P_AADHAR,
         PAN             = P_PAN,
         MOBILE          = P_MOBILE,
         EMAIL           = P_EMAIL,
-        ADDRESS1        = P_ADDRESS1,
-        ADDRESS2        = P_ADDRESS2,
+        ADDRESS1        = P_ADD1,
+        ADDRESS2        = P_ADD2,
         PINCODE         = P_PIN,
         CITY_ID         = P_CITY_ID
         WHERE INV_CODE  = P_INV;
@@ -167,18 +194,37 @@ if p_type = 'UPDATE' THEN
         DOB = TO_DATE(P_DOB,'DD/MM/YYYY/')
         WHERE CLIENT_CODEKYC = P_INV;
     
-    select IS_FAMILY_HEAD (P_INV) INTO V_IS_FAM_HEAD 
-    from dual;
-
+    select IS_FAMILY_HEAD(P_INV) INTO V_IS_FAM_HEAD 
+    from dual;    
     
-    
-    
-    IF V_IS_FAM_HEAD IS NOT NULL THEN
-    
+    IF V_IS_FAM_HEAD = '1' THEN
+        UPDATE CLIENT_MASTER T SET
+        MODIFY_USER = P_LOGIN,
+        MODIFY_DATE = SYSDATE,
+        PAN= P_PAN,
+        MOBILE = P_MOBILE,
+        EMAIL = P_EMAIL,
+        ADDRESS1 = P_ADD1,
+        ADDRESS2 = P_ADD2,
+        PINCODE = P_PIN,
+        CITY_ID = P_CITY_ID
+        WHERE CLIENT_CODE = SUBSTR(P_INV,1,8);
+        
+        IF P_DOB IS NOT NULL THEN
+            UPDATE CLIENT_MASTER T
+            SET MODIFY_USER = P_LOGIN,
+            MODIFY_DATE = SYSDATE,
+            DOB = TO_DATE(P_DOB,'DD/MM/YYYY')
+            WHERE CLIENT_CODE = SUBSTR(P_INV,1,8);
+        END IF;
+    END IF;    
         
         
-    
-    
+ 
+    OPEN P_CURSOR FOR 
+        SELECT 'Information updated' FROM DUAL
+        RETURN;
+    END IF;
        
 END IF;            
 
