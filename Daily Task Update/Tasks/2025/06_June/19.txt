@@ -1,1 +1,12 @@
 2025-06-19 - Thursday
+
+
+git add WM/Controllers/PsmController.cs
+git add WM/Masters/NpsTransactionPunching.aspx.cs
+git add WM/Masters/Mf_Punching.aspx.cs 
+
+
+
+nps: punching reload
+mf: pan validation and micro & microscopic
+ao: city and checkbox issue for new delhi
