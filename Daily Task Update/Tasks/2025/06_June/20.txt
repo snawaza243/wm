@@ -7,3 +7,5 @@ git add WM/Masters/Mf_Punching.aspx.cs
 
 mf dt
 mf pan 
+
+dap bulk 
