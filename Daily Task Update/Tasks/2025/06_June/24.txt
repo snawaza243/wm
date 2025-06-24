@@ -1,1 +1,6 @@
 2025-06-24 - Tuesday
+
+git add WM/Controllers/MfPunchingController.cs
+git add WM/Controllers/PsmController.cs
+git add WM/Masters/Mf_Punching.aspx
+git add WM/Masters/Mf_Punching.aspx.cs
