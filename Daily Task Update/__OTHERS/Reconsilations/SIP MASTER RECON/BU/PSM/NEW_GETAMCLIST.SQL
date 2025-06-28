@@ -1,0 +1,13 @@
+CREATE OR REPLACE PROCEDURE WEALTHMAKER.GetAMCList (
+    p_cursor OUT SYS_REFCURSOR   
+)
+AS
+BEGIN
+    
+    OPEN p_cursor FOR
+        SELECT MUT_NAME , MUT_CODE
+        FROM MUT_FUND       
+        WHERE MUT_CODE IS NOT NULL
+        ORDER BY MUT_NAME;
+END GetAMCList;
+/
