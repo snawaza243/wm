@@ -1,0 +1,2 @@
+-- bulk insert from excel to temp due table
+--psm_dap_temp_due1_lap
