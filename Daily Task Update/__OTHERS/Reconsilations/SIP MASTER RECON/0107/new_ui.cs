@@ -11,6 +11,7 @@ namespace WM.Masters
 {
     public partial class sip_master_reconciliation : System.Web.UI.Page
     {
+        PsmController pc = new PsmController();
         protected void Page_Load(object sender, EventArgs e)
         {
             if (!IsPostBack)
@@ -30,176 +31,17 @@ namespace WM.Masters
             }
             else
             {
-                HandlePostback1();
+                HandlePostbackArSearchRowClick();
             }
             ToggleReconcileButton();
 
         }
 
-        private void HandlePostback1()
-        {
-            string eventTarget = Request["__EVENTTARGET"];
-            string eventArgument = Request["__EVENTARGUMENT"];
+    
 
-            // Debug output to verify values
-            System.Diagnostics.Debug.WriteLine($"EventTarget: {eventTarget}");
-            System.Diagnostics.Debug.WriteLine($"EventArgument: {eventArgument}");
-            System.Diagnostics.Debug.WriteLine($"GridView UniqueID: {tableSearchResults.UniqueID}");
 
-            if (!string.IsNullOrEmpty(eventTarget) &&
-                eventTarget.Equals(tableSearchResults.UniqueID, StringComparison.OrdinalIgnoreCase) &&
-                !string.IsNullOrEmpty(eventArgument) &&
-                eventArgument.StartsWith("RowDoubleClick:", StringComparison.OrdinalIgnoreCase)) // Changed to match your actual argument
-            {
-                int rowIndex = int.Parse(eventArgument.Split(':')[1]);
-                string tranCode = hftran1stcode.Value;
-                hftran1stcode.Value= rowIndex.ToString(); // Store the row index in the hidden field
-                // Debug output
-                System.Diagnostics.Debug.WriteLine($"Processing row {rowIndex} with TranCode: {tranCode}");
 
-                // Process the selected row
-                ProcessSelectedRow(rowIndex, tranCode);
-            }
-            else
-            {
-                System.Diagnostics.Debug.WriteLine("Postback condition not met");
-            }
-        }
 
-<<<<<<< HEAD
-            #region selected row function
-        private void ProcessSelectedRow(int rowIndex, string tranCode)
-        {
-            try
-            {
-                // Get the GridViewRow from the index
-                GridViewRow row = tableSearchResults.Rows[rowIndex];
-
-                // Get all values from the selected row
-                HiddenField hfTranCode = (HiddenField)row.FindControl("hfTranCode");
-                string tranCodetrap = hfTranCode?.Value ?? tranCode; // Use parameter if hidden field not found
-
-                string tranDateStr = ((Label)row.FindControl("lblTranDate"))?.Text;
-                string tranType = ((Label)row.FindControl("lblTrnType"))?.Text;
-                string investorName = ((Label)row.FindControl("lblInvestorName"))?.Text;
-                string amcCode = ((Label)row.FindControl("lblAMC"))?.Text;
-                string branch = ((Label)row.FindControl("lblbranchco"))?.Text;
-                string amount = ((Label)row.FindControl("lblAmount"))?.Text;
-                string chqno = ((Label)row.FindControl("lblChqNo"))?.Text;
-                string registrar = ((Label)row.FindControl("lblregis"))?.Text;
-                string cobfl = ((Label)row.FindControl("lblCOBFL"))?.Text;
-
-                // Process registrar and COBFL options
-                investorName = "new investor name";
-                ProcessRegistrarOptions(registrar, cobfl);
-
-                // Process date range
-                ProcessTransactionDates(tranDateStr);
-
-                // Update other form controls
-                UpdateFormControls(tranType, amcCode, amount, investorName, chqno);
-            }
-            catch (Exception ex)
-            {
-                // Log error and handle gracefully
-                System.Diagnostics.Debug.WriteLine($"Error processing selected row: {ex.Message}");
-                // Optionally show error to user
-                ScriptManager.RegisterStartupScript(this, GetType(), "showalert",
-                    $"alert('Error processing row: {ex.Message.Replace("'", "")}');", true);
-                return;
-            }
-        }
-
-        private void ProcessRegistrarOptions(string registrar, string cobfl)
-        {
-            // Reset all options first
-            c.Checked = false;
-            k.Checked = false;
-            cCob.Checked = false;
-            kCob.Checked = false;
-
-            if (!string.IsNullOrEmpty(registrar) && !string.IsNullOrEmpty(cobfl))
-            {
-                if (registrar == "C" && cobfl == "0")
-                {
-                    c.Checked = true;  // Select "C"
-                }
-                else if (registrar == "K" && cobfl == "0")
-                {
-                    k.Checked = true;  // Select "K"
-                }
-                else if (registrar == "C" && cobfl == "1")
-                {
-                    cCob.Checked = true;  // Select "C COB"
-                }
-                else if (registrar == "K" && cobfl == "1")
-                {
-                    kCob.Checked = true;  // Select "K COB"
-                }
-            }
-        }
-
-        private void ProcessTransactionDates(string tranDateStr)
-        {
-            if (!string.IsNullOrEmpty(tranDateStr) &&
-                DateTime.TryParseExact(tranDateStr, "dd/MM/yyyy",
-                CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime tranDate))
-            {
-                // Calculate the "From" and "To" dates, safely adjusting the day if needed.
-                DateTime fromDate = tranDate.AddMonths(-1); // One month before
-                DateTime toDate = tranDate.AddMonths(1);    // One month after
-
-                // Ensure the day remains valid if the target month has fewer days.
-                fromDate = new DateTime(fromDate.Year, fromDate.Month,
-                    Math.Min(tranDate.Day, DateTime.DaysInMonth(fromDate.Year, fromDate.Month)));
-                toDate = new DateTime(toDate.Year, toDate.Month,
-                    Math.Min(tranDate.Day, DateTime.DaysInMonth(toDate.Year, toDate.Month)));
-
-                // Assign the formatted dates to the textboxes.
-                dateFromRta.Text = fromDate.ToString("dd/MM/yyyy");
-                dateToRta.Text = toDate.ToString("dd/MM/yyyy");
-            }
-            else
-            {
-                // Handle invalid date parsing.
-                dateFromRta.Text = string.Empty;
-                dateToRta.Text = string.Empty;
-            }
-        }
-
-        private void UpdateFormControls(string tranType, string amcCode, string amount,
-            string investorName, string chqno)
-        {
-            // Set reconciliation type
-            if (!string.IsNullOrEmpty(tranType))
-            {
-                rblReconciliationType.SelectedValue = tranType.ToLower() == "reconciled" ?
-                    "reconciled-rta" : "unreconciled-rta";
-            }
-
-            // Set AMC code
-            if (!string.IsNullOrEmpty(amcCode))
-            {
-                amcSelectrta.SelectedValue = amcCode;
-            }
-
-            // Set amount
-            txtAmount.Text = amount ?? string.Empty;
-
-            // Set investor name
-            txtInvestorName.Text = investorName ?? string.Empty;
-
-            // Set cheque information
-            chequeNoSelect.SelectedValue = "001"; // Default value
-            chequeNo.Text = chqno ?? string.Empty;
-        }
-
-        #endregion
- 
-=======
-          
->>>>>>> 61a899eff7d506158de88eb454b6ebd184bc2dc8
-        #region Prashan 
         private void ToggleReconcileButton()
         {
             reconcileBtn.Enabled = GridRta.Rows.Count > 0;
@@ -602,297 +444,41 @@ namespace WM.Masters
             }
         }
 
-        #endregion
-
-        protected void tableSearchResults_RowDataBound(object sender, GridViewRowEventArgs e)
-        {
-            if (e.Row.RowType == DataControlRowType.DataRow)
-            {
-                // Add double click event to each row
-                e.Row.Attributes["ondblclick"] = "onRowDoubleClick(this)";
-                e.Row.Style["cursor"] = "pointer";
-            }
-        }
-
-        protected void tableSearchResults_RowCommand(object sender, GridViewCommandEventArgs e)
-        {
-            if (e.CommandName == "RowDoubleClick")
-            {
-                // Get the row index from the command argument
-                string[] args = e.CommandArgument.ToString().Split(':');
-                if (args.Length == 2 && args[0] == "RowDoubleClick")
-                {
-                    int rowIndex = Convert.ToInt32(args[1]);
-
-                    hfSelectedRow.Value = rowIndex.ToString();
-                    // Get the transaction code from the hidden field
-                    string tranCode = hftran1stcode.Value;
-
-                    // Now you can use the tranCode to perform server-side operations
-                    ProcessSelectedRow(rowIndex, tranCode);
-                }
-            }
-        }
-
-        protected void chkSelect_RowAr(object sender, EventArgs e)
-        {
-            try
-            {
-
-                // Find the row where the checkbox is checked
-                CheckBox chk = (CheckBox)sender;
-                GridViewRow row = (GridViewRow)chk.NamingContainer;
-
-                // if checked then uncheck all other checkboxes
-                foreach (GridViewRow r in tableSearchResults.Rows)
-                {
-                    if (r.RowType == DataControlRowType.DataRow && r != row)
-                    {
-                        CheckBox otherChk = (CheckBox)r.FindControl("chkSelect");
-                        if (otherChk != null)
-                        {
-                            otherChk.Checked = false; // Uncheck other checkboxes
-                        }
-                    }
-                }
-                int rowIndex = row.RowIndex;
-
-                // If your grid has a header, adjust the index to skip it
-                if (tableSearchResults.HeaderRow != null && rowIndex >= 0)
-                {
-                    hfSelectedRow.Value = rowIndex.ToString();
-                }
-                SelectedRowIndex = row.RowIndex;
-
-                tableSearchResults.Focus();
-
-                // Get values from the selected row
-                HiddenField hfTranCode = (HiddenField)row.FindControl("hfTranCode");
-                string tranCodetrap = hfTranCode.Value;
-                tranCodetra = tranCodetrap.ToString();
-
-                string tranDateStr = ((Label)row.FindControl("lblTranDate")).Text;
-                string tranType = ((Label)row.FindControl("lblTrnType")).Text;
-                string investorName = ((Label)row.FindControl("lblInvestorName")).Text;
-                string amcCode = ((Label)row.FindControl("lblAMC")).Text;
-                string branch = ((Label)row.FindControl("lblbranchco")).Text;
-                string amount = ((Label)row.FindControl("lblAmount")).Text;
-                string chqno = ((Label)row.FindControl("lblChqNo")).Text;
-                string registrar = ((Label)row.FindControl("lblregis")).Text;
-                string cobfl = ((Label)row.FindControl("lblCOBFL")).Text;
-
-                if (registrar == "C" && cobfl == "0")
-                {
-                    c.Checked = true;  // Select "C"
-                }
-                else if (registrar == "K" && cobfl == "0")
-                {
-                    k.Checked = true;  // Select "K"
-                }
-                else if (registrar == "C" && cobfl == "1")
-                {
-                    cCob.Checked = true;  // Select "C COB"
-                }
-                else if (registrar == "K" && cobfl == "1")
-                {
-                    kCob.Checked = true;  // Select "K COB"
-                }
-
-
-                if (DateTime.TryParseExact(tranDateStr, "dd/MM/yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime tranDate))
-                {
-                    // Calculate the "From" and "To" dates, safely adjusting the day if needed.
-                    DateTime fromDate = tranDate.AddMonths(-1); // One month before
-                    DateTime toDate = tranDate.AddMonths(1);    // One month after
-
-                    // Ensure the day remains valid if the target month has fewer days.
-                    fromDate = new DateTime(fromDate.Year, fromDate.Month, Math.Min(tranDate.Day, DateTime.DaysInMonth(fromDate.Year, fromDate.Month)));
-                    toDate = new DateTime(toDate.Year, toDate.Month, Math.Min(tranDate.Day, DateTime.DaysInMonth(toDate.Year, toDate.Month)));
-
-                    // Assign the formatted dates to the textboxes.
-                    dateFromRta.Text = fromDate.ToString("dd/MM/yyyy");
-                    dateToRta.Text = toDate.ToString("dd/MM/yyyy");
-                }
-                else
-                {
-                    // Handle invalid date parsing.
-                    dateFromRta.Text = string.Empty;
-                    dateToRta.Text = string.Empty;
-                }
-
-
-                rblReconciliationType.SelectedValue = tranType.ToLower() == "reconciled" ? "reconciled-rta" : "unreconciled-rta";
-                amcSelectrta.SelectedValue = amcCode;
-                //  branchSelectrta.SelectedValue = branch;
-                txtAmount.Text = amount;
-                txtInvestorName.Text = investorName;
-                chequeNoSelect.SelectedValue = "001";
-                chequeNo.Text = chqno;
-
-            }
-
-            catch (Exception ex)
-            {
-                // Handle any unexpected errors
-                // Optionally, log the error or display a message to the user
-                Console.WriteLine($"Error: {ex.Message}");
-            }
-        }
-
-
-
-        #region selected row function
-        private void ProcessSelectedRow(int rowIndex, string tranCode)
-        {
-            try
-            {
-                // Get the GridViewRow from the index
-                GridViewRow row = tableSearchResults.Rows[rowIndex];
-
-                // Get all values from the selected row
-                HiddenField hfTranCode = (HiddenField)row.FindControl("hfTranCode");
-                string tranCodetrap = hfTranCode?.Value ?? tranCode; // Use parameter if hidden field not found
-
-                string tranDateStr = ((Label)row.FindControl("lblTranDate"))?.Text;
-                string tranType = ((Label)row.FindControl("lblTrnType"))?.Text;
-                string investorName = ((Label)row.FindControl("lblInvestorName"))?.Text;
-                string amcCode = ((Label)row.FindControl("lblAMC"))?.Text;
-                string branch = ((Label)row.FindControl("lblbranchco"))?.Text;
-                string amount = ((Label)row.FindControl("lblAmount"))?.Text;
-                string chqno = ((Label)row.FindControl("lblChqNo"))?.Text;
-                string registrar = ((Label)row.FindControl("lblregis"))?.Text;
-                string cobfl = ((Label)row.FindControl("lblCOBFL"))?.Text;
-
-                // Process registrar and COBFL options
-                investorName = "new investor name";
-                ProcessRegistrarOptions(registrar, cobfl);
-
-                // Process date range
-                ProcessTransactionDates(tranDateStr);
-
-                // Update other form controls
-                UpdateFormControls(tranType, amcCode, amount, investorName, chqno);
-            }
-            catch (Exception ex)
-            {
-                // Log error and handle gracefully
-                System.Diagnostics.Debug.WriteLine($"Error processing selected row: {ex.Message}");
-                // Optionally show error to user
-                ScriptManager.RegisterStartupScript(this, GetType(), "showalert",
-                    $"alert('Error processing row: {ex.Message.Replace("'", "")}');", true);
-                return;
-            }
-        }
-
-        private void ProcessRegistrarOptions(string registrar, string cobfl)
-        {
-            // Reset all options first
-            c.Checked = false;
-            k.Checked = false;
-            cCob.Checked = false;
-            kCob.Checked = false;
-
-            if (!string.IsNullOrEmpty(registrar) && !string.IsNullOrEmpty(cobfl))
-            {
-                if (registrar == "C" && cobfl == "0")
-                {
-                    c.Checked = true;  // Select "C"
-                }
-                else if (registrar == "K" && cobfl == "0")
-                {
-                    k.Checked = true;  // Select "K"
-                }
-                else if (registrar == "C" && cobfl == "1")
-                {
-                    cCob.Checked = true;  // Select "C COB"
-                }
-                else if (registrar == "K" && cobfl == "1")
-                {
-                    kCob.Checked = true;  // Select "K COB"
-                }
-            }
-        }
-
-        private void ProcessTransactionDates(string tranDateStr)
-        {
-            if (!string.IsNullOrEmpty(tranDateStr) &&
-                DateTime.TryParseExact(tranDateStr, "dd/MM/yyyy",
-                CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime tranDate))
-            {
-                // Calculate the "From" and "To" dates, safely adjusting the day if needed.
-                DateTime fromDate = tranDate.AddMonths(-1); // One month before
-                DateTime toDate = tranDate.AddMonths(1);    // One month after
-
-                // Ensure the day remains valid if the target month has fewer days.
-                fromDate = new DateTime(fromDate.Year, fromDate.Month,
-                    Math.Min(tranDate.Day, DateTime.DaysInMonth(fromDate.Year, fromDate.Month)));
-                toDate = new DateTime(toDate.Year, toDate.Month,
-                    Math.Min(tranDate.Day, DateTime.DaysInMonth(toDate.Year, toDate.Month)));
-
-                // Assign the formatted dates to the textboxes.
-                dateFromRta.Text = fromDate.ToString("dd/MM/yyyy");
-                dateToRta.Text = toDate.ToString("dd/MM/yyyy");
-            }
-            else
-            {
-                // Handle invalid date parsing.
-                dateFromRta.Text = string.Empty;
-                dateToRta.Text = string.Empty;
-            }
-        }
-
-        private void UpdateFormControls(string tranType, string amcCode, string amount,
-            string investorName, string chqno)
-        {
-            // Set reconciliation type
-            if (!string.IsNullOrEmpty(tranType))
-            {
-                rblReconciliationType.SelectedValue = tranType.ToLower() == "reconciled" ?
-                    "reconciled-rta" : "unreconciled-rta";
-            }
-
-            // Set AMC code
-            if (!string.IsNullOrEmpty(amcCode))
-            {
-                amcSelectrta.SelectedValue = amcCode;
-            }
-
-            // Set amount
-            txtAmount.Text = amount ?? string.Empty;
-
-            // Set investor name
-            txtInvestorName.Text = investorName ?? string.Empty;
-
-            // Set cheque information
-            chequeNoSelect.SelectedValue = "001"; // Default value
-            chequeNo.Text = chqno ?? string.Empty;
-        }
-
-        #endregion
-
-
         protected void chkSelect_CheckedChanged(object sender, EventArgs e)
         {
             try
             {
 
-                // Find the row where the checkbox is checked
+                btnReset2_Click(this, null);
+
+
                 CheckBox chk = (CheckBox)sender;
+
+                if (!chk.Checked)
+                {
+                    btnReset2_Click(this, null);
+                    return;
+                }
                 GridViewRow row = (GridViewRow)chk.NamingContainer;
 
-                // if checked then uncheck all other checkboxes
+                // Uncheck others and reset their background
                 foreach (GridViewRow r in tableSearchResults.Rows)
                 {
-                    if (r.RowType == DataControlRowType.DataRow && r != row)
+                    if (r.RowType == DataControlRowType.DataRow)
                     {
                         CheckBox otherChk = (CheckBox)r.FindControl("chkSelect");
-                        if (otherChk != null)
+                        if (otherChk != null && r != row)
                         {
-                            otherChk.Checked = false; // Uncheck other checkboxes
+                            otherChk.Checked = false;
+                            r.BackColor = System.Drawing.Color.White; // reset
                         }
                     }
                 }
+
+                row.BackColor = chk.Checked ? System.Drawing.Color.LightBlue : System.Drawing.Color.White;
+
                 int rowIndex = row.RowIndex;
+
 
                 // If your grid has a header, adjust the index to skip it
                 if (tableSearchResults.HeaderRow != null && rowIndex >= 0)
@@ -917,6 +503,10 @@ namespace WM.Masters
                 string chqno = ((Label)row.FindControl("lblChqNo")).Text;
                 string registrar = ((Label)row.FindControl("lblregis")).Text;
                 string cobfl = ((Label)row.FindControl("lblCOBFL")).Text;
+
+                
+                string remarkValue = ((Label)row.FindControl("lblRemark")).Text;
+
 
                 if (registrar == "C" && cobfl == "0")
                 {
@@ -965,6 +555,10 @@ namespace WM.Masters
                 txtInvestorName.Text = investorName;
                 chequeNoSelect.SelectedValue = "001";
                 chequeNo.Text = chqno;
+                remark.Text = remarkValue;
+                UpdatePanelFirst.Update();
+
+                return;
 
             }
 
@@ -977,9 +571,109 @@ namespace WM.Masters
         }
 
 
-       
 
- 
+        private void HandlePostbackArSearchRowClick()
+        {
+            string eventTarget = Request["__EVENTTARGET"];
+            string eventArgument = Request["__EVENTARGUMENT"];
+
+            System.Diagnostics.Debug.WriteLine($"EventTarget: {eventTarget}");
+            System.Diagnostics.Debug.WriteLine($"EventArgument: {eventArgument}");
+            System.Diagnostics.Debug.WriteLine($"GridView UniqueID: {tableSearchResults.UniqueID}");
+
+            if (!string.IsNullOrEmpty(eventTarget) &&
+                eventTarget.Equals(tableSearchResults.UniqueID, StringComparison.OrdinalIgnoreCase) &&
+                !string.IsNullOrEmpty(eventArgument) &&
+                eventArgument.StartsWith("RowDoubleClick:", StringComparison.OrdinalIgnoreCase)) // Changed to match your actual argument
+            {
+                int rowIndex = int.Parse(eventArgument.Split(':')[1]);
+                //string tranCode = hftran1stcode.Value;
+                //hftran1stcode.Value = rowIndex.ToString(); // Store the row index in the hidden field
+
+                ProcessSelectedRow(rowIndex);
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine("Postback condition not met");
+            }
+        }
+        private void ProcessSelectedRow(int rowIndex)
+        {
+            try
+            {
+                GridViewRow row = tableSearchResults.Rows[rowIndex];
+                CheckBox chkSelect = (CheckBox)row.FindControl("chkSelect");
+
+                if (chkSelect != null)
+                {
+                    // Check this checkbox
+                    chkSelect.Checked = true;
+
+                    // Uncheck all others manually (replicating logic)
+                    foreach (GridViewRow r in tableSearchResults.Rows)
+                    {
+                        if (r.RowIndex != rowIndex && r.RowType == DataControlRowType.DataRow)
+                        {
+                            CheckBox otherChk = (CheckBox)r.FindControl("chkSelect");
+                            if (otherChk != null)
+                            {
+                                otherChk.Checked = false;
+                                r.BackColor = System.Drawing.Color.White;
+                            }
+                        }
+                    }
+
+                    row.BackColor = System.Drawing.Color.LightBlue;
+
+                    // Now call the CheckedChanged handler manually
+                    chkSelect_CheckedChanged(chkSelect, EventArgs.Empty);
+                    pc.ShowAlert(this, "this is sample");
+                }
+
+                UpdatePanelFirst.Update();
+            }
+            catch (Exception ex)
+            {
+                // Log error
+                Console.WriteLine($"ProcessSelectedRow error: {ex.Message}");
+            }
+        }
+
+
+
+        protected void tableSearchResults_RowDataBound(object sender, GridViewRowEventArgs e)
+        {
+            if (e.Row.RowType == DataControlRowType.DataRow)
+            {
+                // Add double click event to each row
+                e.Row.Attributes["ondblclick"] = "onRowDoubleClick(this)";
+                e.Row.Style["cursor"] = "pointer";
+
+                // Find the checkbox control
+                CheckBox chkSelect = (CheckBox)e.Row.FindControl("chkSelect");
+                if (chkSelect != null)
+                {
+                    // Add client-side click handler to prevent event bubbling
+                    chkSelect.Attributes["onclick"] = "event.stopPropagation();";
+                }
+            }
+        }
+
+        protected void tableSearchResults_RowCommand(object sender, GridViewCommandEventArgs e)
+        {
+            if (e.CommandName == "RowDoubleClick")
+            {
+                string[] args = e.CommandArgument.ToString().Split(':');
+                if (args.Length == 2 && args[0] == "RowDoubleClick")
+                {
+                    int rowIndex = Convert.ToInt32(args[1]);
+                    hfSelectedRow.Value = rowIndex.ToString();
+                    ProcessSelectedRow(rowIndex);
+                    UpdatePanelFirst.Update();
+                }
+            }
+        }
+
 
 
 
@@ -1031,30 +725,42 @@ namespace WM.Masters
 
         protected void btnSearch_Click(object sender, EventArgs e)
         {
-            SipMasterModel searchModel = new SipMasterModel
+            try
             {
-                Channelid = decimal.TryParse(channelSelect.SelectedValue, out decimal result) ? result : (decimal?)null,
-                ARNumber = arNumber.Text,
-                Branch = branchSelect.SelectedValue,
-                Region = regionSelect.SelectedValue,
-                RM = rmSelect.SelectedValue,
-                Zone = zoneSelect.SelectedValue,
-                TranType = RadioButtonList2.SelectedValue,
-                ReconciliationStatus = rblReconciliationType.SelectedValue,
-                COB = cob.Checked ? "1" : null,
-                PMS = pms.Checked ? "1" : null,
-                DateFrom = (string.IsNullOrEmpty(dateFrom.Text) || !string.IsNullOrEmpty(arNumber.Text)) ? (System.DateTime?)null :
-            (DateTime.TryParseExact(dateFrom.Text, "dd/MM/yyyy", null, System.Globalization.DateTimeStyles.None, out DateTime parsedDateFrom)
-            ? parsedDateFrom // Store as DateTime object
-            : (System.DateTime?)null),
 
-                DateTo = (string.IsNullOrEmpty(dateTo.Text) || !string.IsNullOrEmpty(arNumber.Text)) ? (System.DateTime?)null :
-            DateTime.TryParseExact(dateTo.Text, "dd/MM/yyyy", null, System.Globalization.DateTimeStyles.None, out DateTime parsedDateTo)
-            ? parsedDateTo // Store as DateTime object
-            : (System.DateTime?)null,
-                AMC = amcSelect.SelectedValue
-            };
-            if (string.IsNullOrWhiteSpace(searchModel.ARNumber) &&
+                // BIND NULL TO tableSearchResults
+                tableSearchResults.DataSource = null;
+                tableSearchResults.DataBind();
+
+                btnReset2_Click(this, null);
+
+
+
+                SipMasterModel searchModel = new SipMasterModel
+                {
+                    Channelid = decimal.TryParse(channelSelect.SelectedValue, out decimal result) ? result : (decimal?)null,
+                    ARNumber = arNumber.Text,
+                    Branch = branchSelect.SelectedValue,
+                    Region = regionSelect.SelectedValue,
+                    RM = rmSelect.SelectedValue,
+                    Zone = zoneSelect.SelectedValue,
+                    TranType = RadioButtonList2.SelectedValue,
+                    ReconciliationStatus = rblReconciliationType.SelectedValue,
+                    COB = cob.Checked ? "1" : null,
+                    PMS = pms.Checked ? "1" : null,
+                    DateFrom = (string.IsNullOrEmpty(dateFrom.Text) || !string.IsNullOrEmpty(arNumber.Text)) ? (System.DateTime?)null :
+                (DateTime.TryParseExact(dateFrom.Text, "dd/MM/yyyy", null, System.Globalization.DateTimeStyles.None, out DateTime parsedDateFrom)
+                ? parsedDateFrom // Store as DateTime object
+                : (System.DateTime?)null),
+
+                    DateTo = (string.IsNullOrEmpty(dateTo.Text) || !string.IsNullOrEmpty(arNumber.Text)) ? (System.DateTime?)null :
+                DateTime.TryParseExact(dateTo.Text, "dd/MM/yyyy", null, System.Globalization.DateTimeStyles.None, out DateTime parsedDateTo)
+                ? parsedDateTo // Store as DateTime object
+                : (System.DateTime?)null,
+                    AMC = amcSelect.SelectedValue
+                };
+
+                if (string.IsNullOrWhiteSpace(searchModel.ARNumber) &&
        string.IsNullOrWhiteSpace(searchModel.Branch) &&
        string.IsNullOrWhiteSpace(searchModel.Region) &&
        string.IsNullOrWhiteSpace(searchModel.RM) &&
@@ -1063,20 +769,27 @@ namespace WM.Masters
        searchModel.DateFrom == null &&
        searchModel.DateTo == null &&
        string.IsNullOrWhiteSpace(searchModel.AMC))
+                {
+                    // Alert user if no criteria are provided
+                    ScriptManager.RegisterStartupScript(this, GetType(), "alertMessage",
+                        "alert('Please provide at least one search criterion.');", true);
+                    return;
+                }
+
+                DataTable dt = new WM.Controllers.sip_master_reconciliationController().GetTransactions(searchModel);
+                tableSearchResults.Visible = true;
+                tableSearchResults.DataSource = dt;
+                tableSearchResults.DataBind();
+                tableSearchResults.Focus();
+
+                lblRowCount.Text = dt.Rows.Count.ToString();
+            }
+            catch (Exception ex)
             {
-                // Alert user if no criteria are provided
-                ScriptManager.RegisterStartupScript(this, GetType(), "alertMessage",
-                    "alert('Please provide at least one search criterion.');", true);
+                pc.ShowAlert(this, "Error: " + ex.Message);
                 return;
             }
 
-            DataTable dt = new WM.Controllers.sip_master_reconciliationController().GetTransactions(searchModel);
-            tableSearchResults.Visible = true;
-            tableSearchResults.DataSource = dt;
-            tableSearchResults.DataBind();
-            tableSearchResults.Focus();
-
-            lblRowCount.Text = dt.Rows.Count.ToString();
         }
 
         protected void btnExport_Click(object sender, EventArgs e)
@@ -1168,6 +881,7 @@ namespace WM.Masters
         {
             // Required for rendering GridView in an Excel-friendly format
         }
+
 
         protected void btnSearchrta_Click(object sender, EventArgs e)
         {
