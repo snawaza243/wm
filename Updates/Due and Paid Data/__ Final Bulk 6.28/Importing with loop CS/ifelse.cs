@@ -58,66 +58,68 @@ AND IMPORTDATATYPE='{MyImportDataType}' ";
                             DataTable dt2 = pc.ExecuteCurrentQueryMaster(sqlX2, out int rn2, out string ie2);
                             insertCount += 1;
 
-                            if (MyImportDataType == "LAPSEDDATA")
+
+
+                if (MyImportDataType == "LAPSEDDATA")
+                {
+                    DateTime MyLapsedDate = DateTime.Now;
+                    #region Select query for LAPSED
+                    string sql = " SELECT   policy_no, company_cd, MAX (due_date) due_date,max(mon_no),max(year_no), ";
+                    sql = sql + "         (SELECT MAX (status_cd) ";
+                    sql = sql + "            FROM bajaj_due_data ";
+                    sql = sql + "           WHERE UPPER (TRIM (policy_no)) = ";
+                    sql = sql + "                                         UPPER (TRIM ('" + row[Excel_policy_no].ToString().ToUpper().Trim() + "')) ";
+                    sql = sql + "             AND UPPER (TRIM (company_cd)) = '" + row[Excel_Comp].ToString().ToUpper().Trim() + "'";
+                    sql = sql + "             AND importdatatype = 'DUEDATA' ";
+                    sql = sql + "             AND due_date = ";
+                    sql = sql + "                    (SELECT MAX (due_date) ";
+                    sql = sql + "                       FROM bajaj_due_data ";
+                    sql = sql + "                      WHERE UPPER (TRIM (policy_no)) = ";
+                    sql = sql + "                                                    UPPER (TRIM ('" + row[Excel_policy_no].ToString().ToUpper().Trim() + "')) ";
+                    sql = sql + "                        AND UPPER (TRIM (company_cd)) = ";
+                    sql = sql + "                                                   '" + row[Excel_Comp].ToString().ToUpper().Trim() + "' ";
+                    sql = sql + "                        AND due_date IS NOT NULL AND IMPORTDATATYPE='DUEDATA' ";
+                    sql = sql + "                        )) status_cd ";
+                    sql = sql + "    FROM bajaj_due_data a ";
+                    sql = sql + "   WHERE   importdatatype = 'DUEDATA' ";
+                    sql = sql + "                      AND UPPER (TRIM (policy_no)) = ";
+                    sql = sql + "                                                    UPPER (TRIM ('" + row[Excel_policy_no].ToString().ToUpper().Trim() + "')) ";
+                    sql = sql + "                        AND UPPER (TRIM (company_cd)) = ";
+                    sql = sql + "                                                   '" + row[Excel_Comp].ToString().ToUpper().Trim() + "' ";
+                    sql = sql + "GROUP BY policy_no, company_cd ";
+                    #endregion
+
+                    DataTable dt3 = pc.ExecuteCurrentQueryMaster(sql, out int rn3, out string ie3);
+                    //if (!RsDueDate.EOF)
+                    if (rn3 > 0 && ie3 == null)
+                    {
+                        #region If found lapsed data then update
+
+                        DateTime MyDueDate = DateTime.MinValue;
+
+                        object rawDueDate = dt3.Rows[0]["due_date"];
+
+                        if (rawDueDate != null && rawDueDate != DBNull.Value)
+                        {
+                            if (!DateTime.TryParse(rawDueDate.ToString(), out MyDueDate))
                             {
-                                DateTime MyLapsedDate = DateTime.Now;
-                                #region Select query for LAPSED
-                                string sql = " SELECT   policy_no, company_cd, MAX (due_date) due_date,max(mon_no),max(year_no), ";
-                                sql = sql + "         (SELECT MAX (status_cd) ";
-                                sql = sql + "            FROM bajaj_due_data ";
-                                sql = sql + "           WHERE UPPER (TRIM (policy_no)) = ";
-                                sql = sql + "                                         UPPER (TRIM ('" + row[Excel_policy_no].ToString().ToUpper().Trim() + "')) ";
-                                sql = sql + "             AND UPPER (TRIM (company_cd)) = '" + row[Excel_Comp].ToString().ToUpper().Trim() + "'";
-                                sql = sql + "             AND importdatatype = 'DUEDATA' ";
-                                sql = sql + "             AND due_date = ";
-                                sql = sql + "                    (SELECT MAX (due_date) ";
-                                sql = sql + "                       FROM bajaj_due_data ";
-                                sql = sql + "                      WHERE UPPER (TRIM (policy_no)) = ";
-                                sql = sql + "                                                    UPPER (TRIM ('" + row[Excel_policy_no].ToString().ToUpper().Trim() + "')) ";
-                                sql = sql + "                        AND UPPER (TRIM (company_cd)) = ";
-                                sql = sql + "                                                   '" + row[Excel_Comp].ToString().ToUpper().Trim() + "' ";
-                                sql = sql + "                        AND due_date IS NOT NULL AND IMPORTDATATYPE='DUEDATA' ";
-                                sql = sql + "                        )) status_cd ";
-                                sql = sql + "    FROM bajaj_due_data a ";
-                                sql = sql + "   WHERE   importdatatype = 'DUEDATA' ";
-                                sql = sql + "                      AND UPPER (TRIM (policy_no)) = ";
-                                sql = sql + "                                                    UPPER (TRIM ('" + row[Excel_policy_no].ToString().ToUpper().Trim() + "')) ";
-                                sql = sql + "                        AND UPPER (TRIM (company_cd)) = ";
-                                sql = sql + "                                                   '" + row[Excel_Comp].ToString().ToUpper().Trim() + "' ";
-                                sql = sql + "GROUP BY policy_no, company_cd ";
-                                #endregion
-
-                                DataTable dt3 = pc.ExecuteCurrentQueryMaster(sql, out int rn3, out string ie3);
-                                //if (!RsDueDate.EOF)
-                                if (rn3 > 0 && ie3 == null)
-                                {
-                                    #region If found lapsed data then update
-
-                                    DateTime MyDueDate = DateTime.MinValue;
-
-                                    object rawDueDate = dt3.Rows[0]["due_date"];
-
-                                    if (rawDueDate != null && rawDueDate != DBNull.Value)
-                                    {
-                                        if (!DateTime.TryParse(rawDueDate.ToString(), out MyDueDate))
-                                        {
-                                            // Optional: fallback or logging
-                                            MyDueDate = DateTime.MinValue; // or any default
-                                        }
-                                    }
-                                    if (MyLapsedDate >= MyDueDate)
-                                    {
-                                        string sql_Y = ("update bajaj_due_Data set status_Cd='LAPSED',last_update_dt='" + DateTime.Now.ToString("dd/MM/yyyy") + "',last_update='" + logginId + "' WHERE UPPER(TRIM(POLICY_no))=UPPER (TRIM ('" + row[Excel_policy_no].ToString().ToUpper().Trim() + "')) and upper(trim(company_cd))= '" + row[Excel_Comp].ToString().ToUpper().Trim() + "' and due_date='" + Convert.ToDateTime(row["due_date"]).ToString("dd/MM/yyyy") + "' and importdatatype='DUEDATA' ");
-                                        string sql_Y2 = ("update policy_details_master set last_status='L',UPDATE_PROG='" + ddlImportDataType.Text + "',UPDATE_USER='" + logginId + "',UPDATE_DATE=TO_DATE('" + ServerDateTime.ToString("dd-MMM-yyyy") + "','DD/MM/YYYY') WHERE UPPER(TRIM(POLICY_no))=UPPER (TRIM ('" + row[Excel_policy_no].ToString().ToUpper().Trim() + "')) and upper(trim(company_cd))= '" + row[Excel_Comp].ToString().ToUpper().Trim() + "'");
-                                        pc.ExecuteCurrentQueryMaster(sql_Y, out _, out string _);
-                                        pc.ExecuteCurrentQueryMaster(sql_Y2, out int _, out string _);
-                                        //update_bajajar_status(rsExcel.Fields[Excel_policy_no].Value.ToString().ToUpper().Trim(), rsExcel.Fields[Excel_Comp].Value.ToString().ToUpper().Trim(), "L", "LAPSED DATA");
-                                        UpdateBajajStatus(row[Excel_policy_no]?.ToString(), row[Excel_Comp]?.ToString(), "L", "LAPSSSSED DATA", month, year);
-                                    }
-                                    #endregion
-                                }
-                                //RsDueDate.Close();
+                                // Optional: fallback or logging
+                                MyDueDate = DateTime.MinValue; // or any default
                             }
+                        }
+                        if (MyLapsedDate >= MyDueDate)
+                        {
+                            string sql_Y = ("update bajaj_due_Data set status_Cd='LAPSED',last_update_dt='" + DateTime.Now.ToString("dd/MM/yyyy") + "',last_update='" + logginId + "' WHERE UPPER(TRIM(POLICY_no))=UPPER (TRIM ('" + row[Excel_policy_no].ToString().ToUpper().Trim() + "')) and upper(trim(company_cd))= '" + row[Excel_Comp].ToString().ToUpper().Trim() + "' and due_date='" + Convert.ToDateTime(row["due_date"]).ToString("dd/MM/yyyy") + "' and importdatatype='DUEDATA' ");
+                            string sql_Y2 = ("update policy_details_master set last_status='L',UPDATE_PROG='" + ddlImportDataType.Text + "',UPDATE_USER='" + logginId + "',UPDATE_DATE=TO_DATE('" + ServerDateTime.ToString("dd-MMM-yyyy") + "','DD/MM/YYYY') WHERE UPPER(TRIM(POLICY_no))=UPPER (TRIM ('" + row[Excel_policy_no].ToString().ToUpper().Trim() + "')) and upper(trim(company_cd))= '" + row[Excel_Comp].ToString().ToUpper().Trim() + "'");
+                            pc.ExecuteCurrentQueryMaster(sql_Y, out _, out string _);
+                            pc.ExecuteCurrentQueryMaster(sql_Y2, out int _, out string _);
+                            //update_bajajar_status(rsExcel.Fields[Excel_policy_no].Value.ToString().ToUpper().Trim(), rsExcel.Fields[Excel_Comp].Value.ToString().ToUpper().Trim(), "L", "LAPSED DATA");
+                            UpdateBajajStatus(row[Excel_policy_no]?.ToString(), row[Excel_Comp]?.ToString(), "L", "LAPSSSSED DATA", month, year);
+                        }
+                        #endregion
+                    }
+                    //RsDueDate.Close();
+                }
 
                             DataTable dt4 = pc.ExecuteCurrentQueryMaster(sql1, out int rn4, out string ie4);
                             string fileNameNe = "DuePaidMappedField" + ddlImpTyp + ".txt";

@@ -1,0 +1,61 @@
+SELECT 
+                inv.Investor_Name,
+                SUBSTR(inv.address1, 1, 10)  AS address,
+                ct.city_name,
+                tmf.BROKER_ID,
+                tmf.RMCODE,
+                tmf.busi_branch_code,
+                tmf.BANK_NAME,
+                tmf.REC_FLAG,
+                tmf.FLAG,
+                tmf.CLIENT_CODE,
+                tmf.SCH_CODE,
+                tmf.MUT_CODE,
+                ei.rm_name,
+                bi.branch_name,
+                tmf.PANNO,
+                amc.MUT_NAME,
+                sch.SCH_NAME,
+                tmf.TR_DATE,
+                tmf.TRAN_TYPE,
+                tmf.APP_NO,
+                tmf.FOLIO_NO,
+                tmf.PAYMENT_MODE,
+                tmf.CHEQUE_NO,
+                tmf.CHEQUE_DATE,
+                tmf.AMOUNT,
+                tmf.SIP_AMOUNT,
+                tmf.SIP_TYPE,
+                tmf.LEAD_NO,
+                tmf.LEAD_NAME,
+                tmf.TRAN_CODE,
+                bi.BRANCH_CODE,
+                tmf.BUSINESS_RMCODE,
+                tmf.INSTALLMENTS_NO,
+                NVL(tmf.cob_flag, 0) AS cob_flag,
+                    -- Inline logic for FN_IDENTIFY_REGISTRAR
+                    (SELECT REG 
+                     FROM WEALTHMAKER.REG_SCHEMES
+                     WHERE MUT_CODE = tmf.MUT_CODE 
+                     AND ROWNUM = 1) AS REGISTRAR,
+                WEALTHMAKER.RETURNSTATUS(tmf.TRAN_CODE) AS STATUS,
+                CASE 
+                    WHEN tmf.loggeduserid IN ('MFONLINE','Valuefy','INVESTWELL') THEN 'Online'
+                    ELSE 'Offline'
+                END AS loggeduserid,
+                NVL(tmf.cob_flag, 0) AS cob_flag,
+                tmf.remark_reco AS cob_remark
+              FROM 
+                transaction_mf_temp1 tmf
+                LEFT JOIN investor_master inv ON tmf.client_code = inv.inv_code
+                LEFT JOIN city_master ct ON inv.city_id = ct.city_id
+                LEFT JOIN WEALTHMAKER.ALLSCHEME sch ON tmf.SCH_CODE = sch.SCH_CODE
+                LEFT JOIN WEALTHMAKER.ALLCOMPANY amc ON tmf.MUT_CODE = amc.MUT_CODE
+                LEFT JOIN branch_master bi ON tmf.BUSI_BRANCH_CODE = bi.branch_code
+                LEFT JOIN employee_master ei ON TO_CHAR(tmf.BUSINESS_RMCODE) = TO_CHAR(ei.payroll_id)
+              WHERE 1=1
+                AND tmf.SIP_TYPE = 'SIP'
+                AND tmf.AMOUNT > 0
+                AND (tmf.ASA <> 'C' OR tmf.ASA IS NULL)
+                AND tmf.move_flag1 IS NULL
+                AND tmf.sip_id IS NULL AND NVL(tmf.rec_flag, 'N') = 'N' AND tmf.TR_DATE >= TO_DATE('08/01/2025', 'DD/MM/YYYY') AND tmf.TR_DATE <= TO_DATE('08/02/2025', 'DD/MM/YYYY') ORDER BY tmf.TR_DATE, ei.rm_name
