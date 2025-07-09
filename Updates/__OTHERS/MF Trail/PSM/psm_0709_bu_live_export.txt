@@ -1,0 +1,137 @@
+CREATE OR REPLACE PROCEDURE WEALTHMAKER.PRC_CALULATE_FOLIO_TRAIL (
+    PFROMDATE         DATE,
+    PTODATE           DATE,
+    PUSERID           VARCHAR2,
+    PROLE_ID          NUMBER,
+    P_CURSOR      OUT SYS_REFCURSOR)
+AS
+BEGIN
+    DELETE FROM WEALTHMAKER.IMPORT_FOLIOS_TEMP WHERE  LOGIN_ID = PUSERID AND ROLE_ID = PROLE_ID;
+
+    FOR I
+        IN (SELECT *
+              FROM WEALTHMAKER.IMPORT_FOLIOS_TEMP
+             WHERE     LOGIN_ID = PUSERID
+                   AND ROLE_ID = PROLE_ID)
+    LOOP
+        INSERT INTO WEALTHMAKER.IMPORT_FOLIOS_CALULATED_DATA (
+                        FEED_SEQ,
+                        BC_NO,
+                        AMC_CODE,
+                        FOLIO,
+                        INVESTOR_NAME,
+                        PRODUCT_CODE,
+                        UNITS,
+                        AMOUNT,
+                        SUBBROKER_CODE,
+                        TRADE_DT,
+                        TRAIL_AMT,
+                        TRAIL_PAID_FROM_DT,
+                        TRAIL_PAID_TO_DT,
+                        DAYS_FEE_PAID_FROM_DT,
+                        DAYS_FEE_PAID_TO_DT,
+                        TRAIL_RATE,
+                        TRAIL_PAYABLE_AMT,
+                        FLAG,
+                        PS_SEQ,
+                        TRXN_ID,
+                        TRAIL_TYPE,
+                        DAYS_FEE_PAID,
+                        INV_CODE,
+                        SCH_CODE,
+                        FLAG_CAL,
+                        SUB_CD,
+                        FLAG_RATE,
+                        TEMP,
+                        SUB_CODE_LAST,
+                        CLIENT_RMCODE,
+                        BROK_CODE,
+                        TER_LOCATION,
+                        TR_LOCATION_UPD,
+                        IMPORT_COMPANY,
+                        TRAN_TYPE,
+                        NET_COMMISSION_AMOUNT,
+                        SOURCE_GST_STATE_CODE,
+                        COMPANY_GST_STATE_CODE,
+                        CGST_RATE,
+                        CGST_AMOUNT,
+                        SGST_RATE,
+                        SGST_AMOUNT,
+                        UTGST_RATE,
+                        UTGST_AMOUNT,
+                        IGST_RATE,
+                        IGST_AMOUNT,
+                        GST_CALCULATION_FLAG,
+                        MUT_CODE,
+                        MF_HO_GST_STATE_CODE,
+                        LOGIN_ID,
+                        ROLE_ID,
+                        TIMEST)
+            SELECT FEED_SEQ,
+                   BC_NO,
+                   AMC_CODE,
+                   FOLIO,
+                   INVESTOR_NAME,
+                   PRODUCT_CODE,
+                   UNITS,
+                   AMOUNT,
+                   SUBBROKER_CODE,
+                   TRADE_DT,
+                   TRAIL_AMT,
+                   TRAIL_PAID_FROM_DT,
+                   TRAIL_PAID_TO_DT,
+                   DAYS_FEE_PAID_FROM_DT,
+                   DAYS_FEE_PAID_TO_DT,
+                   TRAIL_RATE,
+                   TRAIL_PAYABLE_AMT,
+                   FLAG,
+                   PS_SEQ,
+                   TRXN_ID,
+                   TRAIL_TYPE,
+                   DAYS_FEE_PAID,
+                   INV_CODE,
+                   SCH_CODE,
+                   FLAG_CAL,
+                   SUB_CD,
+                   FLAG_RATE,
+                   TEMP,
+                   SUB_CODE_LAST,
+                   CLIENT_RMCODE,
+                   BROK_CODE,
+                   TER_LOCATION,
+                   TR_LOCATION_UPD,
+                   IMPORT_COMPANY,
+                   TRAN_TYPE,
+                   NET_COMMISSION_AMOUNT,
+                   SOURCE_GST_STATE_CODE,
+                   COMPANY_GST_STATE_CODE,
+                   CGST_RATE,
+                   CGST_AMOUNT,
+                   SGST_RATE,
+                   SGST_AMOUNT,
+                   UTGST_RATE,
+                   UTGST_AMOUNT,
+                   IGST_RATE,
+                   IGST_AMOUNT,
+                   GST_CALCULATION_FLAG,
+                   MUT_CODE,
+                   MF_HO_GST_STATE_CODE,
+                   PUSERID,
+                   PROLE_ID,
+                   SYSDATE
+              FROM MFTRAIL.TRAIL_FEED@TEST_NEW.BAJAJCAPITAL
+             WHERE     TRAIL_PAID_FROM_DT >= PFROMDATE
+                   AND TRAIL_PAID_TO_DT <= PTODATE
+                   AND FOLIO = I.FOLIO_NUMBER;
+    END LOOP;
+    DELETE FROM WEALTHMAKER.IMPORT_FOLIOS_TEMP
+          WHERE     LOGIN_ID = PUSERID
+                AND ROLE_ID = PROLE_ID;
+
+    OPEN P_CURSOR FOR
+        SELECT *
+          FROM WEALTHMAKER.IMPORT_FOLIOS_CALULATED_DATA
+         WHERE     LOGIN_ID = PUSERID
+               AND ROLE_ID = PROLE_ID;
+END;
+/
