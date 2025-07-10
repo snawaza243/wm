@@ -1,1 +1,5 @@
 2025-07-09 - Wednesday
+
+git add WM/Masters/MF_Trail.aspx
+git add WM/Masters/MF_Trail.aspx.cs
+git add WM/Masters/MF_Trail.aspx.designer.cs

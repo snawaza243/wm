@@ -1,0 +1,202 @@
+CREATE OR REPLACE PROCEDURE WEALTHMAKER.PSM_AO_CLIENT_BY_GUEST(
+    p_guest_cd IN VARCHAR2,  
+    p_login_id IN VARCHAR2,
+    o_cursor OUT SYS_REFCURSOR   
+)
+IS
+    ISVLAIDGUEST_CODE NUMBER :=0;
+
+    ISVLAIDPITCH_CODE_1 NUMBER :=0;
+
+    ISVLAIDPITCH_CODE_2 NUMBER :=0;
+
+    DUP_GUEST_FLAG number:= 0;
+
+    -- Declare the variables to hold the result set values
+    C1_MESSAGE NUMBER;
+    C1_GUEST_CODE VARCHAR2(20);
+    C1_GUEST_NAME VARCHAR2(100);
+    C1_MOBILE_NO VARCHAR2(20);
+    C1_EMP_NO VARCHAR2(20);
+    C1_TELEPHONE VARCHAR2(20);
+
+    C2_MESSAGE NUMBER;
+    C2_GUEST_SEX VARCHAR2(10);
+    C2_GUEST_MATRIALST VARCHAR2(20);
+    TITLE VARCHAR2(10);
+    C2_PITCH_NO VARCHAR2(20);
+    C2_ADD1 VARCHAR2(200);
+    C2_ADD2 VARCHAR2(200);
+    C2_CITY VARCHAR2(50);
+    C2_CITY_ID VARCHAR2(20);
+    C2_STATE VARCHAR2(50);
+    C2_STATE_CODE VARCHAR2(10);
+    C2_COUNTRY_ID VARCHAR2(20);
+    C2_PIN VARCHAR2(20);
+    C2_DOB DATE;
+    C2_EMAIL VARCHAR2(100);
+
+
+
+begin
+
+
+BEGIN
+
+
+IF p_guest_cd IS NOT NULL THEN 
+     --OPEN o_cursor FOR SELECT * FROM BAJAJ_VENUE_BOOKING WHERE GUEST_CD = trim(p_guest_cd); RETURN;
+
+    SELECT NVL(count(GUEST_CD), 0) INTO ISVLAIDGUEST_CODE FROM BAJAJ_VENUE_BOOKING WHERE GUEST_CD = trim(p_guest_cd); -- FOR VALID GUEST CODE
+
+    IF ISVLAIDGUEST_CODE > 0 THEN
+        SELECT NVL(count(GUEST_CD), 0) INTO DUP_GUEST_FLAG FROM CLIENT_MASTER WHERE GUEST_CD = trim(p_guest_cd);
+        IF DUP_GUEST_FLAG > 0 THEN
+            OPEN o_cursor FOR 
+            SELECT 'DUPLICATE GUEST CODE WITH ' || (SELECT client_code FROM CLIENT_MASTER WHERE GUEST_CD = trim(p_guest_cd) ) AS MESSAGE FROM DUAL; 
+            RETURN;
+        ELSE
+            SELECT NVL(COUNT(D.PITCH_BOOK_NO), 0) INTO ISVLAIDPITCH_CODE_1
+            FROM  BAJAJ_VENUE_BOOKING D             
+            WHERE  D.GUEST_CD  = TRIM(p_guest_cd);
+
+            IF ISVLAIDPITCH_CODE_1 > 0 THEN
+                SELECT NVL(COUNT(A.ACCOUNTNO), 0) INTO ISVLAIDPITCH_CODE_2 
+                FROM CLIENTBASICDET A
+                WHERE A.ACCOUNTNO = (SELECT PITCH_BOOK_NO FROM BAJAJ_VENUE_BOOKING WHERE GUEST_CD = TRIM(p_guest_cd) AND ROWNUM = 1);
+                
+                IF ISVLAIDPITCH_CODE_2 = 0 THEN
+                OPEN O_CURSOR FOR SELECT 'PITCH BOOK NOT FOUND' AS MESSAGE FROM DUAL; RETURN;
+                END IF;
+            ELSE
+                OPEN O_CURSOR FOR SELECT 'PITCH BOOK NOT FOUND' AS MESSAGE FROM DUAL; RETURN;
+            END IF;        
+        END IF;
+    ELSE
+        OPEN o_cursor FOR SELECT 'INVALID GUEST CODE ' AS MESSAGE FROM DUAL; RETURN;
+    END IF;    
+
+
+
+ELSE
+    OPEN o_cursor FOR SELECT 'PLEASE ENTER A VALID GUEST CODE ' AS MESSAGE FROM DUAL; RETURN;
+END IF;
+
+END ;
+    -- FETCHING C2 DATA CLEINT DETAILS
+    BEGIN
+        SELECT 
+            1,
+            B.SEX,
+            B.MATRIALST,
+            CASE 
+                WHEN UPPER(B.SEX) = UPPER('Male') THEN 'Mr.'
+                WHEN UPPER(B.SEX) = UPPER('Female') AND UPPER(B.MATRIALST) = UPPER('Single') THEN 'Ms.'
+                ELSE 'Mrs.'
+            END,
+            PITCH_BOOK_NO,
+            RESIADD1,
+            RESIADD2,
+            CITY,
+            NVL((SELECT CM.city_id FROM CITY_MASTER CM WHERE CITY_NAME = CITY),NULL),--CM.city_id,
+            STATE,
+            NVL((SELECT CM.state_id FROM CITY_MASTER CM WHERE CITY_NAME = CITY),NULL),--CM.state_id,
+            NVL((SELECT SM.country_id FROM STATE_MASTER SM WHERE SM.STATE_ID = (SELECT CM.state_id FROM CITY_MASTER CM WHERE CITY_NAME = CITY)),NULL),--SM.country_id,
+            RESIPINCODE,
+            B.DOB,
+            CORESSEMAIL
+        INTO C2_MESSAGE, C2_GUEST_SEX, C2_GUEST_MATRIALST, TITLE, C2_PITCH_NO, C2_ADD1, C2_ADD2, C2_CITY, C2_CITY_ID, C2_STATE, C2_STATE_CODE, C2_COUNTRY_ID, C2_PIN, C2_DOB, C2_EMAIL
+        FROM 
+            CLIENTBASICDET A,
+            CLIENTPERSDET B,
+            CLIENTWORKDET C,
+            BAJAJ_VENUE_BOOKING D
+        WHERE 
+            D.GUEST_CD  = p_guest_cd 
+            AND TO_CHAR(A.ACCOUNTNO) = D.PITCH_BOOK_NO
+            AND A.ACCOUNTNO = B.ACCOUNTNO
+            AND A.ACCOUNTNO = C.ACCOUNTNO(+)
+            AND ROWNUM = 1;
+    EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+            C2_MESSAGE := 0;
+            C2_GUEST_SEX := NULL;
+            C2_GUEST_MATRIALST := NULL;
+            TITLE := NULL;
+            C2_PITCH_NO := NULL;
+            C2_ADD1 := NULL;
+            C2_ADD2 := NULL;
+            C2_CITY := NULL;
+            C2_CITY_ID := NULL;
+            C2_STATE := NULL;
+            C2_STATE_CODE := NULL;
+            C2_COUNTRY_ID := NULL;
+            C2_PIN := NULL;
+            C2_DOB := NULL;
+            C2_EMAIL := NULL;
+        WHEN OTHERS THEN
+            RAISE;
+    END;
+
+    -- FETCHING C1 DATA CLEINT BASIC DETAILS
+    BEGIN
+        SELECT 
+            1,
+            D.GUEST_CD,
+            D.GUEST_NAME,
+            D.MOBILE,
+            D.EMP_NO,
+            D.TELEPHONE
+        INTO C1_MESSAGE, C1_GUEST_CODE, C1_GUEST_NAME, C1_MOBILE_NO, C1_EMP_NO, C1_TELEPHONE
+        FROM 
+            BAJAJ_VENUE_BOOKING D
+        WHERE 
+            D.GUEST_CD = p_guest_cd
+            AND ROWNUM = 1;
+
+    EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+            C1_MESSAGE :=0;
+            C1_GUEST_CODE := NULL;
+            C1_GUEST_NAME := NULL;
+            C1_MOBILE_NO := NULL;
+            C1_EMP_NO := NULL;
+            C1_TELEPHONE := NULL;
+        WHEN OTHERS THEN
+            RAISE;
+    END;
+
+    -- Open the cursor for the combined results
+    --IF C1_MESSAGE = 0 OR C2_MESSAGE = 0 THEN OPEN o_cursor FOR SELECT 'GUEST CODE HAVE NOT VALID DATA' || C1_MESSAGE || C2_MESSAGE AS MESSAGE FROM DUAL; RETURN ; END IF;
+    IF C1_MESSAGE = 1 OR C2_MESSAGE = 1 THEN
+        OPEN o_cursor FOR
+        SELECT
+            'GUEST CODE PASS'          AS MESSAGE,
+            C1_MESSAGE AS C1_MESSAGE,
+            C1_GUEST_CODE AS C1_GUEST_CODE,
+            C1_GUEST_NAME AS C1_GUEST_NAME,
+            C1_MOBILE_NO AS C1_MOBILE_NO,
+            C1_EMP_NO AS C1_EMP_NO,
+            C1_TELEPHONE AS C1_TELEPHONE,
+            C2_MESSAGE AS C2_MESSAGE,
+            C2_GUEST_SEX AS C2_GUEST_SEX,
+            C2_GUEST_MATRIALST AS C2_GUEST_MATRIALST,
+            TITLE AS TITLE,
+            C2_PITCH_NO AS C2_PITCH_NO,
+            C2_ADD1 AS C2_ADD1,
+            C2_ADD2 AS C2_ADD2,
+            C2_CITY AS C2_CITY,
+            C2_CITY_ID AS C2_CITY_ID,
+            C2_STATE AS C2_STATE,
+            C2_STATE_CODE AS C2_STATE_CODE,
+            C2_COUNTRY_ID AS C2_COUNTRY_ID,
+            C2_PIN AS C2_PIN,
+            C2_DOB AS C2_DOB,
+            C2_EMAIL AS C2_EMAIL
+        FROM DUAL;
+    END IF;
+EXCEPTION
+    WHEN OTHERS THEN
+        RAISE;
+END PSM_AO_CLIENT_BY_GUEST;
+/
