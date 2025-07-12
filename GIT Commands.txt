@@ -1,0 +1,31 @@
+here are some steps "1.  folder create in local
+2. open git bash
+3. clone of any brnach 
+git clone -b developer https://tarunsharma3@bitbucket.org/iitpldev/vb6_migration.git
+4. open new bitbash in vb6_migration folder
+
+5. create branch 
+git branch tarun_dev
+
+6. checkout new branch so that we connect with that branch
+ git checkout tarun_dev
+
+output - Tarun@TarunSharma-IT MINGW64 /e/WM_BitBucket_vb6/vb6_migration (tarun_dev)
+
+7. now you have the developer brnach code into your system now make necessary changes in your code
+
+8. git status
+
+9. git add path/filename // to add new file into git
+or git add . // for all files 
+
+10. git commit -m 'Message' //commit new file with message
+
+11.  git push -u origin tarun_dev  // after that your change code will be reflectiong on web
+
+
+
+
+
+
+" on the bases of this imforamte bake a detailed and informative and engaging blog content with detailed explained. and finally  give me its html

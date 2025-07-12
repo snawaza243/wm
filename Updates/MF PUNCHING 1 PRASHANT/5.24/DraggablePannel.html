@@ -1,0 +1,103 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Draggable Panel</title>
+    <style>
+        .draggable-panel {
+            width: 300px;
+            height: 200px;
+            position: absolute;
+            top: 100px;
+            left: 100px;
+            background-color: #fff;
+            border: 1px solid #ccc;
+            box-shadow: 2px 2px 12px rgba(0,0,0,0.1);
+            border-radius: 5px;
+        }
+
+        .draggable-header {
+            background-color: #007bff;
+            color: white;
+            padding: 10px;
+            cursor: move;
+            border-top-left-radius: 5px;
+            border-top-right-radius: 5px;
+            user-select: none;
+        }
+
+        .draggable-body {
+            padding: 15px;
+        }
+    </style>
+</head>
+<body>
+
+    <asp:Panel ID="myPanel" runat="server" CssClass="draggable-panel" ClientIDMode="Static">
+    <div id="myPanelHeader" class="draggable-header">Draggable Panel</div>
+    <div class="draggable-body">Panel content here...</div>
+</asp:Panel>
+
+<div class="draggable-panel" id="myPanel">
+    <div class="draggable-header" id="myPanelHeader">Draggable Panel</div>
+    <div class="draggable-body">
+        <p>This panel is draggable using the header.</p>
+    </div>
+</div>
+
+<script>
+    function makeDraggable(panelId, handleId) {
+        const panel = document.getElementById(panelId);
+        const handle = document.getElementById(handleId);
+
+        let isDragging = false;
+        let offsetX = 0, offsetY = 0;
+
+        handle.addEventListener('mousedown', startDrag);
+        handle.addEventListener('touchstart', startDrag, { passive: false });
+
+        document.addEventListener('mousemove', drag);
+        document.addEventListener('touchmove', drag, { passive: false });
+
+        document.addEventListener('mouseup', stopDrag);
+        document.addEventListener('touchend', stopDrag);
+
+        function startDrag(e) {
+            isDragging = true;
+            const clientX = e.clientX || e.touches[0].clientX;
+            const clientY = e.clientY || e.touches[0].clientY;
+
+            const rect = panel.getBoundingClientRect();
+            offsetX = clientX - rect.left;
+            offsetY = clientY - rect.top;
+
+            e.preventDefault();
+        }
+
+        function drag(e) {
+            if (!isDragging) return;
+
+            const clientX = e.clientX || e.touches[0].clientX;
+            const clientY = e.clientY || e.touches[0].clientY;
+
+            const newX = Math.max(0, Math.min(clientX - offsetX, window.innerWidth - panel.offsetWidth));
+            const newY = Math.max(0, Math.min(clientY - offsetY, window.innerHeight - panel.offsetHeight));
+
+            panel.style.left = newX + 'px';
+            panel.style.top = newY + 'px';
+
+            e.preventDefault();
+        }
+
+        function stopDrag() {
+            isDragging = false;
+        }
+    }
+
+    // Make panel draggable
+    makeDraggable('myPanel', 'myPanelHeader');
+</script>
+
+</body>
+</html>

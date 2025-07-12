@@ -1,0 +1,13 @@
+tableSearchResultsTran_RowCommand
+
+View: AR Search BTN: btnSearch_Click
+
+PRA(AR Search on View)): Get_Transactions_mf_punc
+
+
+pra modify: View
+
+pra: ChkDupTranPunPRA
+
+if above no the: 
+    ModifyTransactionPUNCHINGPRA

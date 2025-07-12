@@ -1,0 +1,20 @@
+CREATE OR REPLACE PROCEDURE psm_mf_view_ar_loge_status (
+    P_TRAN_CODE     VARCHAR2,
+    P_INV_CODE      VARCHAR2,
+    P_DT_NUMBER     VARCHAR2,
+    p_cursor        OUT SYS_REFCURSOR
+)
+AS
+BEGIN
+    OPEN p_cursor FOR
+        SELECT t.LOGGEDUSERID AS MF_VIEW_STATUS
+        FROM transaction_mf_temp1 t
+        WHERE t.tran_code = P_TRAN_CODE
+          AND t.LOGGEDUSERID IN ('MFONLINE', 'INVESTWELL')
+          AND ROWNUM = 1;
+
+EXCEPTION
+    WHEN OTHERS THEN
+        OPEN p_cursor FOR SELECT '' AS MF_VIEW_STATUS FROM dual;
+END;
+/
