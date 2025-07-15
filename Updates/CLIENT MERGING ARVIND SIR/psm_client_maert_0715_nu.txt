@@ -1,0 +1,234 @@
+CREATE OR REPLACE PROCEDURE wealthmaker.clientmerge_v1 (
+    p_xml           IN CLOB,
+    mainclientcode  IN NUMBER,
+    modifydate      IN DATE,
+    loggeduserid    IN VARCHAR2,
+    p_message       OUT VARCHAR2,
+    inv_cursor      OUT SYS_REFCURSOR
+)
+IS
+    clientcode      NUMBER;
+    maincode        VARCHAR2(100) DEFAULT 'AH2251863';
+    newinvcode      NUMBER;
+    branchcode      NUMBER;
+    rmcode          NUMBER;
+    busrmcode       NUMBER;
+    investorcount   NUMBER;
+    kyc             VARCHAR2(50);
+    pan             VARCHAR2(50);
+    fpinvestorcount NUMBER;
+    membercount     NUMBER;
+
+    CURSOR C IS
+        SELECT TO_NUMBER(extractvalue(VALUE(X), '/Record/ClientCode')) AS clientcode
+        FROM TABLE(xmlsequence(EXTRACT(XMLTYPE(p_xml), '/Records/Record'))) X;
+
+BEGIN
+    -- Start the transaction
+    SAVEPOINT start_transaction;
+
+    SELECT sourceid, rm_code INTO branchcode, rmcode FROM client_master WHERE client_code = mainclientcode;
+    SELECT payroll_id INTO busrmcode FROM employee_master WHERE rm_code = rmcode; 
+
+    -- OUTER LOOP START
+    FOR rec IN C LOOP
+
+        clientcode := rec.clientcode;        
+        -- RS CLIENTSelect * from client_master where client_code=" & msfgMain.TextMatrix(1, 2), MyConn, adOpenDynamic, adLockPessimistic
+        -- RS CLINT 1Select * from client_master where client_code=" & msfgMergedInvestors.TextMatrix(i, 2), MyConn, adOpenForwardOnly
+        -- RS DATA select inv_code,investor_name,PAN,MANDATE_FLAG from investor_master where source_id=" & msfgMergedInvestors.TextMatrix(i, 2), MyConn, adOpenForwardOnly
+
+        -- INNER LOOP START
+        FOR rec IN (SELECT inv_code,investor_name,pan,mandate_flag FROM investor_master WHERE source_id = clientcode) LOOP
+            SELECT COUNT(*) INTO investorcount FROM investor_master WHERE source_id = mainclientcode;
+            SELECT kyc, pan INTO kyc, pan FROM investor_master WHERE source_id = mainclientcode AND ROWNUM = 1;
+            IF investorcount = 0 THEN
+            BEGIN
+                SELECT inv_code INTO newinvcode FROM investor_master WHERE source_id = mainclientcode;
+            END;
+            ELSE 
+                --select count(*) into MemberCount from investor_master where source_id = MainClientCode;
+                SELECT MAX(TO_NUMBER(substr(inv_code,9,3))) INTO membercount FROM investor_master WHERE source_id = mainclientcode;
+                
+                newinvcode := TO_NUMBER( mainclientcode || to_char((membercount + 1), 'FM000'));
+                UPDATE investor_master SET source_id = mainclientcode, branch_code = branchcode, rm_code = rmcode, inv_code = newinvcode WHERE inv_code = rec.inv_code; 
+
+
+                UPDATE client_test SET source_code = mainclientcode, branch_code = branchcode, business_code = busrmcode, client_codekyc = newinvcode, main_code = maincode 
+                WHERE client_codekyc = rec.inv_code;
+                /* table or view does not exist */
+                UPDATE investor_master SET source_id = mainclientcode, branch_code = branchcode, rm_code = rmcode, inv_code = newinvcode 
+                WHERE inv_code = rec.inv_code;
+
+           END IF;
+
+            UPDATE fp_investor SET familyhead_code=newinvcode WHERE familyhead_code=rec.inv_code;
+            UPDATE fp_investor SET fam_mem1=REPLACE(fam_mem1,rec.inv_code,newinvcode) WHERE familyhead_code LIKE substr(rec.inv_code, 1, 8) || '%' OR familyhead_code LIKE substr(newinvcode, 1, 8) || '%';
+            UPDATE fp_investor SET fam_mem2=REPLACE(fam_mem2,rec.inv_code,newinvcode) WHERE familyhead_code LIKE substr(rec.inv_code, 1, 8) || '%' OR familyhead_code LIKE substr(newinvcode, 1, 8) || '%';
+            UPDATE fp_investor SET fam_mem3=REPLACE(fam_mem3,rec.inv_code,newinvcode) WHERE familyhead_code LIKE substr(rec.inv_code, 1, 8) || '%' OR familyhead_code LIKE substr(newinvcode, 1, 8) || '%';
+            UPDATE wealthmaker.rp_detail SET inv_code=newinvcode,rm_branch_code=branchcode,rm_business_code=busrmcode,modified_on=modifydate WHERE inv_code=rec.inv_code;
+
+            UPDATE transaction_st SET client_code=newinvcode,branch_code=branchcode,source_code=mainclientcode,rmcode=rmcode,modify_talisma=modifydate WHERE client_code=rec.inv_code;
+
+            UPDATE transaction_mf_temp1 SET client_code=newinvcode,branch_code=branchcode,source_code=mainclientcode,rmcode=rmcode WHERE client_code=rec.inv_code;
+
+            /* table or view does not exist*/
+            UPDATE transaction_st SET client_code=newinvcode,branch_code=branchcode,source_code=mainclientcode,rmcode=rmcode WHERE client_code=rec.inv_code;
+
+            UPDATE transaction_sttemp SET client_code=newinvcode,branch_code=branchcode,source_code=mainclientcode,rmcode=rmcode,modify_talisma=modifydate WHERE client_code=rec.inv_code;
+
+            /*table or view does not exist*/
+            UPDATE redem SET client_code=newinvcode,branch_code=branchcode,source_code=mainclientcode,rmcode=rmcode WHERE client_code=rec.inv_code;
+
+            /* table or view does not exist */
+            UPDATE investor_folio@mf.bajajcapital SET investor_code=newinvcode WHERE investor_code=rec.inv_code;
+
+            UPDATE investor_master_ipo SET inv_code=newinvcode,agent_code=mainclientcode WHERE inv_code=rec.inv_code;
+            UPDATE revertal_transaction SET client_code=newinvcode,branch_code=branchcode,source_code=mainclientcode,rmcode=rmcode WHERE client_code=rec.inv_code;
+            UPDATE transaction_ipo SET inv_code=newinvcode,agent_code=mainclientcode WHERE inv_code=rec.inv_code;
+
+            /*table or view does not exist*/
+            UPDATE tran_payout SET inv_code=newinvcode WHERE inv_code=rec.inv_code;
+
+            /* ORA-04098: trigger 'WEALTHMAKER.TRG_WEBENGAGE_DATA' is invalid and failed re-validation*/ 
+            UPDATE bajaj_ar_head SET client_cd=newinvcode,modify_talisma=modifydate WHERE client_cd=rec.inv_code;
+
+
+            /* table or view does not exist*/
+            UPDATE tran_net_balance6@mf.bajajcapital SET client_code=newinvcode WHERE client_code=rec.inv_code;
+
+            UPDATE tran_ipo SET inv_code=newinvcode,client_code=mainclientcode WHERE inv_code=rec.inv_code;
+            UPDATE tran_lead SET inv_code=newinvcode WHERE inv_code=rec.inv_code;
+            UPDATE leads.lead_detail SET inv_code=newinvcode WHERE inv_code=rec.inv_code;
+            /*table or view does not exist*/
+            UPDATE port_transaction_st SET client_code=newinvcode,branch_code=branchcode,source_code=mainclientcode,rmcode=rmcode WHERE client_code=rec.inv_code;
+
+
+            /* Error: Invalid Number  */  
+            UPDATE tb_doc_upload SET inv_code = to_char(newinvcode) WHERE inv_code = to_char(rec.inv_code);
+
+
+            UPDATE wealthmaker.client_voucher_details SET inv_code=newinvcode WHERE inv_code=rec.inv_code;
+
+            /* table or view does not exist */
+            UPDATE portfolio_trans@mf.bajajcapital SET client_code=newinvcode,source_code=mainclientcode WHERE client_code=rec.inv_code;
+
+            --Online Just Trade
+            UPDATE transaction_st_online SET client_code=newinvcode WHERE client_code=rec.inv_code;
+            UPDATE online_client_request SET inv_code=newinvcode WHERE inv_code=rec.inv_code;
+            UPDATE online_client_request_hist SET inv_code=newinvcode WHERE inv_code=rec.inv_code;
+            UPDATE online_business_summary  SET client_codewm=newinvcode WHERE client_codewm=rec.inv_code;
+            UPDATE offline_business_summary SET client_codewm=newinvcode WHERE client_codewm=rec.inv_code;
+
+
+
+            IF investorcount = 0 THEN
+                INSERT INTO client_inv_merge_log VALUES(newinvcode,rec.inv_code,loggeduserid,sysdate);
+                /* too many values */
+                INSERT INTO investor_del SELECT * FROM investor_master  WHERE inv_code=rec.inv_code;
+
+                /*table or view does not exist*/
+                DELETE FROM investor_master WHERE inv_code=rec.inv_code;
+
+
+                IF kyc = 'YES' OR kyc = 'YESP' THEN
+                    INSERT INTO account_merge_log VALUES(newinvcode,rec.inv_code,loggeduserid,sysdate);
+                END IF;
+
+                IF TRIM(pan) = '' OR pan IS NULL THEN
+                    IF TRIM(rec.pan) <> '' AND rec.pan IS NOT NULL THEN
+                        UPDATE client_test SET client_pan=rec.pan WHERE client_codekyc=newinvcode AND client_pan IS NULL;
+                    END IF;
+                END IF;
+
+                IF rec.mandate_flag = 'Y' THEN
+                    UPDATE client_test SET mandate_flag='Y' WHERE client_codekyc=newinvcode AND nvl(mandate_flag,'N')='N';
+                    UPDATE investor_master SET mandate_flag='Y' WHERE inv_code=newinvcode AND nvl(mandate_flag,'N')='N';
+                END IF;
+
+            END IF;
+
+
+        END LOOP;
+        -- INNER LOOP END HERE
+
+        UPDATE investor_master SET branch_code=branchcode,rm_code=rmcode,modify_date=modifydate WHERE source_id=mainclientcode;
+        /* table or view does not exist */
+        UPDATE investor_master SET branch_code=branchcode,rm_code=rmcode,modify_date=modifydate WHERE source_id=mainclientcode;
+
+        ----------------------CLIENT MERGING-----------------------
+        UPDATE client_master SET sourceid=branchcode,rm_code=rmcode,modify_date=modifydate WHERE client_code=mainclientcode;
+        /*table or view does not exist*/
+        UPDATE client_master SET sourceid=branchcode,rm_code=rmcode,modify_date=modifydate WHERE client_code=mainclientcode;
+
+        /* Error: ORA-04098: trigger 'WEALTHMAKER_MF.TRANTEMP_TR3_NEW1' is invalid and failed re-validation*/
+        UPDATE transaction_st SET branch_code=branchcode,rmcode=rmcode,modify_talisma=modifydate WHERE source_code=mainclientcode;
+
+
+        UPDATE transaction_mf_temp1 SET branch_code=branchcode,rmcode=rmcode WHERE source_code=mainclientcode;
+        /* table or view does not exist */
+        UPDATE transaction_st SET branch_code=branchcode,rmcode=rmcode WHERE source_code=mainclientcode;
+
+        UPDATE transaction_sttemp SET branch_code=branchcode,rmcode=rmcode,modify_talisma=modifydate WHERE source_code=mainclientcode;
+        /* table or view does not exist */
+        UPDATE redem SET branch_code=branchcode,rmcode=rmcode WHERE source_code=mainclientcode;
+
+        UPDATE revertal_transaction SET branch_code=branchcode,rmcode=rmcode WHERE source_code=mainclientcode;
+
+        UPDATE client_vehicle SET client_code=mainclientcode WHERE client_code=clientcode;
+        UPDATE reference_master SET client_code=mainclientcode WHERE client_code=clientcode;
+        UPDATE relation_master SET client_code=mainclientcode WHERE client_code=clientcode;
+        UPDATE bill_detail_paid SET agent_code=mainclientcode WHERE agent_code=clientcode;
+        UPDATE payment_detail SET agent_code=mainclientcode WHERE agent_code=clientcode;
+        UPDATE ledger SET agent_code=mainclientcode WHERE agent_code=clientcode;
+        /* table or view does not exist*/
+        UPDATE port_transaction_st SET branch_code=branchcode,rmcode=rmcode WHERE source_code=clientcode;
+
+        INSERT INTO client_inv_merge_log VALUES(mainclientcode,clientcode,loggeduserid,sysdate);
+        /*too many values
+        insert into client_del select * from client_master where client_code=ClientCode;
+        */
+        DELETE FROM client_master WHERE client_code = clientcode;
+        /* Error: ORA-04098: trigger 'WEALTHMAKER.CLIENTDEL' is invalid and failed re-validation*/
+        DELETE FROM client_test WHERE substr(client_codekyc,1,8) = clientcode;
+
+        /* table or view does not exist*/
+        DELETE FROM client_master WHERE client_code = clientcode;
+        DELETE FROM client_master_ext4 WHERE client_code = clientcode;
+
+        DECLARE 
+        fpinvestorcount NUMBER;
+        familyhead VARCHAR2(100);
+        familymember1 VARCHAR2(100);
+        familymember2 VARCHAR2(100);
+        familymember3 VARCHAR2(100);
+        BEGIN
+            SELECT COUNT(*) INTO fpinvestorcount FROM fp_investor WHERE substr(familyhead_code,1,8)=mainclientcode AND (fp_type='Snapshot' OR fp_type='Comprehensive') ORDER BY familyhead_code DESC ;
+            IF fpinvestorcount > 1 THEN
+                SELECT familyhead_code, fam_mem1 INTO familyhead, familymember1 
+                FROM fp_investor WHERE substr(familyhead_code,1,8 )= mainclientcode AND (fp_type='Snapshot' OR fp_type='Comprehensive') AND ROWNUM = 1
+                ORDER BY familyhead_code DESC ;
+                /* table or view does not exist */
+                INSERT INTO dup_fp_investor SELECT * FROM fp_investor WHERE familyhead_code=familyhead;
+
+                UPDATE fp_investor SET fam_mem1=fam_mem1 || '#' || familymember1 WHERE substr(familyhead_code,1,8) = mainclientcode AND (fp_type='Snapshot' OR fp_type='Comprehensive');
+            END IF;
+        END;
+
+
+    END LOOP; 
+    -- OUTER LOOP END
+    -- Commit the transaction if all updates are successful
+    COMMIT;
+
+    OPEN inv_cursor FOR
+        SELECT inv_code,investor_name,pan,source_id FROM investor_master WHERE source_id = mainclientcode;
+
+    p_message := 'Success: client merge successfully';
+
+EXCEPTION
+    WHEN OTHERS THEN
+        ROLLBACK TO start_transaction;
+            p_message := 'Error: ' || sqlerrm;
+END;
+/

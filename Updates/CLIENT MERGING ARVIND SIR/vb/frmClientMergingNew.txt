@@ -1,0 +1,1075 @@
+Dim mCount As Integer
+Dim branch_cd As String
+Dim Rm_cd As String
+Dim bus_rm As String
+Dim main_cd As String
+Dim strmsg As String
+Dim MailMainFlag As Boolean
+Private Sub cmbbranch_Change()
+Dim RsData As New ADODB.Recordset
+
+    cmbOldRM.Clear
+    If SRmCode = "" Then
+        If cmbBranch.ListIndex <> -1 Then
+            RsData.open "Select RM_CODE,RM_NAME,PAYROLL_ID from EMPLOYEE_MASTER where source=" & cmbBranch.List(cmbBranch.ListIndex, 1) & " and (type='A' or type is null) order by RM_NAME", MyConn, adOpenForwardOnly
+        Else
+            RsData.open "Select RM_CODE,RM_NAME,PAYROLL_ID from EMPLOYEE_MASTER where source in(" & Branches & ") and (type='A' or type is null) order by RM_NAME", MyConn, adOpenForwardOnly
+        End If
+    Else
+        RsData.open "Select RM_CODE,RM_NAME,PAYROLL_ID from EMPLOYEE_MASTER where rm_code=" & SRmCode & " order by RM_NAME", MyConn, adOpenForwardOnly
+    End If
+    
+    j = 0
+    While Not RsData.EOF
+        cmbOldRM.AddItem RsData("RM_NAME")
+        cmbOldRM.List(j, 1) = RsData("PAYROLL_ID")
+        cmbOldRM.List(j, 2) = RsData("RM_CODE")
+        j = j + 1
+        RsData.MoveNext
+    Wend
+    RsData.Close
+    Set RsData = Nothing
+
+End Sub
+
+Private Sub cmbBranch_KeyUp(KeyCode As MSForms.ReturnInteger, Shift As Integer)
+    If cmbBranch.MatchFound = False Then
+        cmbBranch.ListIndex = -1
+    End If
+
+End Sub
+
+Public Sub cmbClient_Change()
+On Error Resume Next
+Dim RsInvestor As New ADODB.Recordset
+Dim rsCount As New ADODB.Recordset
+Dim i As Long
+
+    msfgInvestors.Rows = 1
+    msfgInvestors.Rows = 2
+    If cmbClient.ListIndex <> -1 Then
+        i = 1
+        RsInvestor.open "select i.investor_name,i.address1,i.address2,c.city_name,i.PINCODE,i.inv_code from investor_master i,city_master c where i.city_id=c.city_id(+) and source_id=" & cmbClient.List(cmbClient.ListIndex, 1) & " order by i.investor_name", MyConn, adOpenForwardOnly
+        While Not RsInvestor.EOF
+            rsCount.open "select count(*) from transaction_st where client_code=" & RsInvestor("inv_code"), MyConn, adOpenForwardOnly
+            msfgInvestors.TextMatrix(i, 0) = rsCount(0)
+            msfgInvestors.TextMatrix(i, 1) = StrConv(RsInvestor("investor_name"), vbProperCase)
+            msfgInvestors.TextMatrix(i, 2) = StrConv(RsInvestor("address1"), vbProperCase)
+            msfgInvestors.TextMatrix(i, 3) = StrConv(RsInvestor("address2"), vbProperCase)
+            msfgInvestors.TextMatrix(i, 4) = StrConv(RsInvestor("city_name"), vbProperCase)
+            msfgInvestors.TextMatrix(i, 5) = RsInvestor("PINCODE")
+            msfgInvestors.TextMatrix(i, 6) = RsInvestor("inv_code")
+            msfgInvestors.Rows = msfgInvestors.Rows + 1
+            i = i + 1
+            RsInvestor.MoveNext
+            rsCount.Close
+        Wend
+        RsInvestor.Close
+        If msfgInvestors.Rows > 2 Then
+            msfgInvestors.Rows = msfgInvestors.Rows - 1
+        End If
+    End If
+    Set RsInvestor = Nothing
+End Sub
+
+Private Sub cmbClient_KeyUp(KeyCode As MSForms.ReturnInteger, Shift As Integer)
+    If cmbClient.MatchFound = False Then
+        cmbClient.ListIndex = -1
+    End If
+End Sub
+
+Private Sub cmbOldRM_Change()
+'Dim rsclient As New ADODB.Recordset
+'Dim i As Long
+'    cmbClient.Clear
+'    If cmbOldRM.ListIndex <> -1 Then
+'        i = 0
+'        'rsclient.open "select client_name,client_code from client_master where rm_code=" & cmbOldRM.List(cmbOldRM.ListIndex, 2) & " order by client_name", myconn, adOpenForwardOnly
+'        rsclient.open "select max(client_name),i.source_id from client_master c,investor_master i where c.client_code=i.source_id and c.rm_code=" & cmbOldRM.List(cmbOldRM.ListIndex, 2) & " group by i.source_id having count(*) >1 order by max(client_name)", myconn, adOpenForwardOnly
+'        While Not rsclient.EOF
+'            cmbClient.AddItem rsclient(0)
+'            cmbClient.List(i, 1) = rsclient(1)
+'            rsclient.MoveNext
+'            i = i + 1
+'        Wend
+'        rsclient.Close
+'    End If
+'    Set rsclient = Nothing
+End Sub
+
+Private Sub cmbOldRM_KeyUp(KeyCode As MSForms.ReturnInteger, Shift As Integer)
+    If cmbOldRM.MatchFound = False Then
+        cmbOldRM.ListIndex = -1
+    End If
+
+End Sub
+
+Private Sub cmdExit_Click()
+    Unload Me
+End Sub
+
+Private Sub cmdMain_Click()
+    If msfgInvestors.Rows >= 2 Then
+        If msfgInvestors.TextMatrix(msfgInvestors.Row, 6) = "Insurance Data Import" Or msfgInvestors.TextMatrix(msfgInvestors.Row, 6) = "MF Data Import" Then
+            MsgBox " Client of " & msfgInvestors.TextMatrix(1, 6) & " Branch Cannot be Set as Main Client ", vbInformation
+        Else
+            If msfgMain.TextMatrix(1, 1) <> "" Then
+                If MsgBox("Main Investor Already Selected. Sure to Proceed ?", vbQuestion + vbYesNo) = vbYes Then
+                    msfgMain.Rows = 1
+                    msfgMain.Rows = 2
+                    msfgMain.TextMatrix(1, 0) = msfgInvestors.TextMatrix(msfgInvestors.Row, 0)
+                    msfgMain.TextMatrix(1, 1) = msfgInvestors.TextMatrix(msfgInvestors.Row, 2)
+                    msfgMain.TextMatrix(1, 2) = msfgInvestors.TextMatrix(msfgInvestors.Row, 9)
+                    msfgMain.TextMatrix(1, 3) = msfgInvestors.TextMatrix(msfgInvestors.Row, 12)
+                    
+                    msfgMergedInvestors.Rows = 1
+                End If
+            Else
+                msfgMain.Rows = 1
+                msfgMain.Rows = 2
+                msfgMain.TextMatrix(1, 0) = msfgInvestors.TextMatrix(msfgInvestors.Row, 0)
+                msfgMain.TextMatrix(1, 1) = msfgInvestors.TextMatrix(msfgInvestors.Row, 2)
+                msfgMain.TextMatrix(1, 2) = msfgInvestors.TextMatrix(msfgInvestors.Row, 9)
+                msfgMain.TextMatrix(1, 3) = msfgInvestors.TextMatrix(msfgInvestors.Row, 12)
+            End If
+        End If
+    End If
+End Sub
+
+Private Sub cmdMerge_Click()
+Dim i As Long
+On Error GoTo errortrap
+Dim RsData As New ADODB.Recordset
+Dim New_Inv_Code As String
+Dim flag As Boolean
+Dim rsClient As New ADODB.Recordset
+Dim rsclient1 As New ADODB.Recordset
+Dim rsInv_check As New ADODB.Recordset
+Dim rsEnroll As New ADODB.Recordset
+Dim rsHead As New ADODB.Recordset
+Dim rsMainCD As New ADODB.Recordset
+Dim Fam_Head As String
+Dim Members1 As String
+Dim Members2 As String
+Dim Members3 As String
+
+    If Validate = False Then
+        Exit Sub
+    End If
+    
+    If MsgBox("Are you sure to Prcoceed ?", vbQuestion + vbYesNo) = vbYes Then
+        Me.MousePointer = 11
+        Frame1.Enabled = False
+        Frame2.Enabled = False
+        Frame3.Enabled = False
+        Frame4.Enabled = False
+        
+        branch_cd = "": Rm_cd = ""
+        Find_RM
+        
+        Fam_Head = ""
+'        rsHead.open "SELECT FAMILY_HEAD FROM INVESTOR_MASTER  WHERE SOURCE_ID=" & msfgMain.TextMatrix(1, 2) & " AND substr(inv_Code, 1, 8) = substr(family_head, 1, 8) and fpl_date is not null", myconn, adOpenForwardOnly
+'        If Not rsHead.EOF Then
+'            If Not (IsNull(rsHead("family_head"))) Then
+'                Fam_Head = rsHead("family_head")
+'            End If
+'        End If
+'        rsHead.Close
+'        Set rsHead = Nothing
+        
+        For i = 1 To msfgMergedInvestors.Rows - 1
+            rsClient.open "Select * from client_master where client_code=" & msfgMain.TextMatrix(1, 2), MyConn, adOpenDynamic, adLockPessimistic
+            rsclient1.open "Select * from client_master where client_code=" & msfgMergedInvestors.TextMatrix(i, 2), MyConn, adOpenForwardOnly
+            RsData.open "select inv_code,investor_name,PAN,MANDATE_FLAG from investor_master where source_id=" & msfgMergedInvestors.TextMatrix(i, 2), MyConn, adOpenForwardOnly
+            MyConn.BeginTrans
+            flag = True
+            While Not RsData.EOF
+               If InStr(Replace(Replace(Trim(UCase(RsData("investor_name"))), ".", ""), " ", ""), "HUF") = 0 Then
+                     rsInv_check.open "Select inv_code,kyc,PAN from investor_master where source_id=" & msfgMain.TextMatrix(1, 2) & " and substr(replace(replace(trim(upper(investor_name)),'.',''),' ',''),1,8) like '%" & Left(Replace(Replace(Trim(UCase(RsData("investor_name"))), ".", ""), " ", ""), 8) & "%' and instr(trim(upper(investor_name)),'HUF')=0 ", MyConn, adOpenForwardOnly
+                     If rsInv_check.EOF = False Then
+                         New_Inv_Code = rsInv_check("inv_code")
+                     Else
+                         mCount = mCount + 1
+                         If mCount >= 999 Then
+                             New_Inv_Code = msfgMain.TextMatrix(1, 2) & Format(mCount, "00000")
+                         Else
+                             New_Inv_Code = msfgMain.TextMatrix(1, 2) & Format(mCount, "000")
+                         End If
+                         
+                         MyConn.Execute "update INVESTOR_MASTER       set   SOURCE_ID=" & msfgMain.TextMatrix(1, 2) & ",BRANCH_CODE=" & branch_cd & ",RM_CODE=" & Rm_cd & ",INV_CODE='" & New_Inv_Code & "' where INV_CODE=" & RsData("INV_CODE")
+                         
+                         MyConn.Execute "update client_test       set   source_code=" & msfgMain.TextMatrix(1, 2) & ",BRANCH_CODE='" & branch_cd & "',business_code='" & bus_rm & "',client_codekyc='" & New_Inv_Code & "',main_code='" & main_cd & "' where client_codekyc=" & RsData("INV_CODE")
+                         
+                         MyConn.Execute "update INVESTOR_MASTER@mf.bajajcapital       set   SOURCE_ID=" & msfgMain.TextMatrix(1, 2) & ",BRANCH_CODE=" & branch_cd & ",RM_CODE=" & Rm_cd & ",INV_CODE='" & New_Inv_Code & "' where INV_CODE=" & RsData("INV_CODE")
+                         
+                     End If
+                Else
+                         mCount = mCount + 1
+                         If mCount >= 999 Then
+                             New_Inv_Code = msfgMain.TextMatrix(1, 2) & Format(mCount, "00000")
+                         Else
+                             New_Inv_Code = msfgMain.TextMatrix(1, 2) & Format(mCount, "000")
+                         End If
+                         
+                         MyConn.Execute "update INVESTOR_MASTER    set   SOURCE_ID=" & msfgMain.TextMatrix(1, 2) & ",BRANCH_CODE=" & branch_cd & ",RM_CODE=" & Rm_cd & ",INV_CODE='" & New_Inv_Code & "' where INV_CODE=" & RsData("INV_CODE")
+                         
+                         MyConn.Execute "update client_test  set   source_code=" & msfgMain.TextMatrix(1, 2) & ",BRANCH_CODE='" & branch_cd & "',business_code='" & bus_rm & "',client_codekyc='" & New_Inv_Code & "',main_code='" & main_cd & "' where client_codekyc=" & RsData("INV_CODE")
+                         
+                         MyConn.Execute "update INVESTOR_MASTER@mf.bajajcapital   set   SOURCE_ID=" & msfgMain.TextMatrix(1, 2) & ",BRANCH_CODE=" & branch_cd & ",RM_CODE=" & Rm_cd & ",INV_CODE='" & New_Inv_Code & "' where INV_CODE=" & RsData("INV_CODE")
+                End If
+                MyConn.Execute "update fp_investor set familyhead_code='" & New_Inv_Code & "' where familyhead_code='" & RsData("inv_code") & "'"
+                MyConn.Execute "update fp_investor set fam_mem1=replace(fam_mem1," & RsData("inv_code") & "," & New_Inv_Code & ") where familyhead_code like '" & Left(RsData("inv_code"), 8) & "%' or familyhead_code like '" & Left(New_Inv_Code, 8) & "%'"
+                MyConn.Execute "update fp_investor set fam_mem2=replace(fam_mem2," & RsData("inv_code") & "," & New_Inv_Code & ") where familyhead_code like '" & Left(RsData("inv_code"), 8) & "%' or familyhead_code like '" & Left(New_Inv_Code, 8) & "%'"
+                MyConn.Execute "update fp_investor set fam_mem3=replace(fam_mem3," & RsData("inv_code") & "," & New_Inv_Code & ") where familyhead_code like '" & Left(RsData("inv_code"), 8) & "%' or familyhead_code like '" & Left(New_Inv_Code, 8) & "%'"
+                        
+           
+                'Retirement Table
+                MyConn.Execute "update WEALTHMAKER.RP_DETAIL set   INV_CODE=" & New_Inv_Code & ",RM_BRANCH_CODE=" & branch_cd & ",RM_BUSINESS_CODE='" & bus_rm & "',MODIFIED_ON=TO_DATE('" & Format(ServerDateTime, "dd/mm/yyyy") & "','DD/MM/RRRR') where INV_CODE=" & RsData("INV_CODE")
+                
+                MyConn.Execute "update TRANSACTION_ST           set   client_code=" & New_Inv_Code & ",branch_code=" & branch_cd & ",source_code=" & msfgMain.TextMatrix(1, 2) & ",rmcode=" & Rm_cd & ",modify_TALISMA=TO_DATE('" & Format(ServerDateTime, "dd/mm/yyyy") & "','DD/MM/RRRR') where client_code=" & RsData("INV_CODE")
+                MyConn.Execute "update TRANSACTION_mf_temp1           set   client_code=" & New_Inv_Code & ",branch_code=" & branch_cd & ",source_code=" & msfgMain.TextMatrix(1, 2) & ",rmcode=" & Rm_cd & " where client_code=" & RsData("INV_CODE")
+                MyConn.Execute "update TRANSACTION_ST@mf.bajajcapital           set   client_code=" & New_Inv_Code & ",branch_code=" & branch_cd & ",source_code=" & msfgMain.TextMatrix(1, 2) & ",rmcode=" & Rm_cd & " where client_code=" & RsData("INV_CODE")
+                MyConn.Execute "update TRANSACTION_STTEMP       set   client_code=" & New_Inv_Code & ",branch_code=" & branch_cd & ",source_code=" & msfgMain.TextMatrix(1, 2) & ",rmcode=" & Rm_cd & ",modify_TALISMA=TO_DATE('" & Format(ServerDateTime, "dd/mm/yyyy") & "','DD/MM/RRRR') where client_code=" & RsData("INV_CODE")
+                MyConn.Execute "update REDEM@mf.bajajcapital                    set   client_code=" & New_Inv_Code & ",branch_code=" & branch_cd & ",source_code=" & msfgMain.TextMatrix(1, 2) & ",rmcode=" & Rm_cd & " where client_code=" & RsData("INV_CODE")
+                MyConn.Execute "update INVESTOR_FOLIO@mf.bajajcapital           set INVESTOR_CODE=" & New_Inv_Code & " where INVESTOR_CODE=" & RsData("INV_CODE")
+                MyConn.Execute "update INVESTOR_MASTER_IPO      set      inv_code=" & New_Inv_Code & ",AGENT_CODE=" & msfgMain.TextMatrix(1, 2) & " where inv_code=" & RsData("INV_CODE")
+                MyConn.Execute "update REVERTAL_TRANSACTION     set   client_code=" & New_Inv_Code & ",branch_code=" & branch_cd & ",source_code=" & msfgMain.TextMatrix(1, 2) & ",rmcode=" & Rm_cd & " where client_code=" & RsData("INV_CODE")
+                MyConn.Execute "update TRANSACTION_IPO          set      inv_code=" & New_Inv_Code & ",AGENT_CODE=" & msfgMain.TextMatrix(1, 2) & " where inv_code=" & RsData("INV_CODE")
+                MyConn.Execute "update TRAN_PAYOUT@mf.bajajcapital              set      inv_code=" & New_Inv_Code & " where inv_code=" & RsData("INV_CODE")
+                MyConn.Execute "update BAJAJ_AR_HEAD            set     CLIENT_CD=" & New_Inv_Code & ",modify_TALISMA=TO_DATE('" & Format(ServerDateTime, "dd/mm/yyyy") & "','DD/MM/RRRR') where CLIENT_CD=" & RsData("INV_CODE")
+                MyConn.Execute "update TRAN_NET_BALANCE6@mf.bajajcapital        set   CLIENT_CODE=" & New_Inv_Code & " where CLIENT_CODE=" & RsData("INV_CODE")
+                MyConn.Execute "update TRAN_IPO                 set      inv_code=" & New_Inv_Code & ",CLIENT_CODE=" & msfgMain.TextMatrix(1, 2) & " where inv_code=" & RsData("INV_CODE")
+                MyConn.Execute "update TRAN_LEAD                set      inv_code=" & New_Inv_Code & " where inv_code=" & RsData("INV_CODE")
+                MyConn.Execute "update port_TRANSACTION_ST@mf.bajajcapital           set   client_code=" & New_Inv_Code & ",branch_code=" & branch_cd & ",source_code=" & msfgMain.TextMatrix(1, 2) & ",rmcode=" & Rm_cd & " where client_code=" & RsData("INV_CODE")
+                
+                MyConn.Execute "update tb_doc_upload            set     inv_code=" & New_Inv_Code & " where inv_code='" & RsData("INV_CODE") & "'"
+                
+                MyConn.Execute "update WEALTHMAKER.CLIENT_VOUCHER_DETAILS        set   inv_code=" & New_Inv_Code & " where inv_code='" & RsData("INV_CODE") & "'"
+                
+                MyConn.Execute "update portfolio_trans@mf.bajajcapital           set   client_code=" & New_Inv_Code & ",source_code=" & msfgMain.TextMatrix(1, 2) & " where client_code=" & RsData("INV_CODE")
+                
+                MyConn.Execute "update transaction_st_online    set client_code='" & New_Inv_Code & "'      where client_code='" & RsData("INV_CODE") & "'"
+                MyConn.Execute "update online_client_request    set inv_code='" & New_Inv_Code & "'         where inv_code='" & RsData("INV_CODE") & "'"
+                MyConn.Execute "update online_client_request_hist    set inv_code='" & New_Inv_Code & "'         where inv_code='" & RsData("INV_CODE") & "'"
+                MyConn.Execute "update online_business_summary  set client_codewm='" & New_Inv_Code & "'    where client_codewm='" & RsData("INV_CODE") & "'"
+                MyConn.Execute "update offline_business_summary set client_codewm='" & New_Inv_Code & "'    where client_codewm='" & RsData("INV_CODE") & "'"
+                '----------------------------------
+
+                If InStr(Replace(Replace(Trim(UCase(RsData("investor_name"))), ".", ""), " ", ""), "HUF") = 0 Then
+                    If rsInv_check.EOF = False Then
+                        'write code here if fpl_date is not null and implemented date is not null for this investor
+                        ' then first update before deletion
+                        MyConn.Execute "insert into client_inv_merge_log values('" & New_Inv_Code & "','" & RsData("INV_CODE") & "','" & Glbloginid & "',sysdate)"
+                        MyConn.Execute "insert into INVESTOR_del select * from INVESTOR_MASTER  where inv_code=" & RsData("INV_CODE")
+                        MyConn.Execute "Delete from INVESTOR_MASTER  where inv_code=" & RsData("INV_CODE")
+                        MyConn.Execute "Delete from INVESTOR_MASTER@mf.bajajcapital  where inv_code=" & RsData("INV_CODE")
+                        If rsInv_check("kyc") = "YES" Or rsInv_check("kyc") = "YESP" Then
+                            '' DELETE ACCOUNT ONLY IF THE ACCOUNT HAS BEEN CREATED FOR THE MATCHING INVESTOR
+                            '' ALSO UPDATE PAN IF NOT AVAILABLE IN MAIN INVESTOR
+                            MyConn.Execute "insert into account_merge_log values('" & New_Inv_Code & "','" & RsData("INV_CODE") & "','" & Glbloginid & "',sysdate)"
+                            If Trim(rsInv_check("PAN")) = "" Or IsNull(rsInv_check("PAN")) = True Then
+                                If Trim(RsData("PAN")) <> "" And IsNull(RsData("PAN")) = False Then
+                                    MyConn.Execute "UPDATE client_test SET CLIENT_pan='" & RsData("pan") & "' where client_codekyc=" & New_Inv_Code & " and CLIENT_pan is null"
+                                End If
+                            End If
+                            'BY PANKAJ PUNDIR FOR MANDATE ON DATED 09-FEB-2017
+                            If Trim(RsData("MANDATE_FLAG")) = "Y" Then
+                                MyConn.Execute "UPDATE client_test SET mandate_flag='Y' where client_codekyc=" & New_Inv_Code & " and nvl(mandate_flag,'N')='N'"
+                                MyConn.Execute "UPDATE Investor_Master SET mandate_flag='Y' where Inv_Code=" & New_Inv_Code & " and nvl(mandate_flag,'N')='N'"
+                            End If
+                            MyConn.Execute "Delete from client_test  where client_codekyc=" & RsData("INV_CODE")
+                        End If
+                    End If
+                    rsInv_check.Close
+                End If
+                RsData.MoveNext
+            Wend
+            
+            MyConn.Execute "update INVESTOR_MASTER           set BRANCH_CODE=" & branch_cd & ",RM_CODE=" & Rm_cd & ",modify_date=TO_DATE('" & Format(ServerDateTime, "dd/mm/yyyy") & "','DD/MM/RRRR') where source_id=" & msfgMain.TextMatrix(1, 2)
+            MyConn.Execute "update INVESTOR_MASTER@mf.bajajcapital           set BRANCH_CODE=" & branch_cd & ",RM_CODE=" & Rm_cd & ",modify_date=TO_DATE('" & Format(ServerDateTime, "dd/mm/yyyy") & "','DD/MM/RRRR') where source_id=" & msfgMain.TextMatrix(1, 2)
+            
+            '******CLIENT MERGING*****
+            MyConn.Execute "update client_MASTER             set sourceid=" & branch_cd & ",RM_CODE=" & Rm_cd & ",modify_date=TO_DATE('" & Format(ServerDateTime, "dd/mm/yyyy") & "','DD/MM/RRRR') where client_code=" & msfgMain.TextMatrix(1, 2)
+            MyConn.Execute "update client_MASTER@mf.bajajcapital             set sourceid=" & branch_cd & ",RM_CODE=" & Rm_cd & ",modify_date=TO_DATE('" & Format(ServerDateTime, "dd/mm/yyyy") & "','DD/MM/RRRR') where client_code=" & msfgMain.TextMatrix(1, 2)
+            MyConn.Execute "update TRANSACTION_ST            set   branch_code=" & branch_cd & ",rmcode=" & Rm_cd & ",modify_TALISMA=TO_DATE('" & Format(ServerDateTime, "dd/mm/yyyy") & "','DD/MM/RRRR') where source_code=" & msfgMain.TextMatrix(1, 2)
+            
+            '-----------------------------------------Here We have to Put The Code-------------------------------------------------------------------
+            'MyConn.Execute "update RBI_HISTORY_DATA          set   client_code=" & msfgMain.TextMatrix(1, 2) & " where client_code=" & msfgMergedInvestors.TextMatrix(1, 2)
+            'MyConn.Execute "update BIMA_HISTORY_DATA         set   client_code=" & msfgMain.TextMatrix(1, 2) & " where client_code=" & msfgMergedInvestors.TextMatrix(1, 2)
+            'MyConn.Execute "update UTI_HISTORY_DATA          set   client_code=" & msfgMain.TextMatrix(1, 2) & " where client_code=" & msfgMergedInvestors.TextMatrix(1, 2)
+            'MyConn.Execute "update CLIENT_ENTIRE_UNIX        set   client_code=" & msfgMain.TextMatrix(1, 2) & " where client_code=" & msfgMergedInvestors.TextMatrix(1, 2)
+            'MyConn.Execute "update POST_OFFICE_MASTER        set   client_code=" & msfgMain.TextMatrix(1, 2) & " where client_code=" & msfgMergedInvestors.TextMatrix(1, 2)
+            '------------------------------------------------------------------------------------------------------------------------------------
+    
+            MyConn.Execute "update TRANSACTION_MF_TEMP1            set   branch_code=" & branch_cd & ",rmcode=" & Rm_cd & " where source_code=" & msfgMain.TextMatrix(1, 2)
+            MyConn.Execute "update TRANSACTION_ST@mf.bajajcapital            set   branch_code=" & branch_cd & ",rmcode=" & Rm_cd & " where source_code=" & msfgMain.TextMatrix(1, 2)
+            MyConn.Execute "update TRANSACTION_STTEMP        set   branch_code=" & branch_cd & ",rmcode=" & Rm_cd & ",modify_TALISMA=TO_DATE('" & Format(ServerDateTime, "dd/mm/yyyy") & "','DD/MM/RRRR') where source_code=" & msfgMain.TextMatrix(1, 2)
+            MyConn.Execute "update REDEM@mf.bajajcapital                     set   branch_code=" & branch_cd & ",rmcode=" & Rm_cd & " where source_code=" & msfgMain.TextMatrix(1, 2)
+            MyConn.Execute "update REVERTAL_TRANSACTION      set   branch_code=" & branch_cd & ",rmcode=" & Rm_cd & " where source_code=" & msfgMain.TextMatrix(1, 2)
+            
+            
+            MyConn.Execute "update CLIENT_VEHICLE            set client_code=" & msfgMain.TextMatrix(1, 2) & " where client_code=" & msfgMergedInvestors.TextMatrix(i, 2)
+            MyConn.Execute "update REFERENCE_MASTER          set client_code=" & msfgMain.TextMatrix(1, 2) & " where client_code=" & msfgMergedInvestors.TextMatrix(i, 2)
+            MyConn.Execute "update RELATION_MASTER           set client_code=" & msfgMain.TextMatrix(1, 2) & " where client_code=" & msfgMergedInvestors.TextMatrix(i, 2)
+            MyConn.Execute "update BILL_DETAIL_PAID          set AGENT_code=" & msfgMain.TextMatrix(1, 2) & " where AGENT_code=" & msfgMergedInvestors.TextMatrix(i, 2)
+            MyConn.Execute "update PAYMENT_DETAIL            set agent_code=" & msfgMain.TextMatrix(1, 2) & " where agent_code=" & msfgMergedInvestors.TextMatrix(i, 2)
+            MyConn.Execute "update LEDGER                    set AGENT_code=" & msfgMain.TextMatrix(1, 2) & " where AGENT_code=" & msfgMergedInvestors.TextMatrix(i, 2)
+            
+            MyConn.Execute "update port_TRANSACTION_ST@mf.bajajcapital            set   branch_code=" & branch_cd & ",rmcode=" & Rm_cd & " where source_code=" & msfgMain.TextMatrix(1, 2)
+            
+            '**********************
+'            If IsNull(rsClient("FP")) And Not (IsNull(rsclient1("FP"))) Then
+'                If rsclient1("FP") = "Y" Then rsClient("FP") = rsclient1("FP")
+'            End If
+'            If IsNull(rsClient("FPF_DATE")) And Not (IsNull(rsclient1("FPF_DATE"))) Then
+'                rsClient("FPF_DATE") = rsclient1("FPF_DATE")
+'            End If
+'            If IsNull(rsClient("FPL_DATE")) And Not (IsNull(rsclient1("FPL_DATE"))) Then
+'                rsClient("FPL_DATE") = rsclient1("FPL_DATE")
+'            End If
+            If IsNull(rsClient("BM_REASON")) And Not (IsNull(rsclient1("BM_REASON"))) Then
+                rsClient("BM_REASON") = rsclient1("BM_REASON")
+            End If
+            If IsNull(rsClient("BM_REMARK")) And Not (IsNull(rsclient1("BM_REMARK"))) Then
+                rsClient("BM_REMARK") = rsclient1("BM_REMARK")
+            End If
+            If (IsNull(rsClient("PHONE")) Or Trim(rsClient("PHONE")) = "") And Not (IsNull(rsclient1("PHONE"))) Then
+                rsClient("PHONE") = rsclient1("PHONE")
+            End If
+            If IsNull(rsClient("EMAIL")) And Not (IsNull(rsclient1("EMAIL"))) Then
+                rsClient("EMAIL") = rsclient1("EMAIL")
+            End If
+            If IsNull(rsClient("MOBILE")) And (Not (IsNull(rsclient1("MOBILE"))) And rsclient1("MOBILE") <> "0") Then
+                rsClient("MOBILE") = rsclient1("MOBILE")
+            ElseIf (Not (IsNull(rsclient1("MOBILE"))) And rsclient1("MOBILE") <> "0") Then
+                rsClient("phone") = rsClient("phone") & "," & rsclient1("MOBILE")
+            End If
+            If IsNull(rsClient("PINCODE")) And Not (IsNull(rsclient1("PINCODE"))) Then
+                rsClient("PINCODE") = rsclient1("PINCODE")
+            End If
+            If IsNull(rsClient("CITY_ID")) And Not (IsNull(rsclient1("CITY_ID"))) Then
+                rsClient("CITY_ID") = rsclient1("CITY_ID")
+            End If
+            If IsNull(rsClient("DOB")) And Not (IsNull(rsclient1("DOB"))) Then
+                rsClient("DOB") = rsclient1("DOB")
+            End If
+            If IsNull(rsClient("EXIST_CODE")) And Not (IsNull(rsclient1("EXIST_CODE"))) Then
+                rsClient("EXIST_CODE") = rsclient1("EXIST_CODE")
+            End If
+            If IsNull(rsClient("ANN_DT")) And Not (IsNull(rsclient1("ANN_DT"))) Then
+                rsClient("ANN_DT") = rsclient1("ANN_DT")
+            End If
+            If IsNull(rsClient("ANN_MM")) And Not (IsNull(rsclient1("ANN_MM"))) Then
+                rsClient("ANN_MM") = rsclient1("ANN_MM")
+            End If
+            If IsNull(rsClient("TAX")) And Not (IsNull(rsclient1("TAX"))) Then
+                rsClient("TAX") = rsclient1("TAX")
+            End If
+            
+            If IsNull(rsClient("pan")) And Not (IsNull(rsclient1("pan"))) Then
+                rsClient("pan") = rsclient1("pan")
+            End If
+            
+            If IsNull(rsClient("INTR_BY")) And Not (IsNull(rsclient1("INTR_BY"))) Then
+                rsClient("INTR_BY") = rsclient1("INTR_BY")
+            End If
+            
+            If IsNull(rsClient("Phone1")) And Not (IsNull(rsclient1("phone1"))) Then
+                rsClient("phone1") = rsclient1("phone1")
+            End If
+            If IsNull(rsClient("Phone2")) And Not (IsNull(rsclient1("Phone2"))) Then
+                rsClient("Phone2") = rsclient1("Phone2")
+            End If
+            If IsNull(rsClient("Phone3")) And Not (IsNull(rsclient1("Phone3"))) Then
+                rsClient("Phone3") = rsclient1("Phone3")
+            End If
+            
+            If IsNull(rsClient("INTRO_CODE")) And (Not (IsNull(rsclient1("INTRO_CODE"))) And rsclient1("INTRO_CODE") <> "0") Then
+                rsClient("INTRO_CODE") = rsclient1("INTRO_CODE")
+            End If
+            
+            If Not (IsNull(rsclient1("creation_date"))) Then
+                If Not (IsNull(rsClient("creation_date"))) Then
+                    If CheckDate(Format(rsClient("creation_date"), "dd/mm/yyyy"), Format(rsclient1("creation_date"), "dd/mm/yyyy")) = False Then
+                        rsClient("creation_date") = rsclient1("creation_date")
+                    End If
+                End If
+            End If
+            
+            If IsNull(rsClient("creation_date")) And Not (IsNull(rsclient1("creation_date"))) Then
+                rsClient("creation_date") = rsclient1("creation_date")
+            End If
+            
+            If Not (IsNull(rsclient1("LAST_TRAN_DT1"))) Then
+                If Not (IsNull(rsClient("LAST_TRAN_DT1"))) Then
+                    If CheckDate(Format(rsclient1("LAST_TRAN_DT1"), "dd/mm/yyyy"), Format(rsClient("LAST_TRAN_DT1"), "dd/mm/yyyy")) = False Then
+                        rsClient("LAST_TRAN_DT1") = rsclient1("LAST_TRAN_DT1")
+                    End If
+                End If
+            End If
+            
+            If IsNull(rsClient("LAST_TRAN_DT1")) And Not (IsNull(rsclient1("LAST_TRAN_DT1"))) Then
+                rsClient("LAST_TRAN_DT1") = rsclient1("LAST_TRAN_DT1")
+            End If
+            
+            rsClient.Update
+            
+            rsClient.Close
+            rsclient1.Close
+            '**********************
+            MyConn.Execute "insert into client_inv_merge_log values('" & msfgMain.TextMatrix(1, 2) & "','" & msfgMergedInvestors.TextMatrix(i, 2) & "','" & Glbloginid & "',sysdate)"
+            MyConn.Execute "insert into client_del select * from client_master where client_code=" & msfgMergedInvestors.TextMatrix(i, 2)
+            MyConn.Execute "Delete from client_master where client_code=" & msfgMergedInvestors.TextMatrix(i, 2)
+            MyConn.Execute "Delete from client_test where substr(client_codekyc,1,8)=" & msfgMergedInvestors.TextMatrix(i, 2)
+            MyConn.Execute "Delete from client_master@mf.bajajcapital where client_code=" & msfgMergedInvestors.TextMatrix(i, 2)
+            MyConn.Execute "Delete from client_master_ext4 where client_code=" & msfgMergedInvestors.TextMatrix(i, 2)
+            '*******END***************
+            MyConn.CommitTrans
+            
+            
+           
+            
+            If rsHead.State = 1 Then rsHead.Close
+            Members = ""
+            Fam_Head = ""
+            rsHead.open "Select * from fp_investor where substr(familyhead_code,1,8)=" & msfgMain.TextMatrix(1, 2) & " and (fp_type='Snapshot' or Fp_type='Comprehensive') order by familyhead_code desc ", MyConn, adOpenKeyset
+            If rsHead.RecordCount > 1 Then
+                Fam_Head = rsHead("familyhead_code")
+                Members1 = rsHead("fam_mem1")
+                'If Not (IsNull(rsHead("fam_mem2"))) Then Members2 = rsHead("fam_mem2")
+                'If Not (IsNull(rsHead("fam_mem3"))) Then Members3 = rsHead("fam_mem3")
+                MyConn.Execute "insert into dup_fp_investor select * from fp_investor where familyhead_code=" & Fam_Head
+                MyConn.Execute "update fp_investor set fam_mem1=fam_mem1||'#'||'" & Members1 & "' where substr(familyhead_code,1,8)=" & msfgMain.TextMatrix(1, 2) & " and (fp_type='Snapshot' or Fp_type='Comprehensive')"
+                'myconn.Execute "delete from fp_investor where familyhead_code=" & Fam_Head
+                'myconn.Execute "insert into dup_fp_investor select * from fp_investor where familyhead_code=" & Fam_Head
+            End If
+            
+            flag = False
+            RsData.Close
+            
+             '******************************************************************************************
+            
+'            Dim Cmd_Incentive As New ADODB.Command
+'            Set Cmd_Incentive.ActiveConnection = MyConn
+'            Cmd_Incentive.CommandType = adCmdStoredProc
+'            Cmd_Incentive.CommandText = "CLIENT_4_4_TRANS_TALISMA_SIN33"
+'            Cmd_Incentive.Parameters.Append Cmd_Incentive.CreateParameter("cl_code", adVarChar, adParamInput, 10, msfgMain.TextMatrix(1, 2))
+'            Cmd_Incentive.Execute
+'            Set Cmd_Incentive = Nothing
+            
+            '******************************************************************************************
+            
+        Next i
+        
+        Me.MousePointer = 0
+        MsgBox "Client(s) Merged Successfully", vbInformation
+        
+       
+        '''''''''''''''''''''''''''''''''''''''''''MAIL TO MAIN RM''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+        Call cmdSend_Click
+
+        '''''''''''''''''''''''''''''''''''''''''''MAIL TO MERGED RM''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+
+        Call MessageMergedRm
+
+        '''''''''''''''''''''''''''''''''''''''''''MAIL TO RM END'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+        
+        
+        
+        '''new section
+        RsData.open "select inv_code,investor_name,pan from investor_master where source_id=" & msfgMain.TextMatrix(1, 2) & " order by inv_code", MyConn, adOpenForwardOnly
+        frmPanUpdation.msfgMergedInvestors.Rows = 1
+        i = 1
+        While Not RsData.EOF
+            
+            frmPanUpdation.msfgMergedInvestors.Rows = frmPanUpdation.msfgMergedInvestors.Rows + 1
+            frmPanUpdation.msfgMergedInvestors.TextMatrix(i, 0) = RsData(0)
+            frmPanUpdation.msfgMergedInvestors.TextMatrix(i, 1) = RsData(1)
+            If Not IsNull(RsData(2)) Then
+                frmPanUpdation.msfgMergedInvestors.TextMatrix(i, 2) = RsData(2)
+            End If
+            i = i + 1
+            RsData.MoveNext
+        Wend
+        'Exit Sub
+        ''end
+        Set RsData = Nothing
+        Set rsClient = Nothing
+        Set rsclient1 = Nothing
+        Set rsInv_check = Nothing
+        
+        Frame1.Enabled = True
+        Frame2.Enabled = True
+        Frame3.Enabled = True
+        Frame4.Enabled = True
+        
+        msfgInvestors.Rows = 1
+        msfgMain.Rows = 1
+        msfgMergedInvestors.Rows = 1
+        'msfgInvestors.Rows = 2
+        msfgMain.Rows = 2
+        SetGrid
+        'cmbClient_Change
+    End If
+    Exit Sub
+errortrap:
+    On Error Resume Next
+    Me.MousePointer = 0
+    MsgBox err.Description
+    Resume
+    If flag = True Then
+        MyConn.RollbackTrans
+    End If
+    Frame1.Enabled = True
+    Frame2.Enabled = True
+    Frame3.Enabled = True
+    Frame4.Enabled = True
+End Sub
+
+Private Sub MessageMergedRm()
+Dim rsInv_Main As New ADODB.Recordset
+Dim rsInv_Merge As New ADODB.Recordset
+'---------------------------------------------------------------------------------------------
+For i = 1 To msfgMergedInvestors.Rows - 1
+            If rsInv_Main.State = 1 Then rsInv_Main.Close
+            If rsInv_Merge.State = 1 Then rsInv_Merge.Close
+            rsInv_Main.open "select i.client_name,I.client_CODE,I.RM_CODE,EMP.PAYROLL_ID,emp.rm_name||'('||emp.payroll_id||')' RM,BRANCH_NAME from client_master i,employee_master emp,BRANCH_MASTER BR where I.RM_CODE=EMP.RM_CODE AND EMP.SOURCE=BR.BRANCH_CODE  AND I.client_code=" & msfgMain.TextMatrix(1, 2), MyConn, adOpenDynamic, adLockPessimistic
+            rsInv_Merge.open "select i.client_name,emp.email EMAIL,I.client_CODE,I.RM_CODE,EMP.PAYROLL_ID,emp.rm_name||'('||emp.payroll_id||')' RM,BRANCH_NAME  from client_DEL I,EMPLOYEE_MASTER EMP,BRANCH_MASTER BR  where I.RM_CODE=EMP.RM_CODE AND EMP.SOURCE=BR.BRANCH_CODE AND EMP.TYPE='A' AND (EMP.TMP_RESIGN <>'Y' OR EMP.TMP_RESIGN IS NULL) AND I.client_code=" & msfgMergedInvestors.TextMatrix(i, 2), MyConn, adOpenForwardOnly
+            If rsInv_Merge.EOF = False And rsInv_Main.EOF = False Then
+                If rsInv_Merge.Fields("PAYROLL_ID") <> rsInv_Main.Fields("PAYROLL_ID") Then
+                    strmsg = " <HTML> "
+                    strmsg = strmsg & "<HEAD> "
+                    strmsg = strmsg & "<META HTTP-EQUIV=""Content-Type"" CONTENT=""text/html; charset=windows-1252""> "
+                    strmsg = strmsg & "<META NAME=""Generator"" CONTENT=""Microsoft FrontPage 5.0""> "
+                    strmsg = strmsg & "<TITLE> </TITLE> "
+                    strmsg = strmsg & "</HEAD>  "
+                    strmsg = strmsg & "<BODY> "
+                    strmsg = strmsg & "<FONT FACE=""calibri"" SIZE=2><P>Dear Sir,<br /><br />This is to inform you that following is the list of client(s), who were found as duplicate in the system and we have now merged with original clients in below mentioned Relationship Manager’s Code.<br /><br />"
+                    strmsg = strmsg & "<TABLE width=""60%"" hieght=""100%"" border=""1"" rules=""all"" cellspacing=""0"" cellpadding=""0"" > "
+                    
+                    strmsg = strmsg & "<TR font-weight: bold; font-family: calibri light, Helvetica, sans-serif; font-size: mediam;text-align: center;> "
+                    strmsg = strmsg & "<TD WIDTH=""20%""  BGCOLOR=#808080 ALIGN=LEFT><FONT  COLOR=#000000 SIZE=2><B>Client Name</B></FONT></TD> "
+                    strmsg = strmsg & "<TD WIDTH=""10%""  BGCOLOR=#808080 ALIGN=LEFT><FONT  COLOR=#000000 SIZE=2><STRONG>To Client</STRONG></FONT></TD> "
+                    strmsg = strmsg & "<TD WIDTH=""15%""  BGCOLOR=#808080 ALIGN=LEFT><FONT  COLOR=#000000 SIZE=2><STRONG>To RM</STRONG></FONT></TD> "
+                    strmsg = strmsg & "<TD WIDTH=""15%""  BGCOLOR=#808080 ALIGN=LEFT><FONT  COLOR=#000000 SIZE=2><STRONG>To Branch</STRONG></FONT></TD> "
+                    strmsg = strmsg & "</TR> "
+                    
+                    strmsg = strmsg & "<TR> "
+                    strmsg = strmsg & "<TD WIDTH=""20%""  BGCOLOR=#FFFFFF ALIGN=LEFT><FONT  COLOR=#000000 size=2 >" & rsInv_Merge.Fields("Client_name") & "</FONT></TD> "
+                    strmsg = strmsg & "<TD WIDTH=""10%""  BGCOLOR=#FFFFFF ALIGN=LEFT><FONT  COLOR=#000000 size=2 >" & rsInv_Main.Fields("Client_code") & " </FONT></TD> "
+                    strmsg = strmsg & "<TD WIDTH=""15%""  BGCOLOR=#FFFFFF ALIGN=LEFT><FONT  COLOR=#000000 size=2 >" & rsInv_Main.Fields("RM") & " </FONT></TD> "
+                    strmsg = strmsg & "<TD WIDTH=""15%""  BGCOLOR=#FFFFFF ALIGN=LEFT><FONT  COLOR=#000000 size=1 >" & rsInv_Main.Fields("BRANCH_NAME") & " </FONT></TD> "
+                    strmsg = strmsg & "</TR> "
+                    strmsg = strmsg & "</table> "
+                    strmsg = strmsg & "<FONT FACE=""calibri"" SIZE=2><P><br /><br /> For any further clarification/query, please feel free to get in touch with <B> Mr. Pankaj Singh Negi. </B> <B>Mr. Pankaj </B> can be contacted on email – <B>pankajsn@bajajcapital.com</B>, Mobile # <B>8826511620</B>or Extension # <B>288</B>. <BR /><BR />With Best Regards, <BR />IT Group"
+                    strmsg = strmsg & "</BODY> "
+                    strmsg = strmsg & "</HTML> "
+                    Call cmdSendMerged_Click(rsInv_Merge.Fields("email"), strmsg)
+                End If
+             End If
+Next i
+End Sub
+
+Private Sub cmdSend_Click()
+On Error GoTo err
+Dim rsInv_Main As New ADODB.Recordset
+    If rsInv_Main.State = 1 Then rsInv_Main.Close
+    rsInv_Main.open "select I.client_CODE,I.RM_CODE,EMP.PAYROLL_ID,emp.email from client_master i,employee_master emp where I.RM_CODE=EMP.RM_CODE AND EMP.TYPE='A' and emp.email is not null  AND (EMP.TMP_RESIGN <>'Y' OR EMP.TMP_RESIGN IS NULL)  AND I.client_code=" & msfgMain.TextMatrix(1, 2), MyConn, adOpenDynamic, adLockPessimistic
+    If rsInv_Main.EOF = False Then
+        If ValidateEmail(rsInv_Main.Fields("email")) = True Then
+            Set poSendMail = New clsSendMail
+            With poSendMail
+                .SMTPHostValidation = VALIDATE_NONE         ' Optional, default = VALIDATE_HOST_DNS
+                .EmailAddressValidation = VALIDATE_SYNAX   ' Optional, default = VALIDATE_SYNTAX
+                .Delimiter = ";"                            ' Optional, default = ";" (semicolon)
+                ' **************************************************************************
+                ' Basic properties for sending email
+                ' **************************************************************************
+                .SMTPHost = GLBlocal_host                 ' Required the fist time, optional thereafter
+                .From = "wealthmaker@bajajcapital.com"          ' Required the fist time, optional thereafter
+                .FromDisplayName = "Wealthmaker" ' Optional, saved after first use
+                .Recipient = rsInv_Main.Fields("email")     ' Required, separate multiple entries with delimiter character
+                .RecipientDisplayName = rsInv_Main.Fields("email")    ' Optional, separate multiple entries with delimiter character
+                .CcRecipient = "pankajsn@bajajcapital.com;harshn@bajajcapital.com"
+                .Subject = "Merging of Clients"                         ' Optional
+                 strmsg = strmsg & "<br><br><hr>Powered by Wealthmaker Email System"
+                 Call MessageMainRm
+                .Message = strmsg                              ' Optional
+                ' **************************************************************************
+                ' Additional Optional properties, use as required by your application / environment
+                ' **************************************************************************
+                .AsHTML = True                             ' Optional, default = FALSE, send mail as html or plain text
+                .ContentBase = ""                           ' Optional, default = Null String, reference base for embedded links
+                .EncodeType = MyEncodeType                  ' Optional, default = MIME_ENCODE
+                .Priority = etPriority                      ' Optional, default = PRIORITY_NORMAL
+                .Receipt = False                         ' Optional, default = FALSE
+                .UseAuthentication = False             ' Optional, default = FALSE
+                .UsePopAuthentication = False           ' Optional, default = FALSE
+                .UserName = GLBLOCAL_UID             ' Optional, default = Null String
+                .Password = "bajaj@123"                     ' Optional, default = Null String, value is NOT saved
+                .POP3Host = "mail.bajajcapital.com"
+                .MaxRecipients = 100                        ' Optional, default = 100, recipient count before error is raised
+                
+                ' **************************************************************************
+                ' Advanced Properties, change only if you have a good reason to do so.
+                ' **************************************************************************
+                ' .ConnectTimeout = 10                      ' Optional, default = 10
+                ' .ConnectRetry = 5                         ' Optional, default = 5
+                ' .MessageTimeout = 60                      ' Optional, default = 60
+                ' .PersistentSettings = True                ' Optional, default = TRUE
+                 .SMTPPort = 25                            ' Optional, default = 25
+        
+                ' **************************************************************************
+                ' OK, all of the properties are set, send the email...
+                ' **************************************************************************
+                ' .Connect                                  ' Optional, use when sending bulk mail
+                If MailMainFlag = True Then
+                    .send                                       ' Required
+                End If
+                .Disconnect                               ' Optional, use when sending bulk mail
+            End With
+         End If
+     End If
+     rsInv_Main.Close
+Exit Sub
+err:
+    MsgBox err.Description & err.Number
+End Sub
+Private Sub MessageMainRm()
+Dim rsInv_Main As New ADODB.Recordset
+Dim rsInv_Merge As New ADODB.Recordset
+MailMainFlag = False
+'---------------------------------------------------------------------------------------------
+strmsg = " <HTML> "
+strmsg = strmsg & "<HEAD> "
+strmsg = strmsg & "<META HTTP-EQUIV=""Content-Type"" CONTENT=""text/html; charset=windows-1252""> "
+strmsg = strmsg & "<META NAME=""Generator"" CONTENT=""Microsoft FrontPage 5.0""> "
+strmsg = strmsg & "<TITLE> </TITLE> "
+strmsg = strmsg & "</HEAD>  "
+strmsg = strmsg & "<BODY> "
+strmsg = strmsg & "<FONT FACE=""calibri"" SIZE=2><P>Dear Sir,<br /><br />This is to inform you that following is the list of client(s), who were found as duplicate in the system and we have now merged with clients under your code.<br /><br/>"
+strmsg = strmsg & "<TABLE width=""100%"" hieght=""100%"" border=""1"" rules=""all"" cellspacing=""0"" cellpadding=""0"" > "
+strmsg = strmsg & "<TR font-weight: bold; font-family: calibri light, Helvetica, sans-serif; font-size: mediam;text-align: center;> "
+strmsg = strmsg & "<TD WIDTH=""20%""  BGCOLOR=#808080 ALIGN=LEFT><FONT  COLOR=#000000 SIZE=2><B>Client Name</B></FONT></TD> "
+strmsg = strmsg & "<TD WIDTH=""10%""  BGCOLOR=#808080 ALIGN=LEFT><FONT  COLOR=#000000 SIZE=2><STRONG>From Client</STRONG></FONT></TD> "
+strmsg = strmsg & "<TD WIDTH=""10%""  BGCOLOR=#808080 ALIGN=LEFT><FONT  COLOR=#000000 SIZE=2><STRONG>To Client</STRONG></FONT></TD> "
+strmsg = strmsg & "<TD WIDTH=""15%""  BGCOLOR=#808080 ALIGN=LEFT><FONT  COLOR=#000000 SIZE=2><STRONG>From RM</STRONG></FONT></TD> "
+strmsg = strmsg & "<TD WIDTH=""15%""  BGCOLOR=#808080 ALIGN=LEFT><FONT  COLOR=#000000 SIZE=2><STRONG>To RM</STRONG></FONT></TD> "
+strmsg = strmsg & "<TD WIDTH=""15%""  BGCOLOR=#808080 ALIGN=LEFT><FONT  COLOR=#000000 SIZE=2><STRONG>From Branch</STRONG></FONT></TD> "
+strmsg = strmsg & "<TD WIDTH=""15%""  BGCOLOR=#808080 ALIGN=LEFT><FONT  COLOR=#000000 SIZE=2><STRONG>To Branch</STRONG></FONT></TD> "
+strmsg = strmsg & "</TR> "
+
+
+For i = 1 To msfgMergedInvestors.Rows - 1
+            If rsInv_Main.State = 1 Then rsInv_Main.Close
+            If rsInv_Merge.State = 1 Then rsInv_Merge.Close
+            rsInv_Main.open "select i.client_name,I.client_CODE,I.RM_CODE,EMP.PAYROLL_ID,emp.rm_name||'('||emp.payroll_id||')' RM,BRANCH_NAME from client_master i,employee_master emp,BRANCH_MASTER BR where I.RM_CODE=EMP.RM_CODE AND EMP.SOURCE=BR.BRANCH_CODE AND  EMP.TYPE='A' AND (EMP.TMP_RESIGN <>'Y' OR EMP.TMP_RESIGN IS NULL) AND I.client_code=" & msfgMain.TextMatrix(1, 2), MyConn, adOpenDynamic, adLockPessimistic
+            rsInv_Merge.open "select i.client_name,I.client_CODE,I.RM_CODE,EMP.PAYROLL_ID,emp.rm_name||'('||emp.payroll_id||')' RM,BRANCH_NAME  from client_DEL I,EMPLOYEE_MASTER EMP,BRANCH_MASTER BR  where I.RM_CODE=EMP.RM_CODE AND EMP.SOURCE=BR.BRANCH_CODE AND EMP.TYPE='A' AND (EMP.TMP_RESIGN <>'Y' OR EMP.TMP_RESIGN IS NULL) AND I.client_code=" & msfgMergedInvestors.TextMatrix(i, 2), MyConn, adOpenForwardOnly
+            If rsInv_Merge.EOF = False And rsInv_Main.EOF = False Then
+                    MailMainFlag = True
+                    strmsg = strmsg & "<TR> "
+                    strmsg = strmsg & "<TD WIDTH=""20%""  BGCOLOR=#FFFFFF ALIGN=LEFT><FONT  COLOR=#000000 size=2 >" & rsInv_Merge.Fields("client_name") & "</FONT></TD> "
+                    strmsg = strmsg & "<TD WIDTH=""10%""  BGCOLOR=#FFFFFF ALIGN=LEFT><FONT  COLOR=#000000 size=2 >" & rsInv_Merge.Fields("client_code") & " </FONT></TD> "
+                    strmsg = strmsg & "<TD WIDTH=""10%""  BGCOLOR=#FFFFFF ALIGN=LEFT><FONT  COLOR=#000000 size=2 >" & rsInv_Main.Fields("client_code") & " </FONT></TD> "
+                    strmsg = strmsg & "<TD WIDTH=""15%""  BGCOLOR=#FFFFFF ALIGN=LEFT><FONT  COLOR=#000000 size=2 >" & rsInv_Merge.Fields("RM") & " </FONT></TD> "
+                    strmsg = strmsg & "<TD WIDTH=""15%""  BGCOLOR=#FFFFFF ALIGN=LEFT><FONT  COLOR=#000000 size=2 >" & rsInv_Main.Fields("RM") & " </FONT></TD> "
+                    strmsg = strmsg & "<TD WIDTH=""15%""  BGCOLOR=#FFFFFF ALIGN=LEFT><FONT  COLOR=#000000 size=2 >" & rsInv_Merge.Fields("BRANCH_NAME") & " </FONT></TD> "
+                    strmsg = strmsg & "<TD WIDTH=""15%""  BGCOLOR=#FFFFFF ALIGN=LEFT><FONT  COLOR=#000000 size=2 >" & rsInv_Main.Fields("BRANCH_NAME") & " </FONT></TD> "
+                    DoEvents
+            End If
+Next i
+strmsg = strmsg & "</TR> "
+strmsg = strmsg & "</table> "
+strmsg = strmsg & "<FONT FACE=""calibri"" SIZE=2><P><br /><br /> For any further clarification/query, please feel free to get in touch with <B> Mr. Pankaj Singh Negi. </B> <B>Mr. Pankaj </B> can be contacted on email – <B>pankajsn@bajajcapital.com</B>, Mobile # <B>8826511620</B>or Extension # <B>288</B>. <BR /><BR />With Best Regards, <BR />IT Group"
+strmsg = strmsg & "</BODY> "
+strmsg = strmsg & "</HTML> "
+End Sub
+Private Sub cmdSendMerged_Click(ByVal Email, ByVal strmsg)
+On Error GoTo err
+        If ValidateEmail(Email) = True Then
+            Set poSendMail = New clsSendMail
+            With poSendMail
+                .SMTPHostValidation = VALIDATE_NONE         ' Optional, default = VALIDATE_HOST_DNS
+                .EmailAddressValidation = VALIDATE_SYNAX   ' Optional, default = VALIDATE_SYNTAX
+                .Delimiter = ";"                            ' Optional, default = ";" (semicolon)
+                ' **************************************************************************
+                ' Basic properties for sending email
+                ' **************************************************************************
+                .SMTPHost = GLBlocal_host                 ' Required the fist time, optional thereafter
+                .From = "wealthmaker@bajajcapital.com"          ' Required the fist time, optional thereafter
+                .FromDisplayName = "Wealthmaker" ' Optional, saved after first use
+                .Recipient = Email     ' Required, separate multiple entries with delimiter character
+                .RecipientDisplayName = Email    ' Optional, separate multiple entries with delimiter character
+                .CcRecipient = "harshn@bajajcapital.com;pankajsn@bajajcapital.com"
+                .Subject = "Merging of Clients"                         ' Optional
+                 'strmsg = strmsg & "<br><br><hr>Powered by Wealthmaker Email System"
+                .Message = strmsg                              ' Optional
+                ' **************************************************************************
+                ' Additional Optional properties, use as required by your application / environment
+                ' **************************************************************************
+                .AsHTML = True                             ' Optional, default = FALSE, send mail as html or plain text
+                .ContentBase = ""                           ' Optional, default = Null String, reference base for embedded links
+                .EncodeType = MyEncodeType                  ' Optional, default = MIME_ENCODE
+                .Priority = etPriority                      ' Optional, default = PRIORITY_NORMAL
+                .Receipt = False                         ' Optional, default = FALSE
+                .UseAuthentication = False             ' Optional, default = FALSE
+                .UsePopAuthentication = False           ' Optional, default = FALSE
+                .UserName = GLBLOCAL_UID             ' Optional, default = Null String
+                .Password = "bajaj@123"                     ' Optional, default = Null String, value is NOT saved
+                .POP3Host = "mail.bajajcapital.com"
+                .MaxRecipients = 100                        ' Optional, default = 100, recipient count before error is raised
+                
+                ' **************************************************************************
+                ' Advanced Properties, change only if you have a good reason to do so.
+                ' **************************************************************************
+                ' .ConnectTimeout = 10                      ' Optional, default = 10
+                ' .ConnectRetry = 5                         ' Optional, default = 5
+                ' .MessageTimeout = 60                      ' Optional, default = 60
+                ' .PersistentSettings = True                ' Optional, default = TRUE
+                 .SMTPPort = 25                            ' Optional, default = 25
+        
+                ' **************************************************************************
+                ' OK, all of the properties are set, send the email...
+                ' **************************************************************************
+                ' .Connect                                  ' Optional, use when sending bulk mail
+                .send                                       ' Required
+                .Disconnect                               ' Optional, use when sending bulk mail
+            End With
+         End If
+Exit Sub
+err:
+    MsgBox err.Description & err.Number
+End Sub
+Private Sub cmdMergedInvestors_Click()
+Dim i As Long
+Dim sql As String
+    If msfgMain.TextMatrix(1, 1) <> "" Then
+        
+        If UCase(msfgMain.TextMatrix(1, 3)) <> "YES" And UCase(msfgMain.TextMatrix(1, 3)) <> "YESP" Then
+            If UCase(Trim(msfgInvestors.TextMatrix(msfgInvestors.Row, 12))) = UCase("YES") Or UCase(Trim(msfgInvestors.TextMatrix(msfgInvestors.Row, 12))) = UCase("YESP") Then
+                MsgBox "The Client which has KYC Account can not be set as Sub Client", vbInformation
+                Exit Sub
+            End If
+        End If
+        
+'        Sql = " SELECT COUNT(*) FROM CLIENT_MASTER WHERE CLIENT_CODE IN (SELECT SOURCE_CODE FROM TRANSACTION_STTEMP "
+'        Sql = Sql & "WHERE SCH_CODE IN (SELECT OSCH_CODE FROM OTHER_PRODUCT WHERE PROD_CLASS_CODE='DT034')) and client_code= '" & msfgInvestors.TextMatrix(msfgInvestors.Row, 9) & "' "
+'        If SqlRet(Sql) = 1 Then
+'            MsgBox "This Client Can Not Be Merged", vbInformation
+'            Exit Sub
+'        End If
+        
+        If msfgInvestors.TextMatrix(msfgInvestors.Row, 9) = msfgMain.TextMatrix(1, 2) Then
+            MsgBox "This Client is Already Choosen as Main Client", vbInformation
+            Exit Sub
+        End If
+        
+        For i = 1 To msfgMergedInvestors.Rows - 1
+            If msfgInvestors.TextMatrix(msfgInvestors.Row, 9) = msfgMergedInvestors.TextMatrix(i, 2) Then
+                MsgBox "This Client is Already Exist in the List", vbInformation
+                Exit Sub
+            End If
+        Next i
+        msfgMergedInvestors.Rows = msfgMergedInvestors.Rows + 1
+        i = msfgMergedInvestors.Rows - 1
+        msfgMergedInvestors.TextMatrix(i, 0) = msfgInvestors.TextMatrix(msfgInvestors.Row, 0)
+        msfgMergedInvestors.TextMatrix(i, 1) = msfgInvestors.TextMatrix(msfgInvestors.Row, 2)
+        msfgMergedInvestors.TextMatrix(i, 2) = msfgInvestors.TextMatrix(msfgInvestors.Row, 9)
+    Else
+        MsgBox "Please Select Main Investor First !", vbInformation
+    End If
+End Sub
+
+Private Sub CMDRESET_Click()
+        Frame1.Enabled = True
+        Frame2.Enabled = True
+        Frame3.Enabled = True
+        Frame4.Enabled = True
+        msfgInvestors.Rows = 1
+        msfgMain.Rows = 1
+        msfgMergedInvestors.Rows = 1
+        msfgMain.Rows = 2
+        SetGrid
+        cmbBranch.ListIndex = -1
+        cmbOldRM.ListIndex = -1
+End Sub
+
+Private Sub Form_Activate()
+Dim Rs_rm As New ADODB.Recordset
+    cmbBranch.Clear
+    If GlbDataFilter = "72" Then
+        Rs_rm.open "Select branch_code,branch_name from branch_master where category_id not in('1004','1005','1006') order by branch_name", MyConn, adOpenForwardOnly
+    Else
+        Rs_rm.open "Select branch_code,branch_name from branch_master where branch_code in (" & Branches & ") and category_id not in('1004','1005','1006') order by branch_name", MyConn, adOpenForwardOnly
+    End If
+    
+    j = 0
+    While Not Rs_rm.EOF
+        cmbBranch.AddItem Rs_rm("branch_name")
+        cmbBranch.List(j, 1) = Rs_rm("branch_code")
+        j = j + 1
+        Rs_rm.MoveNext
+    Wend
+    Rs_rm.Close
+    Set Rs_rm = Nothing
+End Sub
+
+Private Sub Form_KeyUp(KeyCode As Integer, Shift As Integer)
+    If KeyCode = vbKeyF1 Then
+        KeyCode = 0
+        Picture1_Click
+    End If
+End Sub
+
+Private Sub Form_Load()
+    Me.Top = (main.Height - Me.Height) / 2 - 600
+    Me.Left = (main.width - Me.width) / 2
+    Me.Icon = LoadPicture(App.Path & "\W.ICO")
+    Drawgrid
+End Sub
+
+Private Sub Drawgrid()
+
+    msfgInvestors.TextMatrix(0, 0) = "Total Transactions"
+    msfgInvestors.TextMatrix(0, 1) = "Create Date"
+    msfgInvestors.TextMatrix(0, 2) = "Client Name"
+    msfgInvestors.TextMatrix(0, 3) = "Address1"
+    msfgInvestors.TextMatrix(0, 4) = "Address2"
+    msfgInvestors.TextMatrix(0, 5) = "City"
+    msfgInvestors.TextMatrix(0, 6) = "Branch"
+    msfgInvestors.TextMatrix(0, 7) = "Phone"
+    msfgInvestors.TextMatrix(0, 8) = "PIN"
+    msfgInvestors.TextMatrix(0, 9) = "Code"
+    msfgInvestors.TextMatrix(0, 10) = "RM"
+    msfgInvestors.TextMatrix(0, 11) = "Last Transaction"
+    msfgInvestors.TextMatrix(0, 12) = "KYC"
+    msfgInvestors.TextMatrix(0, 13) = "Approve Flag"
+    msfgInvestors.TextMatrix(0, 14) = "Mobile"
+    
+    msfgMain.TextMatrix(0, 0) = "Tot Tr."
+    msfgMain.TextMatrix(0, 1) = "Client Name"
+    msfgMain.TextMatrix(0, 2) = "Code"
+    msfgMain.TextMatrix(0, 3) = "Kyc"
+    
+    SetGrid
+        
+    msfgInvestors.RowHeight(0) = 400
+    msfgInvestors.WordWrap = True
+    
+    msfgInvestors.ColAlignment(0) = 4
+    msfgMain.ColAlignment(0) = 4
+    msfgMergedInvestors.ColAlignment(0) = 4
+
+    msfgInvestors.ColAlignment(1) = vbLeftJustify
+    msfgInvestors.ColAlignment(2) = vbLeftJustify
+    msfgInvestors.ColAlignment(3) = vbLeftJustify
+    msfgInvestors.ColAlignment(4) = vbLeftJustify
+    msfgInvestors.ColAlignment(5) = vbLeftJustify
+    msfgInvestors.ColAlignment(6) = vbLeftJustify
+    msfgInvestors.ColAlignment(7) = vbLeftJustify
+    msfgInvestors.ColAlignment(8) = vbLeftJustify
+    msfgInvestors.ColAlignment(9) = vbLeftJustify
+    msfgInvestors.ColAlignment(10) = vbLeftJustify
+    msfgInvestors.ColAlignment(11) = vbLeftJustify
+    
+    msfgInvestors.ColWidth(0) = 1000
+    msfgInvestors.ColWidth(1) = 1000
+    msfgInvestors.ColWidth(2) = 2500
+    msfgInvestors.ColWidth(3) = 2500
+    msfgInvestors.ColWidth(4) = 2500
+    msfgInvestors.ColWidth(5) = 1500
+    msfgInvestors.ColWidth(6) = 800
+    msfgInvestors.ColWidth(7) = 1200
+    msfgInvestors.ColWidth(10) = 2000
+    msfgInvestors.ColWidth(11) = 1000
+    msfgInvestors.ColWidth(14) = 1000
+    
+    msfgMain.ColWidth(0) = 800
+    msfgMain.ColWidth(1) = 2500
+    msfgMain.ColWidth(2) = 1200
+    
+    msfgMergedInvestors.ColWidth(0) = 800
+    msfgMergedInvestors.ColWidth(1) = 2500
+    msfgMergedInvestors.ColWidth(2) = 1200
+    
+    msfgInvestors.Rows = 1
+End Sub
+
+Private Sub Label9_Click()
+treeselected = "N"
+Set frmtree_search.currentForm = Nothing
+Set frmtree_search.currentForm = frmClientMerging_New
+frmtree_search.treeName = "Treeclient"
+frmtree_search.Show
+frmtree_search.cmbBranch.Text = cmbBranch.Text
+frmtree_search.cmbBranch.Enabled = False
+frmtree_search.Cmbcat.Text = "CLIENT"
+frmtree_search.Cmbcat.Enabled = False
+frmtree_search.ZOrder
+End Sub
+
+Private Sub msfgInvestors_DblClick()
+    DeleteRowMerge msfgInvestors
+End Sub
+
+Private Sub msfgInvestors_KeyDown(KeyCode As Integer, Shift As Integer)
+    If KeyCode = 46 Then
+        DeleteRowMerge msfgInvestors
+        'SetGrid
+    End If
+
+End Sub
+
+Private Sub msfgMergedInvestors_DblClick()
+    DeleteRowMerge msfgMergedInvestors
+    'SetGrid
+End Sub
+
+Private Sub msfgMergedInvestors_KeyDown(KeyCode As Integer, Shift As Integer)
+    If KeyCode = 46 Then
+        DeleteRowMerge msfgMergedInvestors
+        'SetGrid
+    End If
+
+End Sub
+
+Private Function Validate() As Boolean
+Dim RsData As New ADODB.Recordset
+Dim sCount As Integer
+Dim i As Integer
+    Validate = False
+    mCount = 0
+    sCount = 0
+    If msfgMain.TextMatrix(1, 1) <> "" Then
+        If msfgMergedInvestors.Rows >= 2 Then
+            Validate = True
+        Else
+            MsgBox "There is no Data to Merge ", vbInformation
+            Validate = False
+            Exit Function
+        End If
+    Else
+        MsgBox "There is no Data to Merge ", vbInformation
+        Validate = False
+        Exit Function
+    End If
+    'prob solve ankit 19/10/2007
+    RsData.open "select max(substr(inv_code,9,5)) cnt from investor_master where source_id=" & msfgMain.TextMatrix(1, 2), MyConn, adOpenForwardOnly
+    mCount = Val(RsData("cnt"))
+    RsData.Close
+    
+    For i = 1 To msfgMergedInvestors.Rows - 1
+    'prob solve ankit 19/10/2007
+    
+  '  rsData.open "select lpad(max(substr(inv_code,9,5)),5,0) cnt from investor_master where source_id=" & msfgMergedInvestors.TextMatrix(1, 2), myconn, adOpenForwardOnly
+        RsData.open "select max(substr(inv_code,9,5)) cnt from investor_master where source_id=" & msfgMergedInvestors.TextMatrix(1, 2), MyConn, adOpenForwardOnly
+        If Not (IsNull(RsData("cnt"))) Then sCount = sCount + Val(RsData("cnt"))
+        RsData.Close
+        If mCount + sCount > 99999 Then
+            MsgBox "Investors Exceeded 99999 Limit ", vbInformation
+            Validate = False
+            Exit For
+        End If
+    Next
+End Function
+
+Private Sub SetGrid()
+   
+    msfgMergedInvestors.TextMatrix(0, 0) = "Tot Tr."
+    msfgMergedInvestors.TextMatrix(0, 1) = "Client Name"
+    msfgMergedInvestors.TextMatrix(0, 2) = "Code"
+
+End Sub
+
+Private Sub Picture1_Click()
+treeselected = "N"
+Set frmtree_search.currentForm = Nothing
+Set frmtree_search.currentForm = frmClientMerging_New
+frmtree_search.treeName = "Treeclient"
+
+
+frmtree_search.Show
+frmtree_search.cmbBranch.Text = cmbBranch.Text
+frmtree_search.txtRM.Text = ""
+If cmbOldRM.ListIndex <> -1 Then
+    frmtree_search.txtRM.Text = cmbOldRM.List(cmbOldRM.ListIndex, 2)
+End If
+
+frmtree_search.Cmbcat.Text = "CLIENT"
+frmtree_search.Cmbcat.Enabled = False
+frmtree_search.ZOrder
+End Sub
+
+
+Private Sub Find_RM()
+Dim rsTran As New ADODB.Recordset
+Dim rsClient_CD As New ADODB.Recordset
+Dim rsEmp As New ADODB.Recordset
+Dim i As Integer
+    CLIENT_CD = ""
+    bus_rm = ""
+    main_cd = ""
+    
+    If msfgMain.TextMatrix(1, 0) <> "0" Then CLIENT_CD = msfgMain.TextMatrix(1, 2) & ","
+    For i = 1 To msfgMergedInvestors.Rows - 1
+        If msfgMergedInvestors.TextMatrix(i, 0) <> "0" Then CLIENT_CD = CLIENT_CD & msfgMergedInvestors.TextMatrix(i, 2) & ","
+    Next i
+    If CLIENT_CD <> "" Then
+        CLIENT_CD = Left(CLIENT_CD, Len(CLIENT_CD) - 1)
+    End If
+    If CLIENT_CD <> "" Then
+'        rsTran.open "select max(tr_date) tr_date,source_code from( " _
+'                        & "select max(tr_date) tr_date,to_char(source_code) source_code from transaction_sttemp where (ASA<>'C' OR ASA IS NULL) AND source_code in(" & CLIENT_CD & ") " _
+'                           & "group by source_code " _
+'                        & " Union All " _
+'                        & "select max(tr_date) tr_date,to_char(source_code) source_code from transaction_st where (ASA<>'C' OR ASA IS NULL) and (flag<>'NEWTRAN' or flag is null) AND source_code in(" & CLIENT_CD & ") " _
+'                           & "group by source_code " _
+'                        & " Union All " _
+'                        & "select max(SYS_AR_DT) tr_date,LPAD(CLIENT_CD,8) source_code from BAJAJ_AR_HEAD where (STATUS_CD<>'Y' OR STATUS_CD IS NULL) AND LPAD(CLIENT_CD,8) in(" & CLIENT_CD & ") " _
+'                           & "group by LPAD(CLIENT_CD,8) " _
+'                        & ") " _
+'                    & "group by source_code " _
+'                    & "order by tr_date desc ", MyConn, adOpenForwardOnly
+
+'        If Not (rsTran.EOF) Then rsTran.MoveFirst
+        branch_cd = "10010226"
+'        While Not (rsTran.EOF) And branch_cd = "10010226"
+'            rsClient_CD.open "Select rm_code,sourceid from client_master where client_code=" & rsTran("source_code"), MyConn, adOpenForwardOnly
+'            branch_cd = rsClient_CD("sourceid")
+'            Rm_cd = rsClient_CD("rm_code")
+'            rsClient_CD.Close
+'            rsTran.MoveNext
+'        Wend
+
+
+    End If
+    If branch_cd = "" Or Rm_cd = "" Or branch_cd = "10010226" Then
+        rsClient_CD.open "Select sourceid,rm_code from client_master where client_code=" & msfgMain.TextMatrix(1, 2), MyConn, adOpenForwardOnly
+        branch_cd = rsClient_CD("sourceid")
+        Rm_cd = rsClient_CD("rm_code")
+        rsClient_CD.Close
+    End If
+    
+    rsEmp.open "select payroll_id from employee_master where rm_code=" & Rm_cd, MyConn, adOpenForwardOnly
+    If Not (rsEmp.EOF) Then
+        bus_rm = rsEmp("payroll_id")
+    End If
+        
+    rsEmp.Close
+    
+    rsEmp.open "select NVL(max(main_code),0) main_code from client_test where client_codekyc like '" & msfgMain.TextMatrix(1, 2) & "%'", MyConn, adOpenForwardOnly
+    If Not (rsEmp.EOF) Then
+        main_cd = rsEmp("main_code")
+    End If
+        
+    rsEmp.Close
+    
+    
+    If rsTran.State = 1 Then rsTran.Close
+    Set rsTran = Nothing
+    Set rsClient_CD = Nothing
+    Set rsEmp = Nothing
+    
+End Sub
+
+

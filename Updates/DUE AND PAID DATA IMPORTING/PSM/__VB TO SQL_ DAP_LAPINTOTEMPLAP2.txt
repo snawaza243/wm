@@ -1,0 +1,34 @@
+SELECT 
+    a.policy_no, 
+    a.company_cd, 
+    MAX(a.due_date) AS due_date,
+    MAX(a.mon_no) AS mon_no,
+    MAX(a.year_no) AS year_no,
+    (
+        SELECT MAX(bddl_temp.status_cd)
+        FROM bajaj_due_data bddl_temp
+        INNER JOIN psm_dap_temp_due1 bddl_tempex1
+            ON UPPER(TRIM(bddl_temp.policy_no)) = UPPER(TRIM(bddl_tempex1.policy_no))
+            AND UPPER(TRIM(bddl_temp.company_cd)) = UPPER(TRIM(bddl_tempex1.company_cd))
+        WHERE 
+            bddl_temp.importdatatype = 'DUEDATA'
+            AND bddl_temp.due_date = (
+                SELECT MAX(bddl_temp2.due_date)
+                FROM bajaj_due_data bddl_temp2
+                INNER JOIN psm_dap_temp_due1 bddl_tempex2
+                    ON UPPER(TRIM(bddl_temp2.policy_no)) = UPPER(TRIM(bddl_tempex2.policy_no))
+                    AND UPPER(TRIM(bddl_temp2.company_cd)) = UPPER(TRIM(bddl_tempex2.company_cd))
+                WHERE 
+                    bddl_temp2.importdatatype = 'DUEDATA'
+                    AND bddl_temp2.due_date IS NOT NULL
+            )
+    ) AS status_cd
+FROM 
+    bajaj_due_data a
+    INNER JOIN psm_dap_temp_due1 bddl_tempex0
+        ON UPPER(TRIM(a.policy_no)) = UPPER(TRIM(bddl_tempex0.policy_no))
+        AND UPPER(TRIM(a.company_cd)) = UPPER(TRIM(bddl_tempex0.company_cd))
+WHERE 
+    a.importdatatype = 'DUEDATA'
+GROUP BY 
+    a.policy_no, a.company_cd;
