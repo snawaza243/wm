@@ -1,1 +1,6 @@
 2025-07-16 - Wednesday
+
+git add WM/Masters/NpsTransactionPunching.aspx
+git add WM/Masters/NpsTransactionPunching.aspx.cs
+git add WM/Tree/FindTransaction.aspx
+git add WM/Tree/FindTransaction.aspx.cs

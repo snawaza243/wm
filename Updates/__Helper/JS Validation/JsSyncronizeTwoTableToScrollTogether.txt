@@ -1,0 +1,39 @@
+    <script type="text/javascript">
+        function syncScroll() {
+            var grid1 = document.getElementById('gridContainer1');
+            var grid2 = document.getElementById('gridContainer2');
+
+            // Check if both grids exist
+            if (!grid1 || !grid2) return;
+
+            // Synchronize horizontal scrolling (scrollLeft)
+            grid1.addEventListener('scroll', function () {
+                grid2.scrollLeft = grid1.scrollLeft;
+            });
+
+            grid2.addEventListener('scroll', function () {
+                grid1.scrollLeft = grid2.scrollLeft;
+            });
+
+            // Synchronize vertical scrolling (scrollTop)
+            //grid1.addEventListener('scroll', function () {
+            //    grid2.scrollTop = grid1.scrollTop;
+            //});
+
+            //grid2.addEventListener('scroll', function () {
+            //    grid1.scrollTop = grid2.scrollTop;
+            //});
+        }
+
+        // Ensure the scroll synchronization is applied on initial page load and after postback
+        document.addEventListener('DOMContentLoaded', function () {
+            syncScroll();  // Sync scroll on initial page load
+
+            // Rebind the scroll synchronization after partial postbacks
+            if (typeof Sys !== "undefined" && Sys.WebForms && Sys.WebForms.PageRequestManager) {
+                Sys.WebForms.PageRequestManager.getInstance().add_endRequest(function () {
+                    syncScroll();  // Reapply scroll synchronization after postback
+                });
+            }
+        });
+    </script>

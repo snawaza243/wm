@@ -1,0 +1,58 @@
+        <button type="button" class="btn btn-primary"
+     onclick="exportGridToExcel('<%= GridRta.ClientID %>', 'RTA_Data_Exported.xls')">
+     Export RTA
+ </button>   
+
+  <script type="text/javascript">
+                function exportGridToExcel(gridId, filename = 'exported_data.xls') {
+                    const table = document.getElementById(gridId);
+                    if (!table) {
+                        alert("Grid not found!");
+                        return;
+                    }
+
+                    // Clone table to avoid modifying the original
+                    const clonedTable = table.cloneNode(true);
+
+                    // Remove unwanted elements (e.g., buttons, checkboxes)
+                    const inputs = clonedTable.querySelectorAll("input, button, a");
+                    inputs.forEach(el => el.remove());
+
+                    // Build data URI
+                    const html = `
+<html xmlns:o='urn:schemas-microsoft-com:office:office' 
+      xmlns:x='urn:schemas-microsoft-com:office:excel' 
+      xmlns='http://www.w3.org/TR/REC-html40'>
+<head>
+    <!--[if gte mso 9]>
+    <xml>
+        <x:ExcelWorkbook>
+            <x:ExcelWorksheets>
+                <x:ExcelWorksheet>
+                    <x:Name>Sheet1</x:Name>
+                    <x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions>
+                </x:ExcelWorksheet>
+            </x:ExcelWorksheets>
+        </x:ExcelWorkbook>
+    </xml>
+    <![endif]-->
+    <meta charset="utf-8" />
+</head>
+<body>
+    ${clonedTable.outerHTML}
+</body>
+</html>`;
+
+                    const blob = new Blob([html], {
+                        type: "application/vnd.ms-excel"
+                    });
+
+                    // Trigger download
+                    const a = document.createElement("a");
+                    a.href = URL.createObjectURL(blob);
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                }
+            </script>

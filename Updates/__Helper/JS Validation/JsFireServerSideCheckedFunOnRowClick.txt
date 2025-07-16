@@ -1,0 +1,11 @@
+
+    <%-- ONCHECK FUCTINO for do posback --%>
+    <script type="text/javascript">
+        function onRowDoubleClick2(row) {
+            var checkbox = row.querySelector('input[type="checkbox"]');
+            if (checkbox) {
+                checkbox.checked = !checkbox.checked;
+                __doPostBack(checkbox.name, '');
+            }
+        }
+    </script>

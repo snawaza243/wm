@@ -11,14 +11,9 @@ namespace WM.Masters
 {
     public partial class sip_master_reconciliation : System.Web.UI.Page
     {
-        // 
-
         PsmController pc = new PsmController();
         protected void Page_Load(object sender, EventArgs e)
         {
-            Session["LoginId"] = "112650";
-            Session["roleId"] = "29";
-
             if (!IsPostBack)
             {
 
@@ -29,8 +24,8 @@ namespace WM.Masters
                 fillRMList();
                 FillAMCList();
                 // 
-
-                dateFrom.Text = "10/02/2025";// DateTime.Now.ToString("dd/MM/yyyy");
+                 
+                dateFrom.Text = DateTime.Now.ToString("dd/MM/yyyy");
                 dateTo.Text = DateTime.Now.ToString("dd/MM/yyyy");
 
             }
@@ -593,7 +588,7 @@ namespace WM.Masters
                 {
                     c.Checked = true;  // Select "C"
                 }
-                 else if (registrar == "K" && cobfl == "0")
+                else if (registrar == "K" && cobfl == "0")
                 {
                     k.Checked = true;  // Select "K"
                 }
@@ -638,7 +633,7 @@ namespace WM.Masters
                 chequeNo.Text = chqno;
                 remark.Text = remarkValue;
                 RadioButton2.Checked = true; // Set the "Unreconciled" radio button as checked
-                row.Focus();
+
                 UpdatePanelFirst.Update();
 
                 return;
@@ -727,20 +722,17 @@ namespace WM.Masters
         {
             if (e.Row.RowType == DataControlRowType.DataRow)
             {
-                e.Row.Attributes["onclick"] = "onGridRowClick(this);";
+                // Add double click event to each row
+                e.Row.Attributes["ondblclick"] = "onRowDoubleClick(this)";
                 e.Row.Style["cursor"] = "pointer";
 
-                // Add double click event to each row
-                //e.Row.Attributes["ondblclick"] = "onRowDoubleClick(this)";
-                //e.Row.Style["cursor"] = "pointer";
-
                 // Find the checkbox control
-                //CheckBox chkSelect = (CheckBox)e.Row.FindControl("chkSelect");
-                //if (chkSelect != null)
-                //{
-                //    // Add client-side click handler to prevent event bubbling
-                //    chkSelect.Attributes["onclick"] = "event.stopPropagation();";
-                //}
+                CheckBox chkSelect = (CheckBox)e.Row.FindControl("chkSelect");
+                if (chkSelect != null)
+                {
+                    // Add client-side click handler to prevent event bubbling
+                    chkSelect.Attributes["onclick"] = "event.stopPropagation();";
+                }
             }
         }
 
@@ -765,112 +757,46 @@ namespace WM.Masters
 
         protected void btnSearchrta_Click(object sender, EventArgs e)
         {
-            try
+            string reconciliationStatus = RadioButton1.Checked ? "Y" : (RadioButton2.Checked ? "N" : null);
+
+            SipMasterModel searchModel = new SipMasterModel
             {
-                //pc.ShowAlert(this, chequeNoSelect.SelectedValue + ", NUMBER: " + chequeNo.Text);
-                //return;
+                Branch = branchSelectrta.SelectedValue,
+                AMC = amcSelectrta.SelectedValue,
+                ReconciliationStatus = reconciliationStatus,
 
-                string reconciliationStatus = RadioButton1.Checked ? "Y" : (RadioButton2.Checked ? "N" : null);
+                DateFrom = string.IsNullOrEmpty(dateFromRta.Text) ? (System.DateTime?)null : System.DateTime.ParseExact(dateFromRta.Text, "dd/MM/yyyy", null),
+                DateTo = string.IsNullOrEmpty(dateToRta.Text) ? (System.DateTime?)null : System.DateTime.ParseExact(dateToRta.Text, "dd/MM/yyyy", null),
+                TranType = RadioButtonList1.SelectedValue,
 
-                #region
-                // Read hidden field values from the page
-                string hdfSearchedCheque_value = hdfSearchedCheque.Value;
-                string hdfSearchedFilio_value = hdfSearchedFilio.Value;
-                string hdfSearchedApp_value = hdfSearchedApp.Value;
-                string hdfSearchedPan_value = hdfSearchedPan.Value;
-                string hdfSearchedBroker_value = hdfSearchedBroker.Value;
+                ChequeNo = chequeNoSelect.SelectedValue,
+                InvestorName = txtInvestorName.Text,
+                Amount = string.IsNullOrEmpty(txtAmount.Text) ? (decimal?)null : decimal.Parse(txtAmount.Text),
+                docNo = chequeNo.Text,
+            };
 
-                // Get the current dropdown selection value
-                string currentCheqDdl = chequeNoSelect.SelectedValue;
-
-                // Variable to hold the current cheque number or related value
-                string currentCheqNo = string.Empty;
-
-                // Decide what value to set in currentCheqNo based on dropdown selection
-                switch (currentCheqDdl)
-                {
-                    case "001": // CHEQUE_NO
-                        currentCheqNo = hdfSearchedCheque_value;
-                        break;
-                    case "002": // FOLIO_NO
-                        currentCheqNo = hdfSearchedFilio_value;
-                        break;
-                    case "003": // APP_NO
-                        currentCheqNo = hdfSearchedApp_value;
-                        break;
-                    case "004": // PANNO
-                        currentCheqNo = hdfSearchedPan_value;
-                        break;
-                    case "005": // BROKER_ID
-                        currentCheqNo = hdfSearchedBroker_value;
-                        break;
-                    default:
-                        currentCheqNo = string.Empty;
-                        break;
-                }
-
-                // Now you can use currentCheqNo for further processing or display
-
-
-                #endregion
-
-                SipMasterModel searchModel = new SipMasterModel
-                {
-                    Branch = branchSelectrta.SelectedValue,
-                    AMC = amcSelectrta.SelectedValue,
-                    ReconciliationStatus = reconciliationStatus,
-
-                    DateFrom = string.IsNullOrEmpty(dateFromRta.Text) ? (System.DateTime?)null : System.DateTime.ParseExact(dateFromRta.Text, "dd/MM/yyyy", null),
-                    DateTo = string.IsNullOrEmpty(dateToRta.Text) ? (System.DateTime?)null : System.DateTime.ParseExact(dateToRta.Text, "dd/MM/yyyy", null),
-                    TranType = RadioButtonList1.SelectedValue,
-
-                    ChequeNo = chequeNoSelect.SelectedValue,
-                    InvestorName = txtInvestorName.Text,
-                    Amount = string.IsNullOrEmpty(txtAmount.Text) ? (decimal?)null : decimal.Parse(txtAmount.Text),
-                    docNo = chequeNo.Text,
-                };
-
-                // Validate that at least one search criterion is provided
-                if (string.IsNullOrWhiteSpace(searchModel.Branch) &&
-                    string.IsNullOrWhiteSpace(searchModel.AMC) &&
-                    searchModel.DateFrom == null &&
-                    searchModel.DateTo == null &&
-                    string.IsNullOrWhiteSpace(searchModel.ChequeNo) &&
-                    string.IsNullOrWhiteSpace(searchModel.InvestorName) &&
-                    searchModel.Amount == null &&
-                    string.IsNullOrWhiteSpace(searchModel.docNo))
-                {
-                    // Display an alert if no criteria are provided
-                    ScriptManager.RegisterStartupScript(this, GetType(), "alertMessage",
-                        "alert('Please provide at least one search criterion.');", true);
-                    return;
-                }
-                
-                DataTable transactions = new WM.Controllers.sip_master_reconciliationController().GetTransactionsRta(searchModel);
-                // bind the dt with erro handling
-                if (transactions == null || transactions.Rows.Count == 0)
-                {
-                    // Display an alert if no transactions are found
-                    ScriptManager.RegisterStartupScript(this, GetType(), "alertMessage",
-                        "alert('No transactions found for the given criteria.');", true);
-                    return;
-                }
-
-                if (transactions.Rows.Count == 0)
-                {
-                    pc.ShowAlert(this, "No transactions found for the given criteria.");
-                    return;
-                }
-                GridRta.Visible = true;
-                GridRta.DataSource = transactions;
-                GridRta.DataBind();
-                GridRta.Focus();
-
-            }
-            catch (Exception ex)
+            // Validate that at least one search criterion is provided
+            if (string.IsNullOrWhiteSpace(searchModel.Branch) &&
+                string.IsNullOrWhiteSpace(searchModel.AMC) &&
+                searchModel.DateFrom == null &&
+                searchModel.DateTo == null &&
+                string.IsNullOrWhiteSpace(searchModel.ChequeNo) &&
+                string.IsNullOrWhiteSpace(searchModel.InvestorName) &&
+                searchModel.Amount == null &&
+                string.IsNullOrWhiteSpace(searchModel.docNo))
             {
-                pc.ShowAlert(this, ex.Message);
+                // Display an alert if no criteria are provided
+                ScriptManager.RegisterStartupScript(this, GetType(), "alertMessage",
+                    "alert('Please provide at least one search criterion.');", true);
+                return;
             }
+
+            DataTable transactions = new WM.Controllers.sip_master_reconciliationController().GetTransactionsRta(searchModel);
+
+            GridRta.Visible = true;
+            GridRta.DataSource = transactions;
+            GridRta.DataBind();
+            GridRta.Focus();
         }
 
 
