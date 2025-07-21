@@ -27,10 +27,7 @@ BEGIN
                     tmf.APP_NO, 
                     tmf.APP_DATE, 
                     tmf.CHEQUE_NO, 
-                    tmf.CHEQUE_DATE, ';
-
-                    
-      V_QUERY := V_QUERY || 'SELECT                  
+                    tmf.CHEQUE_DATE, 
                     tmf.AMOUNT, 
                     tmf.BANK_NAME, 
                     tmf.FOLIO_NO, 
@@ -142,8 +139,8 @@ LIVE: transaction_st@MF.BAJAJCAPITAL tmf
                                    AND TRIM(UPPER(tmf.REG_TRANTYPE)) NOT LIKE ''%STPIR%''
                                    AND TRIM(UPPER(tmf.REG_TRANTYPE)) NOT LIKE ''%REDEMPTION%''
                                    AND TRIM(UPPER(tmf.REG_TRANTYPE)) NOT LIKE ''%PRE-REJECTION%''
-                                  
-                                   
+
+
                                        ';
         ELSIF UPPER(P_TRAN_TYPE) = 'SIP' THEN
             V_QUERY := V_QUERY || ' AND ((UPPER(tmf.REG_TRANTYPE) LIKE ''%SYS%'' 
@@ -166,22 +163,22 @@ LIVE: transaction_st@MF.BAJAJCAPITAL tmf
     --SELECT V_QUERY FROM DUAL ;
      OPEN P_CURSOR FOR V_QUERY ;
 
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 END SP_SEARCH_TRANSACTIONS_PRA;
 /

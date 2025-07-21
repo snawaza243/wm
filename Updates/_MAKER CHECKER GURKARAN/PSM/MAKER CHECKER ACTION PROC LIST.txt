@@ -1,0 +1,11 @@
+-- Maker Checked
+
+/*
+ 
+    
+GetInvestorMC           --> PSM_MC_TR
+PRC_GETRTADETAILS       --> PSM_MC_RTA_BY_TR
+UNRECONCILERECORDMC_NEW --> PSM_MC_UNRECO
+PRC_AUDITAR             --> PSM_MC_AUDIT_TR
+
+*/
