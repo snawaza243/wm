@@ -1,0 +1,515 @@
+CREATE OR REPLACE PROCEDURE WEALTHMAKER.PSM_DAP_BULK1(
+    P_FILENAME      VARCHAR2,
+    P_SHEETNAME     VARCHAR2,
+    P_MONTH         VARCHAR2,
+    P_YEAR          VARCHAR2,
+    P_DDLIMPORTTYPE VARCHAR2, 
+    P_CHKTYPE       VARCHAR2,
+    P_DATACOUNT     VARCHAR2,
+    P_LOG_ID        VARCHAR2,
+    P_ROLE_ID       VARCHAR2,
+    P_CURSOR        OUT SYS_REFCURSOR
+) AS
+    
+    -- At the beginning of your procedure where you declare variables
+    V_MYIMPORT          VARCHAR2(1);
+    V_MYIMPORTDATATYPE  VARCHAR2(20);  
+
+    v_total_records     NUMBER;
+    v_inserted_records  NUMBER;
+    v_updated_records   NUMBER;
+
+
+
+    V_CURDATE           VARCHAR2(20) := TO_CHAR(SYSDATE, 'DD/MM/YYYY');
+    V_SERVERDATE        VARCHAR2(20) := TO_CHAR(SYSDATE, 'DD-MON-YYYY');
+
+
+    v_rec_count         NUMBER := 0;
+    v_rec_del           NUMBER := 0;
+
+
+
+BEGIN
+
+
+
+BEGIN -- PREPARE V_MYIMPORT, V_MYIMPORTDATATYPE BY P_DDLIMPORTTYPE
+    IF P_DDLIMPORTTYPE IS NOT NULL THEN
+        IF P_DDLIMPORTTYPE = 'DUE' THEN
+            V_MYIMPORT := 'D';
+            V_MYIMPORTDATATYPE := 'DUEDATA';
+        ELSIF P_DDLIMPORTTYPE = 'LAPSED' THEN
+            V_MYIMPORT := 'L';
+            V_MYIMPORTDATATYPE := 'LAPSEDDATA';
+        ELSIF P_DDLIMPORTTYPE = 'PAID' THEN
+            V_MYIMPORT := 'D';
+            V_MYIMPORTDATATYPE := 'DUEDATA';
+        ELSIF P_DDLIMPORTTYPE = 'REINS' THEN
+            V_MYIMPORT := 'L';
+            V_MYIMPORTDATATYPE := 'LAPSEDDATA';
+        END IF;
+    END IF;
+END;
+
+
+
+/*
+open p_cursor for 
+select 
+    P_FILENAME || ' - ' ||
+    P_SHEETNAME || ' - ' ||
+    P_MONTH || ' - ' ||
+    P_YEAR || ' - ' ||
+    P_DDLIMPORTTYPE || ' - ' || 
+    P_CHKTYPE || ' - ' ||
+    P_DATACOUNT || ' - ' ||
+    P_LOG_ID || ' - ' ||
+    P_ROLE_ID || ' - '
+    from dual;
+    return;
+
+*/
+
+
+    IF P_CHKTYPE = 'DUE' THEN
+        -- STEP 0: BULK INSERTION IN PSM_DAP_TEMP_DUE1 FROM EXCEL DATA DONE FROM CLIENT SIDE
+
+        -- STEP 1: CLEAN THE BULK IMPORTED DATA IN TEMP TABLE
+        CLEAN_PSM_DUE1;
+
+        -- COUNT TOTAL IMPORTED EXCEL RECORDS OF TMEP DUE
+        SELECT COUNT(*) INTO v_total_records 
+        FROM PSM_DAP_TEMP_DUE1;
+
+
+        -- Step 2: Bulk Insert new data in BAJAJ_DUE_DATA, avoiding duplicates from psm_dap_temp_due1
+        INSERT /*+ APPEND PARALLEL(4) */ INTO BAJAJ_DUE_DATA (
+            POLICY_NO, COMPANY_CD, STATUS_CD, LOCATION, CL_NAME, PREM_AMT, 
+            PAY_MODE, SA, DUE_DATE, CL_ADD1, CL_ADD2, CL_ADD3, CL_ADD4, 
+            CL_ADD5, CL_CITY, CL_PIN, CL_PHONE1, CL_PHONE2, CL_MOBILE, 
+            PLAN_NAME, DOC, PREM_FREQ, PLY_TERM, PPT, NET_AMOUNT, 
+            MON_NO, YEAR_NO, USERID, IMPORT_DT, IMPORTDATATYPE, NEWINSERT
+        )
+        SELECT /*+ PARALLEL(4) */
+            D.POLICY_NO, D.COMPANY_CD, D.STATUS_CD, D.LOCATION, D.CL_NAME,  CAST(D.PREM_AMT AS NUMBER(14,2)), 
+            D.PAY_MODE, CAST(D.SA AS NUMBER(14,2)), TO_DATE(D.DUE_DATE, 'DD-MM-YYYY'), 
+            D.CL_ADD1, D.CL_ADD2, D.CL_ADD3, D.CL_ADD4, D.CL_ADD5, D.CL_CITY, D.CL_PIN, 
+            D.CL_PHONE1, D.CL_PHONE2, D.CL_MOBILE, 
+            D.PLAN_NAME,  TO_DATE(D.DOC, 'DD-MM-YYYY') , D.PREM_FREQ, D.PLY_TERM, D.PPT, CAST(D.NET_AMOUNT AS NUMBER(14,2))
+            , to_number(P_MONTH), to_number(P_YEAR), P_LOG_ID, SYSDATE, V_MYIMPORTDATATYPE, 'BAL'
+        FROM PSM_DAP_TEMP_DUE1 D
+        WHERE NOT EXISTS (
+            SELECT /*+ HASH_SJ */ 1 
+            FROM BAJAJ_DUE_DATA B
+            WHERE UPPER(TRIM(B.POLICY_NO)) = UPPER(TRIM(D.POLICY_NO))
+              AND UPPER(TRIM(B.COMPANY_CD)) = UPPER(TRIM(D.COMPANY_CD))
+              AND B.MON_NO = to_number(P_MONTH)
+              AND B.YEAR_NO = to_number(P_YEAR)
+              AND B.IMPORTDATATYPE = V_MYIMPORTDATATYPE
+        );
+
+        v_inserted_records := SQL%ROWCOUNT;
+
+        PSM_UPDATE_DUE_PAID_PREM_FRQ(P_LOG_ID, V_MYIMPORTDATATYPE);
+        
+        -- Update POLICY_DETAILS_MASTER for DUEDATA imports
+        IF V_MYIMPORTDATATYPE = 'DUEDATA' THEN -- Update payment mode and basic info
+            MERGE INTO policy_details_master p
+            USING (
+                SELECT 
+                    UPPER(TRIM(policy_no)) as policy_no,
+                    UPPER(TRIM(company_cd)) as company_cd,
+                    MAX(pay_mode) as pay_mode,
+                    MAX(prem_freq) as prem_freq,
+                    MAX(doc) as doc,
+                    MAX(ply_term) as ply_term,
+                    MAX(cl_mobile) as mobile,
+                    MAX(sa) as sa,
+                    MAX(prem_amt) as prem_amt
+                FROM psm_dap_temp_due1
+                GROUP BY UPPER(TRIM(policy_no)), UPPER(TRIM(company_cd))
+            ) d
+            ON (
+                UPPER(TRIM(p.policy_no)) = d.policy_no
+                AND UPPER(TRIM(p.company_cd)) = d.company_cd
+            )
+            WHEN MATCHED THEN UPDATE SET
+                p.file_name = 'DUE_AND_PAID' || V_MYIMPORTDATATYPE || '.txt',
+                p.payment_mode = d.pay_mode,
+                p.update_prog = V_MYIMPORTDATATYPE,
+                p.update_user = P_LOG_ID,
+                p.update_date = TRUNC(SYSDATE),
+                p.prem_freq = NVL(d.prem_freq, p.prem_freq),
+                p.doc = NVL(TO_DATE(D.DOC, 'DD-MM-YYYY'), p.doc),
+                p.ply_term = NVL(d.ply_term, p.ply_term),
+                p.mobile = NVL(d.mobile, p.mobile),
+                p.sa = NVL(CAST(D.SA AS NUMBER(14,2)) , p.sa),
+                p.prem_amt = NVL(CAST(D.PREM_AMT AS NUMBER(14,2)), p.prem_amt);
+
+             --v_updated_records := SQL%ROWCOUNT;
+        END IF;
+
+        IF V_MYIMPORTDATATYPE = 'LAPSEDDATA' THEN
+                    -- Step 2: Bulk insert IN TEMP TABLE TO LAPSED DATA FROM PSM_DAP_TEMP_DUE1
+                    DELETE FROM psm_dap_temp_due1_lap;
+                    
+                    BEGIN -- STEP 3: BULK INSERT ALL LAPSED DATA IN psm_dap_temp_due1_lap FROM PSM_DAP_TEMP_DUE1 
+                        INSERT INTO psm_dap_temp_due1_lap (policy_no, company_cd, due_date, mon_no, year_no, status_cd)
+                        SELECT 
+                            a.policy_no, 
+                            a.company_cd, 
+                            MAX(a.due_date) AS due_date,
+                            MAX(a.mon_no) AS mon_no,
+                            MAX(a.year_no) AS year_no,
+                            (
+                                SELECT MAX(bddl_temp.status_cd)
+                                FROM bajaj_due_data bddl_temp
+                                INNER JOIN psm_dap_temp_due1 bddl_tempex1
+                                    ON UPPER(TRIM(bddl_temp.policy_no)) = UPPER(TRIM(bddl_tempex1.policy_no))
+                                    AND UPPER(TRIM(bddl_temp.company_cd)) = UPPER(TRIM(bddl_tempex1.company_cd))
+                                WHERE 
+                                    bddl_temp.importdatatype = 'DUEDATA'
+                                    AND bddl_temp.due_date = (
+                                        SELECT MAX(bddl_temp2.due_date)
+                                        FROM bajaj_due_data bddl_temp2
+                                        INNER JOIN psm_dap_temp_due1 bddl_tempex2
+                                            ON UPPER(TRIM(bddl_temp2.policy_no)) = UPPER(TRIM(bddl_tempex2.policy_no))
+                                            AND UPPER(TRIM(bddl_temp2.company_cd)) = UPPER(TRIM(bddl_tempex2.company_cd))
+                                        WHERE 
+                                            bddl_temp2.importdatatype = 'DUEDATA'
+                                            AND bddl_temp2.due_date IS NOT NULL
+                                    )
+                            ) AS status_cd
+                        FROM 
+                            bajaj_due_data a
+                            INNER JOIN psm_dap_temp_due1 bddl_tempex0
+                                ON UPPER(TRIM(a.policy_no)) = UPPER(TRIM(bddl_tempex0.policy_no))
+                                AND UPPER(TRIM(a.company_cd)) = UPPER(TRIM(bddl_tempex0.company_cd))
+                        WHERE 
+                            a.importdatatype = 'DUEDATA'
+                        GROUP BY 
+                            a.policy_no, a.company_cd;
+                        --v_inserted_records := SQL%ROWCOUNT;
+                        COMMIT;
+                    END;
+
+                    BEGIN  -- BULK UPDATE BAJAJ_DUE_DATA FROM psm_dap_temp_due1_lap
+                        UPDATE /*+ PARALLEL(4) */ bajaj_due_data b
+                        SET 
+                            b.status_cd = 'LAPSED',
+                            b.last_update_dt = TRUNC(SYSDATE),
+                            b.last_update = P_LOG_ID
+                        WHERE 
+                            b.importdatatype = 'DUEDATA'
+                            AND EXISTS (
+                                SELECT 1 
+                                FROM psm_dap_temp_due1_lap d
+                                WHERE 
+                                    d.due_date <= TRUNC(SYSDATE)
+                                    AND UPPER(TRIM(b.policy_no)) = UPPER(TRIM(d.policy_no))
+                                    AND UPPER(TRIM(b.company_cd)) = UPPER(TRIM(d.company_cd))
+                                    AND b.due_date = d.due_date
+                            );
+                    
+                        COMMIT;
+                    END;
+
+                    BEGIN -- UPDATE POLICY_DETAILS_MASTER FROM psm_dap_temp_due1_lap
+                        UPDATE /*+ PARALLEL(4) */ policy_details_master p
+                        SET 
+                            p.last_status = 'L',
+                            p.update_prog = V_MYIMPORTDATATYPE,
+                            p.update_user = P_LOG_ID,
+                            p.update_date = TRUNC(SYSDATE)
+                        WHERE EXISTS (
+                            SELECT 1 
+                            FROM psm_dap_temp_due1_lap d
+                            WHERE 
+                                UPPER(TRIM(p.policy_no)) = UPPER(TRIM(d.policy_no)) AND
+                                UPPER(TRIM(p.company_cd)) = UPPER(TRIM(d.company_cd))
+                        );
+                    
+                        COMMIT;
+                    END;
+
+                    BEGIN -- Call update_bajajar_status: UPDATE BAJAJ_AR_HEAD status, INSERT IN BAJAJ_AR_DETAILS
+                        UPDATE BAJAJ_AR_HEAD h
+                        SET status_cd = 'L'
+                        WHERE EXISTS (  SELECT 1 FROM psm_dap_temp_due1_lap d WHERE h.POLICY_NO = d.policy_no 
+                                        AND h.COMPANY_CD = d.company_cd  
+                                        AND TO_CHAR(h.SYS_AR_DT,'MON-YYYY') = TO_CHAR(P_MONTH|| '-' ||P_YEAR) );
+                        
+                        -- Bulk insert into BAJAJ_AR_DETAILS for updated records
+                        INSERT INTO BAJAJ_AR_DETAILS (SYS_AR_NO, STATUS_DT, STATUS_CD, REMARKS, SYS_AR_DT, STATUS_UPDATE_ON)
+                            SELECT 
+                                h.SYS_AR_NO,
+                                LAST_DAY(h.SYS_AR_DT),
+                                'L',
+                                'LAPSED DATA ' || TO_CHAR(SYSDATE,'DD-MON-YYYY HH24:MI:SS'),
+                                h.SYS_AR_DT,
+                                SYSDATE
+                            FROM 
+                                BAJAJ_AR_HEAD h
+                            JOIN 
+                                psm_dap_temp_due1_lap d ON h.POLICY_NO = d.policy_no AND h.COMPANY_CD = d.company_cd
+                            WHERE 
+                                TO_CHAR(h.SYS_AR_DT,'MON-YYYY') = TO_CHAR(P_MONTH|| '-' || P_YEAR)
+                                AND h.status_cd = 'L'
+                                AND NOT EXISTS (
+                                    SELECT 1 
+                                    FROM BAJAJ_AR_DETAILS d2
+                                    WHERE d2.SYS_AR_NO = h.SYS_AR_NO
+                                    AND d2.STATUS_DT = LAST_DAY(h.SYS_AR_DT)
+                                );
+                        COMMIT;                        
+                    END;
+                END IF; -- CLOSE LAPSED IN DUE
+            
+        v_updated_records :=  v_total_records - v_inserted_records;
+
+        OPEN P_CURSOR FOR 
+        SELECT 'Operation Done successfully. ' ||
+               'Imported: ' || NVL(v_inserted_records, 0) || 
+               ', Duplicate: ' || NVL(v_updated_records, 0) || 
+               ', Total: ' || NVL(v_total_records, 0) as MESSAGE
+        FROM DUAL;
+        RETURN;
+
+    ELSIF P_CHKTYPE = 'PAID' THEN
+            ---open p_cursor for select 'PAID IMPORTING TRIGGERED' FROM DUAL; RETURN;
+
+            CLEAN_PSM_PAID1;
+
+            SELECT COUNT(*) INTO v_total_records 
+            FROM psm_dap_temp_paid1;
+
+            -- First insert any new records that don't exist in BAJAJ_DUE_DATA
+            INSERT /*+ APPEND PARALLEL(4) */ INTO BAJAJ_DUE_DATA (
+                POLICY_NO, COMPANY_CD, PREM_AMT, PAID_DATE, STATUS_CD, NET_AMOUNT, 
+                DUE_DATE, NEXT_DUE_DATE, PREM_FREQ, PAY_MODE, DOC, PLAN_NAME,
+                MON_NO, YEAR_NO, USERID, IMPORT_DT, IMPORTDATATYPE, NEWINSERT, FORCE_FLAG            
+            )
+            SELECT /*+ PARALLEL(4) */
+                TP.policy_no, TP.company_cd, TP.prem_amt, TO_DATE(TP.paid_date, 'DD-MM-YYYY'), TP.status_cd, TP.net_amount, 
+                TO_DATE(TP.due_date, 'DD-MM-YYYY'), TO_DATE(TP.next_due_date, 'DD-MM-YYYY'), TP.prem_freq, TP.pay_mode, TO_DATE(TP.doc, 'DD-MM-YYYY'), TP.plan_name,
+                TO_NUMBER(P_MONTH), TO_NUMBER(P_YEAR), P_LOG_ID, SYSDATE, V_MYIMPORTDATATYPE, NULL, 'FORCE FULL'
+            FROM psm_dap_temp_paid1 TP
+            WHERE NOT EXISTS (
+                SELECT 1 
+                FROM BAJAJ_DUE_DATA BDD
+                WHERE UPPER(TRIM(BDD.POLICY_NO)) = UPPER(TRIM(TP.POLICY_NO))
+                  AND UPPER(TRIM(BDD.COMPANY_CD)) = UPPER(TRIM(TP.COMPANY_CD))
+                  AND BDD.MON_NO = TO_NUMBER(P_MONTH)
+                  AND BDD.YEAR_NO = TO_NUMBER(P_YEAR)
+                  AND BDD.IMPORTDATATYPE = V_MYIMPORTDATATYPE
+            );
+
+            --v_inserted_records := SQL%ROWCOUNT;
+
+            -- Update POLICY_DETAILS_MASTER for policies with status changing from L to PAID
+            UPDATE POLICY_DETAILS_MASTER PDM
+            SET LAST_STATUS = 'R',
+                UPDATE_PROG = V_MYIMPORTDATATYPE,
+                UPDATE_USER = P_LOG_ID,
+                UPDATE_DATE = SYSDATE
+            WHERE EXISTS (
+                SELECT 1 
+                FROM psm_dap_temp_paid1 TP
+                WHERE UPPER(TRIM(PDM.POLICY_NO)) = UPPER(TRIM(TP.POLICY_NO))
+                  AND UPPER(TRIM(PDM.COMPANY_CD)) = UPPER(TRIM(TP.COMPANY_CD))
+                  AND PDM.LAST_STATUS = 'L'
+                  AND UPPER(TP.STATUS_CD) = 'PAID'
+            ) ;
+
+            -- Insert policies not found in POLICY_DETAILS_MASTER
+            INSERT INTO POLICYNOTINHEADER(POLICY_NO, COMPANY_CD)
+            SELECT TP.POLICY_NO, TP.COMPANY_CD
+            FROM psm_dap_temp_paid1 TP
+            WHERE NOT EXISTS (
+                SELECT 1 
+                FROM POLICY_DETAILS_MASTER PDM
+                WHERE UPPER(TRIM(PDM.POLICY_NO)) = UPPER(TRIM(TP.POLICY_NO))
+                  AND UPPER(TRIM(PDM.COMPANY_CD)) = UPPER(TRIM(TP.COMPANY_CD))
+            );
+
+            -- Update BAJAJ_DUE_DATA for policies with max date condition
+            MERGE INTO BAJAJ_DUE_DATA BDD
+            USING (
+                SELECT 
+                    TP.POLICY_NO,
+                    TP.COMPANY_CD,
+                    TP.STATUS_CD,
+                    MAX(TO_DATE('01/'||P_MONTH||'/'||P_YEAR,'dd/mm/yyyy')) as MAX_DATE
+                FROM psm_dap_temp_paid1 TP
+                JOIN (
+                    SELECT POLICY_NO, COMPANY_CD, MAX(TO_DATE('01/'||MON_NO||'/'||YEAR_NO,'dd/mm/yyyy')) as FROM_DT
+                    FROM BAJAJ_DUE_DATA
+                    WHERE STATUS_CD = 'LAPSED'
+                    GROUP BY POLICY_NO, COMPANY_CD
+                ) MD ON UPPER(TRIM(MD.POLICY_NO)) = UPPER(TRIM(TP.POLICY_NO))
+                     AND UPPER(TRIM(MD.COMPANY_CD)) = UPPER(TRIM(TP.COMPANY_CD))
+                WHERE TO_DATE('01/'||P_MONTH||'/'||P_YEAR,'dd/mm/yyyy') > MD.FROM_DT
+                GROUP BY TP.POLICY_NO, TP.COMPANY_CD, TP.STATUS_CD
+            ) SRC
+            ON (UPPER(TRIM(BDD.POLICY_NO)) = UPPER(TRIM(SRC.POLICY_NO))
+               AND UPPER(TRIM(BDD.COMPANY_CD)) = UPPER(TRIM(SRC.COMPANY_CD))
+               AND BDD.IMPORTDATATYPE = V_MYIMPORTDATATYPE
+               AND TO_DATE('01/'||BDD.MON_NO||'/'||BDD.YEAR_NO,'dd/mm/yyyy') > TO_DATE(V_CURDATE, 'dd/mm/yyyy')
+               AND TO_DATE('01/'||BDD.MON_NO||'/'||BDD.YEAR_NO,'dd/mm/yyyy') <= LAST_DAY(TO_DATE('01/'||BDD.MON_NO||'/'||BDD.YEAR_NO,'dd/mm/yyyy')))
+            WHEN MATCHED THEN
+                UPDATE SET 
+                    BDD.STATUS_CD = SRC.STATUS_CD,
+                    BDD.LAST_UPDATE_DT = TO_DATE(V_SERVERDATE, 'DD-MON-YYYY'),
+                    BDD.LAST_UPDATE = P_LOG_ID;
+
+            -- Update BAJAJ_DUE_DATA for other policies
+            UPDATE BAJAJ_DUE_DATA BDD
+            SET STATUS_CD = (
+                    SELECT UPPER(TP.STATUS_CD)
+                    FROM psm_dap_temp_paid1 TP
+                    WHERE UPPER(TRIM(TP.POLICY_NO)) = UPPER(TRIM(BDD.POLICY_NO))
+                      AND UPPER(TRIM(TP.COMPANY_CD)) = UPPER(TRIM(BDD.COMPANY_CD))
+                ),
+                LAST_UPDATE_DT = TO_DATE(V_SERVERDATE, 'DD-MON-YYYY'),
+                LAST_UPDATE = P_LOG_ID
+            WHERE EXISTS (
+                SELECT 1
+                FROM psm_dap_temp_paid1 TP
+                WHERE UPPER(TRIM(TP.POLICY_NO)) = UPPER(TRIM(BDD.POLICY_NO))
+                  AND UPPER(TRIM(TP.COMPANY_CD)) = UPPER(TRIM(BDD.COMPANY_CD))
+                  AND BDD.MON_NO = TO_NUMBER(P_MONTH)
+                  AND BDD.YEAR_NO = TO_NUMBER(P_YEAR)
+                  AND BDD.IMPORTDATATYPE = V_MYIMPORTDATATYPE
+            );
+
+            v_updated_records := SQL%ROWCOUNT;
+
+            -- Insert into BAJAJ_PAID_DATA for paid policies
+            INSERT /*+ APPEND PARALLEL(4) */ INTO BAJAJ_PAID_DATA (
+                POLICY_NO, COMPANY_CD, PREM_AMT, PAID_DATE, STATUS_CD, NET_AMOUNT, 
+                DUE_DATE, NEXT_DUE_DATE, PREM_FREQ, PAY_MODE, DOC, PLAN_NAME,
+                MON_NO, YEAR_NO, USERID, IMPORT_DT, IMPORTDATATYPE
+            )
+            SELECT /*+ PARALLEL(4) */
+                TP.policy_no, TP.company_cd, TP.prem_amt, TO_DATE(TP.paid_date, 'DD-MM-YYYY'), TP.status_cd, TP.net_amount, 
+                TO_DATE(TP.due_date, 'DD-MM-YYYY'), TO_DATE(TP.next_due_date, 'DD-MM-YYYY'), TP.prem_freq, TP.pay_mode, TO_DATE(TP.doc, 'DD-MM-YYYY'), TP.plan_name,
+                TO_NUMBER(P_MONTH), TO_NUMBER(P_YEAR), P_LOG_ID, TO_DATE(V_SERVERDATE, 'DD-MON-YYYY'), V_MYIMPORTDATATYPE
+            FROM psm_dap_temp_paid1 TP
+            WHERE UPPER(TP.STATUS_CD) = 'PAID'
+              AND NOT EXISTS (
+                  SELECT 1 
+                  FROM BAJAJ_PAID_DATA BPD
+                  WHERE UPPER(TRIM(BPD.POLICY_NO)) = UPPER(TRIM(TP.POLICY_NO))
+                    AND UPPER(TRIM(BPD.COMPANY_CD)) = UPPER(TRIM(TP.COMPANY_CD))
+                    AND BPD.MON_NO = TO_NUMBER(P_MONTH)
+                    AND BPD.YEAR_NO = TO_NUMBER(P_YEAR)
+                    AND BPD.IMPORTDATATYPE = V_MYIMPORTDATATYPE
+              );
+
+            --v_rec_count := SQL%ROWCOUNT;
+            v_inserted_records := SQL%ROWCOUNT;
+
+            PSM_UPDATE_DUE_PAID_PREM_FRQ(P_LOG_ID, V_MYIMPORTDATATYPE);
+            
+            -- Update POLICY_DETAILS_MASTER for paid policies
+            UPDATE POLICY_DETAILS_MASTER PDM
+            SET LAST_STATUS = 'A',
+                UPDATE_PROG = V_MYIMPORTDATATYPE,
+                UPDATE_USER = P_LOG_ID,
+                UPDATE_DATE = TO_DATE(V_SERVERDATE, 'DD/MM/YYYY')
+            WHERE EXISTS (
+                SELECT 1 
+                FROM psm_dap_temp_paid1 TP
+                WHERE UPPER(TRIM(PDM.POLICY_NO)) = UPPER(TRIM(TP.POLICY_NO))
+                  AND UPPER(TRIM(PDM.COMPANY_CD)) = UPPER(TRIM(TP.COMPANY_CD))
+                  AND UPPER(TP.STATUS_CD) = 'PAID'
+            );
+
+            -- Update status for paid policies (assuming UpdateBajajStatus functionality)
+            -- This would need to be implemented as a separate procedure call or logic
+
+            -- Update existing records in BAJAJ_PAID_DATA
+            UPDATE BAJAJ_PAID_DATA BPD
+            SET STATUS_CD = (
+                    SELECT UPPER(TP.STATUS_CD)
+                    FROM psm_dap_temp_paid1 TP
+                    WHERE UPPER(TRIM(TP.POLICY_NO)) = UPPER(TRIM(BPD.POLICY_NO))
+                      AND UPPER(TRIM(TP.COMPANY_CD)) = UPPER(TRIM(BPD.COMPANY_CD))
+                ),
+                LAST_UPDATE_DT = TO_DATE(V_SERVERDATE, 'DD-MON-YYYY'),
+                LAST_UPDATE = P_LOG_ID
+            WHERE EXISTS (
+                SELECT 1
+                FROM psm_dap_temp_paid1 TP
+                WHERE UPPER(TRIM(TP.POLICY_NO)) = UPPER(TRIM(BPD.POLICY_NO))
+                  AND UPPER(TRIM(TP.COMPANY_CD)) = UPPER(TRIM(BPD.COMPANY_CD))
+                  AND BPD.MON_NO = TO_NUMBER(P_MONTH)
+                  AND BPD.YEAR_NO = TO_NUMBER(P_YEAR)
+                  AND BPD.IMPORTDATATYPE = V_MYIMPORTDATATYPE
+            );
+
+            -- Handle duplicate policies
+            DELETE FROM DUP_POLICY;
+
+            INSERT INTO DUP_POLICY
+            SELECT policy_no FROM (
+                SELECT a.policy_no, a.sys_ar_Dt, a.company_Cd 
+                FROM bajaj_Ar_head a 
+                JOIN bajaj_paid_Data b ON UPPER(TRIM(a.COMPANY_CD)) = UPPER(TRIM(B.COMPANY_CD)) 
+                    AND a.Policy_No = B.Policy_No 
+                WHERE b.mon_no = TO_NUMBER(P_MONTH) 
+                  AND b.year_no = TO_NUMBER(P_YEAR) 
+                  AND b.importdatatype = V_MYIMPORTDATATYPE
+                GROUP BY a.policy_no, a.sys_ar_dt, a.company_Cd 
+                HAVING COUNT(a.policy_no) > 1 
+                   AND COUNT(a.sys_ar_dt) > 1 
+                   AND COUNT(A.company_cd) > 1
+            );
+
+            -- Mark duplicate records
+            UPDATE bajaj_paid_Data 
+            SET dup_rec = 'Y' 
+            WHERE policy_no IN (SELECT POLICY_NO FROM DUP_POLICY) 
+              AND mon_no = TO_NUMBER(P_MONTH) 
+              AND year_no = TO_NUMBER(P_YEAR) 
+              AND importdatatype = V_MYIMPORTDATATYPE;
+
+            v_rec_del := SQL%ROWCOUNT;
+            v_rec_count := v_rec_count - v_rec_del;
+
+            -- Update employee and investor codes
+            UPDATE bajaj_paid_data A 
+            SET A.emp_no = (
+                    SELECT MAX(B.emp_no) 
+                    FROM bajaj_ar_head B 
+                    WHERE UPPER(TRIM(B.Company_cd)) = UPPER(TRIM(A.Company_cd)) 
+                      AND B.policy_no = A.policy_no 
+                      AND B.FRESH_RENEWAL = 1
+                ),
+                inv_cd = (
+                    SELECT MAX(B.client_Cd) 
+                    FROM bajaj_ar_head B 
+                    WHERE UPPER(TRIM(B.Company_cd)) = UPPER(TRIM(A.Company_cd)) 
+                      AND B.policy_no = A.policy_no 
+                      AND B.FRESH_RENEWAL = 1
+                )
+            WHERE mon_no = TO_NUMBER(P_MONTH) 
+              AND year_no = TO_NUMBER(P_YEAR) 
+              AND dup_Rec IS NULL 
+              AND importdatatype = V_MYIMPORTDATATYPE;
+
+            v_updated_records := v_total_records - v_inserted_records;
+
+            OPEN P_CURSOR FOR 
+                --SELECT 'Records Imported Successfully. Inserted: ' || v_inserted_records || ', Updated: ' || v_updated_records || ', Paid Records: ' || v_rec_count as MESSAGE
+
+                SELECT 'Operation Done Successfully. Imported: ' || v_inserted_records || ', Duplidate: ' || v_updated_records || ', Total: ' || v_total_records  as MESSAGE
+
+                FROM DUAL;
+                RETURN;                
+        END IF;
+
+
+END;
+/
