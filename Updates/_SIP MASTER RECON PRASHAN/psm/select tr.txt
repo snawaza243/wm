@@ -58,4 +58,4 @@ SELECT
                 AND tmf.AMOUNT > 0
                 AND (tmf.ASA <> 'C' OR tmf.ASA IS NULL)
                 AND tmf.move_flag1 IS NULL
-                AND tmf.sip_id IS NULL AND NVL(tmf.rec_flag, 'N') = 'N' AND tmf.TR_DATE >= TO_DATE('08/01/2025', 'DD/MM/YYYY') AND tmf.TR_DATE <= TO_DATE('08/02/2025', 'DD/MM/YYYY') ORDER BY tmf.TR_DATE, ei.rm_name
+                AND tmf.sip_id IS NULL AND tmf.tran_code = 'TR24095817' AND NVL(tmf.rec_flag, 'N') = 'N' ORDER BY tmf.TR_DATE, ei.rm_name

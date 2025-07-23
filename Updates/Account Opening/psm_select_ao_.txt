@@ -1,0 +1,9 @@
+select im.inv_code, im.MAR_STATUS, ct.MARITAL_STATUS
+from client_master cm
+left join investor_master im on im.SOURCE_ID = cm.client_code
+left join client_test ct on ct.SOURCE_CODE = im.SOURCE_ID
+where substr(im.inv_code,-3) = '001'
+and ct.client_code = 'AH2534969'
+--and im.timest > '01-jan-2025'
+
+select mobile from investor_master where mobile = '7021416551';
