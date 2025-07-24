@@ -1,0 +1,51 @@
+CREATE OR REPLACE PROCEDURE PSM_CITY_MASTER(
+    P_LOGIN     IN VARCHAR2,
+    P_ROLE      IN VARCHAR2,
+    P_COUNTRY   IN VARCHAR2 DEFAULT NULL,
+    P_STATE     IN VARCHAR2 DEFAULT NULL,
+    P_CITY      IN VARCHAR2 DEFAULT NULL,
+    P_CURSOR    OUT SYS_REFCURSOR
+)
+AS
+    V_HAS_ACCESS NUMBER := 1;
+BEGIN
+    -- First verify user access rights
+    /*SELECT COUNT(*) INTO V_HAS_ACCESS
+    FROM USER_ACCESS_TABLE 
+    WHERE USER_ID = P_LOGIN
+    AND ROLE_ID = P_ROLE
+    AND MODULE_ID = 'CITY_MASTER'; 
+    
+    IF V_HAS_ACCESS = 0 THEN
+        RAISE_APPLICATION_ERROR(-20001, 'Access denied for user ' || P_LOGIN || ' with role ' || P_ROLE);
+    END IF;
+    
+    */
+    
+    -- Open cursor with filtered city data
+    OPEN P_CURSOR FOR
+        SELECT 
+            CM.CITY_ID,
+            CM.CITY_NAME,
+            SM.STATE_ID,
+            SM.STATE_NAME,
+            CN.COUNTRY_ID,
+            CN.COUNTRY_NAME 
+        FROM 
+            CITY_MASTER CM
+            JOIN STATE_MASTER SM ON CM.STATE_ID = SM.STATE_ID
+            JOIN COUNTRY_MASTER CN ON SM.COUNTRY_ID = CN.COUNTRY_ID
+        WHERE
+            (P_COUNTRY IS NULL OR CN.COUNTRY_ID = P_COUNTRY)
+            AND (P_STATE IS NULL OR SM.STATE_ID = P_STATE)
+            AND (P_CITY IS NULL OR CM.CITY_ID = P_CITY)
+        ORDER BY 
+            CN.COUNTRY_NAME, 
+            SM.STATE_NAME, 
+            CM.CITY_NAME;
+EXCEPTION
+    WHEN OTHERS THEN
+        -- Log error if needed (consider adding error logging table)
+        RAISE_APPLICATION_ERROR(-20002, 'Error in PSM_CITY_MASTER: ' || SQLERRM);
+END PSM_CITY_MASTER;
+/

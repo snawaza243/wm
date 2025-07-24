@@ -1,0 +1,129 @@
+#hierarchy {
+    height: 485px;
+    width: 100%;
+    overflow: auto;
+}
+
+    #hierarchy .folder, .file {
+        cursor: pointer;
+        white-space: nowrap;
+    }
+
+    #hierarchy .folder {
+        padding: 4px 0;
+    }
+
+        #hierarchy .folder:hover {
+            color: #000;
+        }
+
+.foldercontainer .foldercontainer {
+    padding-left: 10px;
+}
+
+.foldercontainer > .file,
+.foldercontainer > .not-found {
+    padding: 4px 0;
+    padding-left: 10px;
+}
+
+.folder {
+    color: var(--bs-primary);
+}
+
+.file, .noitems, .not-found {
+    color: var(--bs-secondary);
+}
+
+
+.folder::before {
+    font-family: FontAwesome;
+    margin-right: 5px;
+    margin-left: 4px;
+}
+
+.fa-spinner {
+    margin-left: 10px;
+    animation: spin 1.5s linear infinite;
+}
+
+.form-control-sm {
+    min-height: unset;
+}
+
+.modal .table-responsive {
+    max-height: 500px;
+    overflow: auto;
+}
+
+.modal table tbody tr td {
+    color: gray;
+}
+
+.modal table tbody tr.selected > td {
+    background-color: rgb(183, 137, 57);
+    color: white;
+    user-select: none;
+}
+
+.modal table tr th:nth-child(1),
+.modal table tr td:nth-child(1) {
+    max-width: 170px;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+.modal table tr th:nth-child(2),
+.modal table tr th:nth-child(3),
+.modal table tr td:nth-child(2),
+.modal table tr td:nth-child(3) {
+    max-width: 250px;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+.modal table tr th:nth-child(6),
+.modal table tr td:nth-child(6) {
+    max-width: 100px;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+.modal table tr th {
+    background-color: whitesmoke;
+}
+
+.modal .small {
+    font-size: .8rem;
+}
+
+.modal table tr th,
+.modal table tr td {
+    padding: 10px;
+}
+
+.table i.fa {
+    cursor: pointer;
+}
+
+.modal .form-control {
+    padding: 9px;
+    border: 0;
+    outline: 1px solid #ebedf2;
+    height: 34px;
+    color: #6c6868;
+}
+
+@keyframes rotate {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    50% {
+        transform: rotate(180deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}

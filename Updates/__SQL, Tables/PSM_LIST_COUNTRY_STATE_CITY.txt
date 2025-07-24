@@ -1,0 +1,63 @@
+CREATE OR REPLACE PROCEDURE PSM_LIST_COUNTRY_STATE_CITY(
+    P_GET_BY_VALUE  IN VARCHAR2 DEFAULT NULL,
+    P_GET_BY        IN VARCHAR2 DEFAULT NULL,
+    P_ORDER_BY      IN VARCHAR2 DEFAULT NULL,
+    P_OUT           OUT SYS_REFCURSOR 
+)
+AS 
+    V_QUERY VARCHAR2(4000);
+BEGIN
+    -- Base query with proper column aliases
+    V_QUERY := 'SELECT ';
+    
+    -- Determine which columns to select based on ORDER BY
+    CASE 
+        WHEN P_ORDER_BY = '1' THEN 
+            V_QUERY := V_QUERY || 'CNM.COUNTRY_ID, CNM.COUNTRY_NAME';
+        WHEN P_ORDER_BY = '2' THEN 
+            V_QUERY := V_QUERY || 'SM.STATE_ID, SM.STATE_NAME, CNM.COUNTRY_ID, CNM.COUNTRY_NAME';
+        WHEN P_ORDER_BY = '3' THEN 
+            V_QUERY := V_QUERY || 'CM.CITY_ID, CM.CITY_NAME, SM.STATE_ID, SM.STATE_NAME, CNM.COUNTRY_ID, CNM.COUNTRY_NAME';
+        ELSE 
+            V_QUERY := V_QUERY || 'CM.CITY_ID, CM.CITY_NAME, SM.STATE_ID, SM.STATE_NAME, CNM.COUNTRY_ID, CNM.COUNTRY_NAME';
+    END CASE;
+    
+    V_QUERY := V_QUERY || '
+            FROM CITY_MASTER CM
+            JOIN STATE_MASTER SM ON CM.STATE_ID = SM.STATE_ID
+            JOIN COUNTRY_MASTER CNM ON SM.COUNTRY_ID = CNM.COUNTRY_ID
+            WHERE 1=1';
+    
+    -- Add filter condition with parameter validation
+    IF P_GET_BY IS NOT NULL AND P_GET_BY_VALUE IS NOT NULL THEN
+        CASE 
+            WHEN P_GET_BY = '1' THEN 
+                V_QUERY := V_QUERY || ' AND CNM.COUNTRY_ID = ''' || REPLACE(P_GET_BY_VALUE, '''', '''''') || '''';
+            WHEN P_GET_BY = '2' THEN 
+                V_QUERY := V_QUERY || ' AND SM.STATE_ID = ''' || REPLACE(P_GET_BY_VALUE, '''', '''''') || '''';
+            WHEN P_GET_BY = '3' THEN 
+                V_QUERY := V_QUERY || ' AND CM.CITY_ID = ''' || REPLACE(P_GET_BY_VALUE, '''', '''''') || '''';
+        END CASE;
+    END IF;
+
+    -- Add GROUP BY and ORDER BY clauses
+    CASE 
+        WHEN P_ORDER_BY = '1' THEN 
+            V_QUERY := V_QUERY || ' GROUP BY CNM.COUNTRY_ID, CNM.COUNTRY_NAME ORDER BY CNM.COUNTRY_NAME';
+        WHEN P_ORDER_BY = '2' THEN 
+            V_QUERY := V_QUERY || ' GROUP BY SM.STATE_ID, SM.STATE_NAME, CNM.COUNTRY_ID, CNM.COUNTRY_NAME ORDER BY SM.STATE_NAME';
+        WHEN P_ORDER_BY = '3' THEN 
+            V_QUERY := V_QUERY || ' GROUP BY CM.CITY_ID, CM.CITY_NAME, SM.STATE_ID, SM.STATE_NAME, CNM.COUNTRY_ID, CNM.COUNTRY_NAME ORDER BY CM.CITY_NAME';
+        ELSE  
+            V_QUERY := V_QUERY || ' ORDER BY CNM.COUNTRY_NAME, SM.STATE_NAME, CM.CITY_NAME';
+    END CASE;
+        
+    -- Execute the query
+    OPEN P_OUT FOR V_QUERY;
+    
+EXCEPTION
+    WHEN OTHERS THEN
+        -- Log error details if needed (consider adding a log table)
+        RAISE_APPLICATION_ERROR(-20001, 'Error in PSM_LIST_COUNTRY_STATE_CITY: ' || SQLERRM);
+END;
+/
