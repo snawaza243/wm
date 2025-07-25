@@ -17,7 +17,24 @@ BEGIN
         -- func that containt fie name PSM_NPS_IMP_GET_COMP_TEXT'
 
         INSERT INTO NPS_NONECS_TBL_IMP_BK SELECT * FROM  NPS_NONECS_TBL_IMP;
-        DELETE FROM  NPS_NONECS_TBL_IMP;
+        DELETE FROM       modified:   WM/.vs/WM.csproj.dtbcache.json
+        modified:   WM/Controllers/InvestorMergeController.cs
+        modified:   WM/Controllers/NpsTransactionPunchingController.cs
+        modified:   WM/Controllers/PsmController.cs
+        modified:   WM/Controllers/sip_master_reconciliationController.cs
+        modified:   WM/Masters/Mf_Punching.aspx.cs
+        modified:   WM/Masters/NpsTransactionPunching.aspx.cs
+        modified:   WM/Masters/SearchInvestorMerge.aspx
+        modified:   WM/Masters/SearchInvestorMerge.aspx.cs
+        modified:   WM/Masters/SearchInvestorMerge.aspx.designer.cs
+        modified:   WM/Masters/investormerge.aspx
+        modified:   WM/Masters/investormerge.aspx.cs
+        modified:   WM/Masters/investormerge.aspx.designer.cs
+        modified:   WM/Tree/FindTransaction.aspx
+        modified:   WM/Tree/FindTransaction.aspx.cs
+        modified:   WM/Tree/FindTransaction.aspx.designer.cs
+        modified:   WM/Tree/ImportExportExcel.aspx.cs
+;
 
         INSERT INTO NPS_NONECS_TBL_IMP (REF_TRAN_CODE,TR_DATE,ECS_AMT,ECS_PERIOD,ECS_PAY_DT,ECS_TRAN_CODE,
         LOGGEDUSERID,TIMEST,MODIFY_USER,MODIFY_DATE,TPSL_TRANID,CONSUMER_CODE,IMPORT_DT)
