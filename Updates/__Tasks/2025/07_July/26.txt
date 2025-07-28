@@ -1,1 +1,5 @@
 2025-07-26 - Saturday
+
+
+git add WM/Masters/AccountOpening.aspx
+git add WM/Masters/AccountOpening.aspx.cs

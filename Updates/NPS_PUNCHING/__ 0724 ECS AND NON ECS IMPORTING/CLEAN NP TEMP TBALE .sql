@@ -1,7 +1,10 @@
-CREATE OR REPLACE PROCEDURE PSM_NPS_NES_TEMP_CLEAN AS
+CREATE OR REPLACE PROCEDURE PSM_NPS_NES_TEMP_CLEAN (
+P_LOG_ID IN VARCHAR2)
+
+AS
 BEGIN
     -- Step 1: Validate and clean data in temp table
-    UPDATE PSM_NPS_NES_TBL_TEMP
+    UPDATE PSM_NPS_NES_TBL_TEMP1
     SET 
         -- Clean REF_TRAN_CODE (remove special chars, trim spaces)
         REF_TRAN_CODE = REGEXP_REPLACE(TRIM(REF_TRAN_CODE), '[^a-zA-Z0-9]', ''),
@@ -32,11 +35,8 @@ BEGIN
                      END,
         
         -- Clean ECS_TRAN_CODE
-        ECS_TRAN_CODE = SUBSTR(TRIM(ECS_TRAN_CODE), 1, 12),
-        
-        -- Clean user IDs
-        LOGGEDUSERID = SUBSTR(TRIM(LOGGEDUSERID), 1, 10),
-        MODIFY_USER = SUBSTR(TRIM(MODIFY_USER), 1, 10),
+        ECS_TRAN_CODE = SUBSTR(TRIM(ECS_TRAN_CODE), 1, 12),       
+       
         
         -- Convert and validate TIMEST
         TIMEST = CASE 
@@ -49,49 +49,11 @@ BEGIN
                          WHEN REGEXP_LIKE(TRIM(MODIFY_DATE), '^\d{2}-[A-Z]{3}-\d{4}$') THEN TRIM(MODIFY_DATE)
                          ELSE NULL
                        END,
-        
-        -- Clean transaction IDs
-        TPSL_TRANID = SUBSTR(TRIM(TPSL_TRANID), 1, 20),
-        CONSUMER_CODE = SUBSTR(TRIM(CONSUMER_CODE), 1, 20),
-        
+                
         -- Set IMPORT_DT to current date
         IMPORT_DT = TO_CHAR(SYSDATE, 'DD-MON-YYYY')
     WHERE ROWNUM > 0;  -- Ensures all rows are processed
     
-    -- Step 2: Insert cleaned data into actual table
-    INSERT INTO nps_nonecs_tbl_imp (
-        REF_TRAN_CODE,
-        TR_DATE,
-        ECS_AMT,
-        ECS_PERIOD,
-        ECS_PAY_DT,
-        ECS_TRAN_CODE,
-        LOGGEDUSERID,
-        TIMEST,
-        MODIFY_USER,
-        MODIFY_DATE,
-        TPSL_TRANID,
-        CONSUMER_CODE,
-        IMPORT_DT
-    )
-    SELECT 
-        REF_TRAN_CODE,
-        TO_DATE(TR_DATE, 'DD-MON-YYYY'),
-        TO_NUMBER(ECS_AMT),
-        ECS_PERIOD,
-        TO_DATE(ECS_PAY_DT, 'DD-MON-YYYY'),
-        ECS_TRAN_CODE,
-        LOGGEDUSERID,
-        TO_DATE(TIMEST, 'DD-MON-YYYY'),
-        MODIFY_USER,
-        TO_DATE(MODIFY_DATE, 'DD-MON-YYYY'),
-        TPSL_TRANID,
-        CONSUMER_CODE,
-        TO_DATE(IMPORT_DT, 'DD-MON-YYYY')
-    FROM PSM_NPS_NES_TBL_TEMP;
-    
-    -- Step 3: Clear temp table (optional)
-    DELETE FROM PSM_NPS_NES_TBL_TEMP;
     
     COMMIT;
     
