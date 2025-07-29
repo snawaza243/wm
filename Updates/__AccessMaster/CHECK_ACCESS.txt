@@ -1,0 +1,50 @@
+  public (bool IsAuthorized, string Message) CheckAccessMaster(string moduleAction)
+  {
+      string loginId = currentLoginID();
+      string currentRole = currentRoleID();
+
+      try
+      {
+          using (var conn = new OracleConnection(connectionString))
+          {
+              conn.Open();
+
+              using (var cmd = new OracleCommand("PSM_ACCESS_MASTER", conn)) // Match name with actual proc
+              {
+                  cmd.CommandType = CommandType.StoredProcedure;
+
+                  cmd.Parameters.Add("P_LOGIN", OracleDbType.Varchar2).Value = loginId;
+                  cmd.Parameters.Add("P_ROLE", OracleDbType.Varchar2).Value = (object)currentRole ?? DBNull.Value;
+                  cmd.Parameters.Add("P_MODULE_ACTION", OracleDbType.Varchar2).Value = moduleAction.ToLower();
+
+                  var resultCursor = new OracleParameter("P_CURSOR", OracleDbType.RefCursor)
+                  {
+                      Direction = ParameterDirection.Output
+                  };
+                  cmd.Parameters.Add(resultCursor);
+
+                  cmd.ExecuteNonQuery();
+
+                  using (var reader = ((OracleRefCursor)resultCursor.Value).GetDataReader())
+                  {
+                      if (reader.Read())
+                      {
+                          bool isAuthorized = string.Equals(reader["STATUS"].ToString(), "true", StringComparison.OrdinalIgnoreCase);
+                          string message = reader["MESSAGE"].ToString();
+                          return (isAuthorized, message);
+                      }
+                  }
+              }
+          }
+
+          return (false, "No authorization data received");
+      }
+      catch (OracleException ex)
+      {
+          return (false, $"Database error: {ex.Message}");
+      }
+      catch (Exception ex)
+      {
+          return (false, $"System error: {ex.Message}");
+      }
+  }

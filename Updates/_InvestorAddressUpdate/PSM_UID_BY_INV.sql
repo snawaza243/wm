@@ -60,6 +60,7 @@ BEGIN
             END IF;
         END IF;
 
+
         -- Mobile uniqueness check
         IF P_MOBILE IS NOT NULL THEN
             BEGIN
@@ -68,14 +69,16 @@ BEGIN
                 WHERE EXISTS (
                     SELECT 1 FROM INVESTOR_MASTER 
                     WHERE MOBILE = P_MOBILE 
-                    AND INV_CODE != P_INV
+                    --AND INV_CODE != P_INV AND ROWNUM =1
+                    AND source_id != substr(P_INV,1,8)
                 );
                 V_MSG:= NVL(V_MSG, '') || ' Mobile Number already exists!';
             EXCEPTION
                 WHEN NO_DATA_FOUND THEN NULL;
             END;
         END IF;
-                
+
+
         -- PAN validation
         IF P_PAN IS NOT NULL THEN
             SELECT VALIDATEPAN1(P_PAN) INTO V_TEMP1 FROM DUAL;
@@ -87,30 +90,28 @@ BEGIN
                     SELECT PAN INTO V_TEMP1
                     FROM INVESTOR_MASTER 
                     WHERE PAN = P_PAN
-                    AND INV_CODE != P_INV;
-                    
+                    AND INV_CODE != P_INV AND ROWNUM =1;                     
                     V_MSG:= NVL(V_MSG, '') || ' PAN already exists!';
                 EXCEPTION
                     WHEN NO_DATA_FOUND THEN NULL;
                 END;
             END IF;
-        END IF;
-
+        END IF; 
         -- Email validation
         IF P_EMAIL IS NOT NULL THEN
-            IF UPPER(P_EMAIL) NOT IN ('NOT AVAILABLE', 'N/A', 'N A', 'NILL', 'NONE', 'N-A') THEN
+            IF UPPER(P_EMAIL) NOT IN ('NOT AVAILABLE', 'N/A', 'N A', 'NILL', 'NONE', 'N-A') THEN             
                 BEGIN
                     SELECT EMAIL INTO V_TEMP1 FROM INVESTOR_MASTER
                     WHERE UPPER(EMAIL) = UPPER(P_EMAIL)
-                    AND INV_CODE != P_INV;
-                    
+                    AND INV_CODE != P_INV AND ROWNUM = 1;
                     V_MSG:= NVL(V_MSG, '') || ' Email already exists!';
                 EXCEPTION
                     WHEN NO_DATA_FOUND THEN NULL;
                 END;
             END IF;
         END IF;
-
+   
+       
         -- Aadhar validation
         IF P_AADHAR IS NOT NULL THEN
             SELECT PSM_VALIDATEAADHAAR(P_AADHAR) INTO V_TEMP1 FROM DUAL;
@@ -122,7 +123,7 @@ BEGIN
                     SELECT AADHAR_CARD_NO INTO V_TEMP1 
                     FROM INVESTOR_MASTER
                     WHERE AADHAR_CARD_NO = P_AADHAR
-                    AND INV_CODE != P_INV;
+                    AND INV_CODE != P_INV AND ROWNUM =1;
                     
                     V_MSG:= NVL(V_MSG, '') || ' Aadhar already exists!';
                 EXCEPTION
@@ -130,6 +131,8 @@ BEGIN
                 END;
             END IF;
         END IF;
+        
+    
              
         -- Return errors if any
         IF V_MSG IS NOT NULL THEN
