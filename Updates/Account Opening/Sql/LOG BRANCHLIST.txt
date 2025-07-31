@@ -1,1 +1,0 @@
- A.BRANCH_CODE IN(SELECT BRANCH_ID FROM USERDETAILS_JI WHERE LOGIN_ID='"+ Convert.ToString(Session["loginid"]) +"' AND ROLE_ID='"+ Convert.ToString(Session["roleid"]) + "')

@@ -1,5 +1,0 @@
-fix the investor list bug in investor details
-fix the state selecion error
-fix th city selection error
-fix the head memebr seleciton
-fix the mobile field of investor search remove the icon and added the validation fuciont for prevention of pasting the other vlaue and bind with number length

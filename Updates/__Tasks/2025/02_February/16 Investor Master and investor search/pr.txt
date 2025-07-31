@@ -1,4 +1,0 @@
-git add WM/Masters/investormaster.aspx
-git add WM/Masters/investormaster.aspx.cs
-git add WM/Masters/investormastersearch.aspx
-git add WM/Masters/investormastersearch.aspx.designer.cs

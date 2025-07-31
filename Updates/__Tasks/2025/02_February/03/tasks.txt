@@ -1,6 +1,0 @@
-"Search Error: Input string was not in a correct format.
-Search with any Client Code like   ""AH248599"""
-"(Other Details) > Incorrect data fetching after choosing investor from list, 
-Ex:  If we select newly created investor then data of existing investor is fetch on the form
-Client Code -  AH618017"
-Design issue: client/Invetor search window not aligned on the form

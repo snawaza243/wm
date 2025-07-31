@@ -1,2 +1,0 @@
-git add WM/Masters/insurance_renewal_letter_printed.aspx.cs
-git add WM/Masters/map_policy_number.aspx.cs

@@ -1,2 +1,0 @@
-DECODE (sa, NULL, (SELECT MAX (sa) FROM bajaj_ar_head f WHERE     f.company_cd = a.company_cd AND f.policy_no = a.policy_no), sa) AS sa,
-                        CASE WHEN sa IS NULL THEN (SELECT MAX(sa) FROM bajaj_ar_head f WHERE f.company_cd = a.company_cd AND f.policy_no = a.policy_no) ELSE sa END AS sa

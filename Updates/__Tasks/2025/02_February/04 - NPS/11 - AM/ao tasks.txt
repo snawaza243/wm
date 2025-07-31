@@ -1,4 +1,0 @@
-removed push back on fam add dob, head,
-arrange deisng of add fam,
-added address 3
-remove date picker pushback

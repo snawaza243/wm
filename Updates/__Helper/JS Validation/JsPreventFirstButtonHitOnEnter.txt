@@ -1,9 +1,0 @@
-   <%-- PREVENT HITTIN FIRST BTN ON ENTER --%>
-   <script>
-       $(document).on("keydown", function (e) {
-           if (e.key === "Enter" || e.keyCode === 13) {
-               // Prevent the default Enter key behavior (like form submit or button click)
-               e.preventDefault();
-           }
-       });
-   </script>

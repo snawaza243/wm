@@ -1,6 +1,0 @@
-git add WM/Controllers/AgentController.cs
-git add WM/Masters/associate_master.aspx
-git add WM/Masters/associate_master.aspx.cs
-git add WM/Masters/associate_master.aspx.designer.cs
-
-

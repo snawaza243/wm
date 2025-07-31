@@ -1,4 +1,0 @@
-EXPLAIN PLAN FOR
-SELECT ...
--- (Put your query here)
-SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY);

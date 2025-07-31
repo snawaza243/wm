@@ -1,3 +1,0 @@
-in ar search added pagination,
-fix the ar by tran_code (remarks, inv_name)
-fix the ar search model design

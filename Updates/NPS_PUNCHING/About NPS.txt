@@ -1,4 +1,0 @@
-Form: frmNPS
-
-AR or Transaction find Form
-frmTransactionFind

@@ -1,2 +1,0 @@
-ALTER TABLE psm_dap_temp_due1
-ADD fup_date VARCHAR2(100);

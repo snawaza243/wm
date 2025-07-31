@@ -1,1 +1,0 @@
-CHECK_DT_NEWINV(); -- 0-1
