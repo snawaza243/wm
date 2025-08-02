@@ -1,0 +1,22 @@
+.resizableTable {
+    table-layout: fixed;
+    width: 100%;
+}
+.resizableTable th {
+    width: 150px;
+    position: relative;
+    overflow: hidden;
+}
+.resizableTable .resizer {
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 5px;
+    height: 100%;
+    cursor: col-resize;
+    user-select: none;
+    z-index: 1;
+}
+.resizableTable th:hover .resizer {
+    background-color: rgba(0, 0, 0, 0.1);
+}
