@@ -1,0 +1,63 @@
+SELECT 
+                    tmf.TRAN_CODE, 
+                    tmf.INV_NAME, 
+                    tmf.UNQ_KEY,
+                    tmf.SCH_CODE, 
+                    si.SCH_NAME, 
+                    tmf.MUT_CODE, 
+                    ai.MUT_NAME, 
+                    tmf.TRAN_TYPE, 
+                    tmf.APP_NO, 
+                    tmf.APP_DATE, 
+                    tmf.CHEQUE_NO, 
+                    tmf.CHEQUE_DATE, 
+                    tmf.AMOUNT, 
+                    tmf.BANK_NAME, 
+                    tmf.FOLIO_NO, 
+                    tmf.RMCODE, 
+                    li.RM_NAME, 
+                    tmf.INVESTOR_TYPE, 
+                    tmf.BRANCH_CODE, 
+                    ti.BRANCH_NAME, 
+                    tmf.TR_DATE, 
+                    tmf.UNITS, 
+                    tmf.NAV_DATE, 
+                    tmf.REMARK, 
+                    tmf.FLAG, 
+                    tmf.BROKER_ID, 
+                    tmf.REG_TRANTYPE, 
+                    pi.EXIST_CODE, 
+                    i.ADDRESS1, 
+                    tmf.BUSINESS_RMCODE,
+                    c.CITY_NAME 
+                FROM 
+                    transaction_st@MF.BAJAJCAPITAL tmf
+                LEFT JOIN 
+                    scheme_info si ON tmf.SCH_CODE = si.SCH_CODE
+                LEFT JOIN 
+                    MUT_FUND ai ON tmf.MUT_CODE = ai.MUT_CODE
+                LEFT JOIN 
+                    BRANCH_MASTER ti ON tmf.BRANCH_CODE = ti.BRANCH_CODE
+                LEFT JOIN 
+                    EMPLOYEE_MASTER li ON tmf.RMCODE = li.RM_CODE
+                LEFT JOIN 
+                    AGENT_MASTER pi ON tmf.source_code = pi.agent_code
+                LEFT JOIN 
+                    INVESTOR_MASTER i ON tmf.CLIENT_CODE = i.INV_CODE
+                LEFT JOIN 
+                    CITY_MASTER c ON i.CITY_ID = c.CITY_ID 
+                WHERE 1 = 1 AND tmf.TR_DATE >= TO_DATE('17-05-2025', 'DD-MM-YYYY') AND tmf.TR_DATE <= TO_DATE('17-07-2025', 'DD-MM-YYYY') AND NVL(tmf.rec_flag, 'N') = 'N' AND tmf.MUT_CODE = 'MF057' AND ( tmf.PAN1 = 'BAWPK9984N') AND tmf.INV_NAME = 'SWATI KHANNA' AND tmf.AMOUNT = 49997.5AND UPPER(tmf.REG_TRANTYPE) NOT LIKE '%SYS%' 
+                                   AND UPPER(tmf.REG_TRANTYPE) NOT LIKE '%SIP%' 
+                                   AND TRIM(UPPER(tmf.REG_TRANTYPE)) NOT LIKE '%S T P IN%' 
+                                   AND TRIM(UPPER(tmf.REG_TRANTYPE)) NOT LIKE '%S T P IN REJ%' 
+                                   AND TRIM(UPPER(tmf.REG_TRANTYPE)) NOT LIKE '%S T P IN REJ REVERSAL%' 
+                                   AND TRIM(UPPER(tmf.REG_TRANTYPE)) NOT LIKE '%STP SWITCH IN%' 
+                                   AND TRIM(UPPER(tmf.REG_TRANTYPE)) NOT LIKE '%OUT%'
+                                   AND TRIM(UPPER(tmf.REG_TRANTYPE)) NOT LIKE '%REINVESTMENT%'
+                                   AND TRIM(UPPER(tmf.REG_TRANTYPE)) NOT LIKE '%STPI%' 
+                                   AND TRIM(UPPER(tmf.REG_TRANTYPE)) NOT LIKE '%STPIR%'
+                                   AND TRIM(UPPER(tmf.REG_TRANTYPE)) NOT LIKE '%REDEMPTION%'
+                                   AND TRIM(UPPER(tmf.REG_TRANTYPE)) NOT LIKE '%PRE-REJECTION%'
+
+
+                                        ORDER BY tmf.TR_DATE

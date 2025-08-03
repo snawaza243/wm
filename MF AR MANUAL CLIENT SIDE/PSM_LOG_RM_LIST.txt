@@ -1,0 +1,54 @@
+CREATE OR REPLACE PROCEDURE WEALTHMAKER.PSM_LOG_RM_LIST(
+P_FOR           IN VARCHAR2,
+P_BY            IN VARCHAR2,
+P_BY_VALUE      IN VARCHAR2,
+P_LOG_ID        IN VARCHAR2,
+P_ROLE_ID       IN VARCHAR2,
+P_CURSOR         OUT SYS_REFCURSOR  
+
+)
+AS
+BEGIN 
+
+    IF P_FOR = 'MF_AR_MANUAL_RECO' THEN  
+        IF P_BY IS NOT NULL THEN
+            IF P_BY = 'CHANNEL' THEN
+                OPEN P_CURSOR FOR                    
+                    SELECT RM_NAME, PAYROLL_ID, RM_CODE
+                    FROM EMPLOYEE_MASTER
+                    WHERE 1 = 1
+                    AND TYPE = 'A' 
+                    AND CATEGORY_ID IN (2001, 2018)
+                    AND SOURCE IN (SELECT BRANCH_ID FROM USERDETAILS_JI WHERE LOGIN_ID = P_LOG_ID AND ROLE_ID=P_ROLE_ID)
+                    ORDER BY RM_NAME;
+            ELSIF P_BY = 'BRANCH' THEN
+                OPEN P_CURSOR FOR 
+                    SELECT RM_NAME, PAYROLL_ID
+                    FROM EMPLOYEE_MASTER
+                    WHERE 1 = 1
+                    AND SOURCE IN (SELECT BRANCH_ID FROM USERDETAILS_JI WHERE LOGIN_ID = P_LOG_ID AND ROLE_ID=P_ROLE_ID)
+                    AND TYPE = 'A'
+                    AND CATEGORY_ID IN (2001, 2018)
+                    AND SOURCE = P_BY_VALUE
+                    ORDER BY RM_NAME;
+            END IF;
+        ELSE
+            OPEN P_CURSOR FOR 
+                    SELECT RM_NAME, PAYROLL_ID, RM_CODE
+                    FROM EMPLOYEE_MASTER
+                    WHERE 1 = 1
+                    AND TYPE = 'A' 
+                    AND CATEGORY_ID IN (2001, 2018)
+                    AND SOURCE IN (SELECT BRANCH_ID FROM USERDETAILS_JI WHERE LOGIN_ID = P_LOG_ID AND ROLE_ID=P_ROLE_ID)
+                    ORDER BY RM_NAME;
+        END IF;
+    ELSE
+        OPEN P_CURSOR FOR 
+            SELECT RM_NAME, PAYROLL_ID, RM_CODE
+            FROM EMPLOYEE_MASTER
+            WHERE 1 = 1
+            AND TYPE = 'A'
+            AND SOURCE IN (SELECT BRANCH_ID FROM USERDETAILS_JI WHERE LOGIN_ID = P_LOG_ID AND ROLE_ID=P_ROLE_ID)
+            ORDER BY RM_NAME;
+    END IF;  
+END;
