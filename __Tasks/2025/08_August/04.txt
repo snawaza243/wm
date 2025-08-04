@@ -1,1 +1,17 @@
 2025-08-04 - Monday
+
+
+git add WM/Controllers/AccountOpeningController.cs
+git add WM/Masters/AccountOpening.aspx.cs
+
+
+git add WM/Controllers/MfManualReconciliationController.cs
+git add WM/Controllers/PsmController.cs
+git add WM/Masters/MfManualReconciliation.aspx
+git add WM/Masters/MfManualReconciliation.aspx.cs
+git add WM/Masters/MfManualReconciliation.aspx.designer.cs
+
+
+
+PSM_MF_RECO_MANUAL_RTA1
+PSM_MF_RECO_MANUAL_TR1

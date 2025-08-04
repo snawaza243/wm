@@ -1,0 +1,763 @@
+  <script>
+      $(document).ready(function () {
+
+
+          // --------- LOADER -------------
+          function showLoader() {
+              if ($('#customLoader').length) {
+                  $('#customLoader').show();
+                  return;
+              }
+
+              const loaderHtml = `
+      <div id="customLoader" style="
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background-color: rgba(0,0,0,0.2);
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          z-index: 9999;">
+          <div style="
+              background-color: white;
+              color: black;
+              padding: 20px 30px;
+              width: 250px;
+              text-align: center;
+              border-radius: 5px;
+              font-weight: bold;
+              font-size: 16px;">
+              Please wait...
+          </div>
+      </div>
+  `;
+              $('body').append(loaderHtml);
+          }
+
+          function hideLoader() {
+              $('#customLoader').fadeOut(300, function () {
+                  $(this).remove(); // Optional: remove from DOM
+              });
+          }
+
+          // Global AJAX loader handlers
+          $(document).ajaxStart(function () {
+              showLoader();
+          });
+
+          $(document).ajaxStop(function () {
+              hideLoader();
+          });
+          // --------- LOADER -------------
+
+
+
+
+          function formatDateToDMY(dateStr) {
+              if (!dateStr) return '';
+
+              const date = new Date(dateStr);
+
+              if (isNaN(date.getTime())) return '';
+
+              const day = ('0' + date.getDate()).slice(-2);
+              const month = ('0' + (date.getMonth() + 1)).slice(-2);
+              const year = date.getFullYear();
+
+              return `${day}/${month}/${year}`;
+          }
+
+          function enableAutoDateFormat(inputId) {
+              const $input = $("#" + inputId);
+
+
+              // Auto-format on input
+              $input.on("input", function () {
+                  let val = $(this).val().replace(/\D/g, ""); // Only digits
+                  if (val.length > 8) val = val.slice(0, 8);
+
+                  let formatted = val;
+                  if (val.length > 4) {
+                      formatted = val.slice(0, 2) + '/' + val.slice(2, 4) + '/' + val.slice(4);
+                  } else if (val.length > 2) {
+                      formatted = val.slice(0, 2) + '/' + val.slice(2);
+                  }
+
+                  $(this).val(formatted);
+              });
+
+              // Validate on blur
+              $input.on("blur", function () {
+                  let val = $(this).val();
+
+                  if (val === "") {
+                      // Empty is allowed → reset any invalid styling
+                      $(this).removeClass('invalid-date');
+                      return;
+                  }
+
+                  if (!isValidDate(val)) {
+                      //$(this).val(''); // Clear invalid input
+                      $(this).addClass('invalid-date'); // Add red border via CSS class
+                  } else {
+                      $(this).removeClass('invalid-date'); // Remove red border if valid
+                  }
+              });
+
+              // Helper function: validate dd/mm/yyyy format and actual date
+              function isValidDate(dateStr) {
+                  const regex = /^(\d{2})\/(\d{2})\/(\d{4})$/;
+                  const match = dateStr.match(regex);
+                  if (!match) return false;
+
+                  const day = parseInt(match[1], 10);
+                  const month = parseInt(match[2], 10) - 1; // JS months: 0–11
+                  const year = parseInt(match[3], 10);
+
+                  const date = new Date(year, month, day);
+                  return (
+                      date.getFullYear() === year &&
+                      date.getMonth() === month &&
+                      date.getDate() === day
+                  );
+              }
+          }
+
+          function clearDropdown(dropdownId) {
+              $("#" + dropdownId).empty();
+          }
+
+          function makeTableColumnsResizable(tableId) {
+              // Check if CSS for this tableId already exists
+              if (!document.getElementById("resizableTableStyles_" + tableId)) {
+                  const css = `
+          #${tableId} {
+              table-layout: fixed;
+              width: 100%;
+          }
+
+          #${tableId} th {
+              width: 150px;
+              position: relative;
+              overflow: hidden;
+          }
+
+          #${tableId} .resizer {
+              position: absolute;
+              right: 0;
+              top: 0;
+              width: 5px;
+              height: 100%;
+              cursor: col-resize;
+              user-select: none;
+              z-index: 1;
+          }
+
+          #${tableId} th:hover .resizer {
+              background-color: rgba(0, 0, 0, 0.1);
+          }
+      `;
+
+                  const style = document.createElement("style");
+                  style.id = "resizableTableStyles_" + tableId;
+                  style.innerHTML = css;
+                  document.head.appendChild(style);
+              }
+
+              const table = document.getElementById(tableId);
+              const ths = table.querySelectorAll("th");
+
+              ths.forEach(th => {
+                  if (!th.style.width) {
+                      th.style.width = th.offsetWidth + "px";
+                  }
+
+                  const resizer = document.createElement("div");
+                  resizer.classList.add("resizer");
+                  th.appendChild(resizer);
+
+                  let startX, startWidth;
+
+                  resizer.addEventListener("mousedown", function (e) {
+                      startX = e.pageX;
+                      startWidth = th.offsetWidth;
+
+                      function onMouseMove(e) {
+                          const newWidth = startWidth + (e.pageX - startX);
+                          th.style.width = newWidth + "px";
+                      }
+
+                      function onMouseUp() {
+                          document.removeEventListener("mousemove", onMouseMove);
+                          document.removeEventListener("mouseup", onMouseUp);
+                      }
+
+                      document.addEventListener("mousemove", onMouseMove);
+                      document.addEventListener("mouseup", onMouseUp);
+
+                      e.preventDefault();
+                  });
+              });
+          }
+
+
+
+          function loadChannelList() {
+              $.ajax({
+                  type: "POST",
+                  url: "/masters/mf_ar_reconsilation.aspx/GetChannelList", // Replace with actual ASPX page name
+                  contentType: "application/json; charset=utf-8",
+                  dataType: "json",
+                  beforeSend: function () {
+                      showLoader();
+                  },
+
+                  success: function (res) {
+                      let { data } = JSON.parse(res.d);
+                      data.unshift({ text: "All", value: "" });
+                      let optionsHtml = data.map(r => `<option value="${r.value}">${r.text}</option>`);
+                      $("#ddlChannel").html(optionsHtml.join(''));
+                  },
+                  error: function (xhr, status, error) {
+                      alert("Failed to load channel list: " + error);
+                  },
+                  complete: function () {
+                      hideLoader();
+                  }
+
+              });
+          }
+
+          function loadRegionList() {
+              $.ajax({
+                  type: "POST",
+                  url: "/masters/mf_ar_reconsilation.aspx/GetRegionList",
+                  contentType: "application/json; charset=utf-8",
+                  dataType: "json",
+                  data: JSON.stringify({}), // Required for WebMethod, even if no params
+                  success: function (res) {
+                      let { data } = JSON.parse(res.d);
+                      data.unshift({ text: "All", value: "" });
+                      let optionsHtml = data.map(r => `<option value="${r.value}">${r.text}</option>`);
+                      $("#ddlRegion").html(optionsHtml.join(''));
+                  },
+                  error: function (xhr, status, error) {
+                      alert("Failed to load region list: " + error);
+                  }
+              });
+          }
+
+          function loadBranchList() {
+              $.ajax({
+                  type: "POST",
+                  url: "/masters/mf_ar_reconsilation.aspx/GetBranchList", // Replace with actual ASPX page name
+                  contentType: "application/json; charset=utf-8",
+                  dataType: "json",
+                  success: function (res) {
+                      let { data } = JSON.parse(res.d);
+                      data.unshift({ text: "All", value: "" });
+                      let optionsHtml = data.map(r => `<option value="${r.value}">${r.text}</option>`);
+                      $("#ddlBranch").html(optionsHtml.join(''));
+                      $("#ddlRtaBranch").html(optionsHtml.join(''));
+                  },
+                  error: function (xhr, status, error) {
+                      alert("Failed to load TR AMC list: " + error);
+                  }
+              });
+          }
+
+          function loadAMCList() {
+              $.ajax({
+                  type: "POST",
+                  url: "/masters/mf_ar_reconsilation.aspx/GetAMCList", // Replace with actual ASPX page name
+                  contentType: "application/json; charset=utf-8",
+                  dataType: "json",
+                  success: function (res) {
+                      let { data } = JSON.parse(res.d);
+                      data.unshift({ text: "All", value: "" });
+                      let optionsHtml = data.map(r => `<option value="${r.value}">${r.text}</option>`);
+                      $("#ddlAMC").html(optionsHtml.join(''));
+                      $("#ddlRtaAMC").html(optionsHtml.join(''));
+                  },
+                  error: function (xhr, status, error) {
+                      alert("Failed to load TR AMC list: " + error);
+                  }
+              });
+          }
+
+          function loadRMList() {
+              $.ajax({
+                  type: "POST",
+                  url: "/masters/mf_ar_reconsilation.aspx/GetRmList", // Replace with actual ASPX page name
+                  contentType: "application/json; charset=utf-8",
+                  dataType: "json",
+                  success: function (res) {
+                      let { data } = JSON.parse(res.d);
+                      data.unshift({ text: "All", value: "" });
+                      let optionsHtml = data.map(r => `<option value="${r.value}">${r.text}</option>`);
+                      $("#ddlRM").html(optionsHtml.join(''));
+                  },
+                  error: function (xhr, status, error) {
+                      alert("Failed to load TR AMC list: " + error);
+                  }
+              });
+          }
+
+          function loadBranchByChannel(channelCode) {
+              $.ajax({
+                  url: "/masters/mf_ar_reconsilation.aspx/GetBranchListByChannel",
+                  method: "POST",
+                  data: JSON.stringify({ channel: channelCode }),
+                  contentType: "application/json; charset=utf-8",
+                  dataType: "json",
+                  success: function (res) {
+                      let { data } = JSON.parse(res.d);
+                      data.unshift({ text: "All", value: "" });
+                      let options = data.map(x => `<option value="${x.value}">${x.text}</option>`);
+                      $("#ddlBranch").html(options.join(''));
+                  }
+              });
+          }
+
+          function loadRegionByChannel(channelCode) {
+              $.ajax({
+                  url: "/masters/mf_ar_reconsilation.aspx/GetRegionListByChannel",
+                  method: "POST",
+                  data: JSON.stringify({ channel: channelCode }),
+                  contentType: "application/json; charset=utf-8",
+                  dataType: "json",
+                  success: function (res) {
+                      let { data } = JSON.parse(res.d);
+                      data.unshift({ text: "All", value: "" });
+                      let options = data.map(x => `<option value="${x.value}">${x.text}</option>`);
+                      $("#ddlRegion").html(options.join(''));
+                  }
+              });
+          }
+
+          function loadZoneByChannel(channelCode) {
+              $.ajax({
+                  url: "/masters/mf_ar_reconsilation.aspx/GetZoneListByChannel",
+                  method: "POST",
+                  data: JSON.stringify({ channel: channelCode }),
+                  contentType: "application/json; charset=utf-8",
+                  dataType: "json",
+                  success: function (res) {
+                      let { data } = JSON.parse(res.d);
+                      data.unshift({ text: "All", value: "" });
+                      let options = data.map(x => `<option value="${x.value}">${x.text}</option>`);
+                      $("#ddlZone").html(options.join(''));
+                  }
+              });
+          }
+
+          function loadRMListByBrnach(value) {
+              $.ajax({
+                  url: "/masters/mf_ar_reconsilation.aspx/GetRmListByBranch",
+                  method: "POST",
+                  data: JSON.stringify({ branchCode: value }), // 🔥 CORRECT HERE
+                  contentType: "application/json; charset=utf-8",
+                  dataType: "json",
+                  success: function (res) {
+                      let { data } = JSON.parse(res.d);
+                      data.unshift({ text: "All", value: "" });
+                      let options = data.map(x => `<option value="${x.value}">${x.text}</option>`);
+                      $("#ddlRM").html(options.join(''));
+                      //alert(data.length);
+                  },
+                  error: function (xhr, status, error) {
+                      alert("Error loading RM list: " + xhr.responseText);
+                  }
+              });
+
+          }
+
+
+
+          function loadTRList() {
+
+              const channel = $('#ddlChannel').val() || '';
+              const region = $('#ddlRegion').val() || '';
+              const zone = $('#ddlZone').val() || '';
+              const branch = $('#ddlBranch').val() || '';
+              const rm = $('#ddlRM').val() || '';
+              const dateFrom = '01/06/2025'; // $('#txtDateFrom').val() || '';
+              const dateTo = '05/06/2025'; // $('#txtDateTo').val() || '';
+              const amc = $('#ddlAMC').val() || '';
+
+              const reconciliationStatus = $('input[name="reco"]:checked').val() || '';
+              const cobFlag = $('#chkTrCOB').is(':checked') ? 'Y' : 'N';
+              const tranType = $('input[name="tranType"]:checked').val() || '';
+              const registrar = $('input[name="registrar"]:checked').val() || '';
+              const arNo = $('#txtARNo').val() || '';
+
+              alert(
+                  `Transaction Filter Values:\n\n` +
+                  `Channel: ${channel}\n` +
+                  `Region: ${region}\n` +
+                  `Zone: ${zone}\n` +
+                  `Branch: ${branch}\n` +
+                  `RM: ${rm}\n` +
+                  `Date From: ${dateFrom}\n` +
+                  `Date To: ${dateTo}\n` +
+                  `AMC: ${amc}\n` +
+                  `Reconciliation Status: ${reconciliationStatus}\n` +
+                  `COB Flag: ${cobFlag}\n` +
+                  `Tran Type: ${tranType}\n` +
+                  `Registrar: ${registrar}\n` +
+                  `AR No: ${arNo}`
+              );
+
+
+              $.ajax({
+                  url: "/masters/mf_ar_reconsilation.aspx/GetTRList",
+                  method: "POST",
+                  contentType: "application/json; charset=utf-8",
+                  dataType: "json",
+                  data: JSON.stringify({
+                      channel, region, zone, branch, rm,
+                      dateFrom, dateTo, amc, arNo,
+                      reconciliationStatus, cobFlag,
+                      tranType, registrar
+                  }),
+                  success: function (res) {
+                      let { data } = JSON.parse(res.d);
+
+                      if (!data || data.length === 0) {
+                          $("#transactionTable tbody").html(`
+              <tr><td colspan="38" class="text-center text-danger">No records found</td></tr>
+          `);
+                          return;
+                      }
+
+                      let rows = data.map(tr => `
+          <tr>
+              <td>${tr.TRAN_CODE || ''}</td>
+              <td>${formatDateToDMY(tr.TR_DATE)}</td>
+              <td>${tr.INVESTOR_NAME || ''}</td>
+              <td>${tr.ADDRESS1 || ''}</td>
+              <td>${tr.CITY_NAME || ''}</td>
+              <td>${tr.MUT_NAME || ''}</td>
+              <td>${tr.SCH_NAME || ''}</td>
+              <td>${tr.AMOUNT || ''}</td>
+              <td>${tr.BANK_NAME || ''}</td>
+              <td>${tr.RM_NAME || ''}</td>
+              <td>${tr.BRANCH_NAME || ''}</td>
+              <td>${tr.RM_CODE || ''}</td>
+              <td>${tr.PANNO || ''}</td>
+              <td>${tr.CHEQUE_NO || ''}</td>
+              <td>${tr.CHEQUE_DATE || ''}</td>
+              <td>${tr.FOLIO_NO || ''}</td>
+              <td>${tr.BROKER_ID || ''}</td>
+              <td>${tr.SIP_AMOUNT || ''}</td>
+              <td>${tr.REGISTRAR || ''}</td>
+              <td>${tr.SOURCE_CODE || ''}</td>
+              <td>${tr.DISPATCH || ''}</td>
+              <td>${tr.COB_FLAG || ''}</td>
+              <td>${tr.CLIENT_CODE || ''}</td>
+              <td>${tr.SCH_CODE || ''}</td>
+              <td>${tr.MUT_CODE || ''}</td>
+              <td>${tr.TRAN_TYPE || ''}</td>
+              <td>${tr.APP_NO || ''}</td>
+              <td>${tr.PAYMENT_MODE || ''}</td>
+              <td>${tr.SIP_TYPE || ''}</td>
+              <td>${tr.LEAD_NO || ''}</td>
+              <td>${tr.LEAD_NAME || ''}</td>
+              <td>${tr.BRANCH_CODE || ''}</td>
+              <td>${tr.BUSINESS_RMCODE || ''}</td>
+              <td>${tr.TRAN_TYPE || ''}</td>
+              <td>${tr.SIP_TYPE || ''}</td>
+              <td>${tr.REMARK || ''}</td>
+              <td>${tr.LOGGEDUSER || ''}</td>
+          </tr>
+      `).join('');
+
+                      $("#transactionTable tbody").html(rows);
+                      $("#lblTrCount").text(`${data.length}`);
+
+                  },
+                  error: function (xhr, status, error) {
+                      console.error("Failed to load TR list:", error);
+                      $("#transactionTable tbody").html(`
+          <tr><td colspan="38" class="text-center text-danger">Error loading data</td></tr>
+      `);
+                      $("#lblTrCount").text(`0`);
+
+                  }
+              });
+
+
+          }
+
+          function setRegistrarRadio(registrar, cobfl) {
+              let registrarVal = "";
+
+              if (registrar === "C" && cobfl === "0") {
+                  registrarVal = "c";
+              } else if (registrar === "K" && cobfl === "0") {
+                  registrarVal = "k";
+              } else if (registrar === "C" && cobfl === "1") {
+                  registrarVal = "ccob";
+              } else if (registrar === "K" && cobfl === "1") {
+                  registrarVal = "kcob";
+              }
+
+              if (registrarVal) {
+                  $('input[name="registrar"][value="' + registrarVal + '"]').prop('checked', true);
+              }
+          }
+
+          function setHiddenTransactionValues(trCode, trAmount, chequeNo, folioNo, appNo, panNo, brokerId, rtaCode, rtaAmount) {
+              $('#hdnTrCode').text(trCode);
+              $('#hdnTrAmount').text(trAmount);
+              $('#hdnTrChe').text(chequeNo);
+              $('#hdnTrFolio').text(folioNo);
+              $('#hdnTrApp').text(appNo);
+              $('#hdnTrPan').text(panNo);
+              $('#hdnTrBroker').text(brokerId);
+              $('#hdnRtaCode').text(rtaCode);
+              $('#hdnRtaAmount').text(rtaAmount);
+          }
+
+          //setRtaFromToDatesByTrDate(rowObj.TR_DATE);
+
+          function setRtaFromToDatesByTrDate(tranDateStr) {
+              if (/^\d{2}\/\d{2}\/\d{4}$/.test(tranDateStr)) {
+                  const [dd, mm, yyyy] = tranDateStr.split('/');
+                  const originalDate = new Date(`${yyyy}-${mm}-${dd}`);
+
+                  if (!isNaN(originalDate)) {
+                      const before = new Date(originalDate);
+                      before.setMonth(before.getMonth() - 1);
+
+                      const after = new Date(originalDate);
+                      after.setMonth(after.getMonth() + 1);
+
+                      const format = (d) => ("0" + d.getDate()).slice(-2) + "/" + ("0" + (d.getMonth() + 1)).slice(-2) + "/" + d.getFullYear();
+
+                      $('#txtRtaDateFrom').val(format(before));
+                      $('#txtRtaDateTo').val(format(after));
+                  } else {
+                      $('#txtRtaDateFrom').val('');
+                      $('#txtRtaDateTo').val('');
+                  }
+              } else {
+                  $('#txtRtaDateFrom').val('');
+                  $('#txtRtaDateTo').val('');
+              }
+          }
+
+
+          function setRtaFields({ 
+              amc,
+              branch,
+              status,
+              tranType,
+              investorName,
+              amount,
+              remarks
+          }) {
+              
+              $('#ddlRtaAMC').val(amc || '');
+              $('#ddlRtaBranch').val(branch || '');
+
+              if (status) {
+                  $(`input[name="status"][value="${status}"]`).prop('checked', true);
+              }
+
+              if (tranType) {
+                  $(`input[name="tranType"][value="${tranType}"]`).prop('checked', true);
+              }
+
+              $('#tstRtaInvestorName').val(investorName || '');
+              $('#txtRtaAmount').val(amount || '');
+              $('#txtRtaRemarks').val(remarks || '');
+          }
+
+ 
+
+
+          loadChannelList();
+          loadRegionList();
+          loadBranchList();
+          loadAMCList();
+          loadRMList();
+          $('#tranRegular').prop('checked', true);
+          enableAutoDateFormat("txtDateFrom");
+          enableAutoDateFormat("txtDateTo");
+          enableAutoDateFormat("txtRtaDateFrom");
+          enableAutoDateFormat("txtRtaDateTo");
+          makeTableColumnsResizable("transactionTable");
+          makeTableColumnsResizable("rtaGrid");
+          makeTableColumnsResizable("tranCodeGrid");
+
+
+
+
+
+          $("#ddlChannel").change(function () {
+              let channelCode = $(this).val();
+              if (!channelCode || channelCode == null) {
+                  loadRegionList();
+                  loadBranchList();
+                  clearDropdown("ddlZone");
+              } else {
+                  loadRegionByChannel(channelCode);
+                  loadBranchByChannel(channelCode);
+                  loadZoneByChannel(channelCode);
+              }
+              loadRMList();
+          });
+
+          $("#ddlBranch").change(function () {
+              let value = $(this).val();
+
+              if (!value || value === null) {
+                  alert('by load');
+                  loadRMList();
+              } else {
+                  loadRMListByBrnach(value);
+              }
+          });
+
+          $("#btnTrFind").click(function () {
+              loadTRList();
+          });
+
+        
+
+          $('#transactionTable tbody').on('click', 'tr', function () {
+              // Remove previous selection
+              $('#transactionTable tbody tr').removeClass('row-selected');
+              $(this).addClass('row-selected');
+
+              // Get header names from <thead>
+              const headers = [];
+              $('#transactionTable thead th').each(function () {
+                  headers.push($(this).text().trim());
+              });
+
+              // Prepare object to store values
+              let rowObj = {};
+              $(this).find('td').each(function (index) {
+                  const key = headers[index];
+                  const value = $(this).text().trim();
+                  rowObj[key] = value;
+
+                  // Also store in hidden span
+                  const spanId = `rowData_${key.replace(/\s+/g, '_')}`;
+                  const $existing = $(`#${spanId}`);
+                  if ($existing.length) {
+                      $existing.text(value);
+                  } else {
+                      $('<span>', {
+                          id: spanId,
+                          class: 'hidden-row-data',
+                          text: value,
+                          style: 'display:none;'
+                      }).appendTo('body'); // Or any container you prefer
+                  }
+              });
+
+              // Now you can access named variables like:
+              const TRAN_CODE = rowObj["TRAN_CODE"];
+              const TR_DATE = rowObj["TR_DATE"];
+              const INVESTOR_NAME = rowObj["INVESTOR_NAME"];
+              const ADDRESS1 = rowObj["ADDRESS1"];
+              const CITY_NAME = rowObj["CITY_NAME"];
+              const MUT_NAME = rowObj["MUT_NAME"];
+              const SCH_NAME = rowObj["SCH_NAME"];
+              const AMOUNT = rowObj["AMOUNT"];
+              const BANK_NAME = rowObj["BANK_NAME"];
+              const RM_NAME = rowObj["RM_NAME"];
+              const BRANCH_NAME = rowObj["BRANCH_NAME"];
+              const RM_CODE = rowObj["RM_CODE"];
+              const PANNO = rowObj["PANNO"];
+              const CHEQUE_NO = rowObj["CHEQUE_NO"];
+              const CHEQUE_DATE = rowObj["CHEQUE_DATE"];
+              const FOLIO_NO = rowObj["FOLIO_NO"];
+              const BROKER_ID = rowObj["BROKER_ID"];
+              const SIP_AMOUNT = rowObj["SIP_AMOUNT"];
+              const REGISTRAR = rowObj["REGISTRAR"];
+              const SOURCE_CODE = rowObj["SOURCE_CODE"];
+              const DISPATCH = rowObj["DISPATCH"];
+              const COB_FLAG = rowObj["COB_FLAG"];
+              const CLIENT_CODE = rowObj["CLIENT_CODE"];
+              const SCH_CODE = rowObj["SCH_CODE"];
+              const MUT_CODE = rowObj["MUT_CODE"];
+              const TRAN_TYPE = rowObj["TRAN_TYPE"];
+              const APP_NO = rowObj["APP_NO"];
+              const PAYMENT_MODE = rowObj["PAYMENT_MODE"];
+              const SIP_TYPE = rowObj["SIP_TYPE"];
+              const LEAD_NO = rowObj["LEAD_NO"];
+              const LEAD_NAME = rowObj["LEAD_NAME"];
+              const BRANCH_CODE = rowObj["BRANCH_CODE"];
+              const BUSINESS_RMCODE = rowObj["BUSINESS_RMCODE"];
+              const REMARK = rowObj["REMARK"];
+              const LOGGEDUSER = rowObj["LOGGEDUSER"];
+
+              setHiddenTransactionValues(
+                  rowObj.TRAN_CODE,
+                  rowObj.AMOUNT,
+                  rowObj.CHEQUE_NO,
+                  rowObj.FOLIO_NO,
+                  rowObj.APP_NO,
+                  rowObj.PANNO,
+                  rowObj.BROKER_ID,
+                  null,   // Assuming REGISTRAR is your RTA code
+                  null   // Assuming SIP_AMOUNT is your RTA amount
+              );
+
+              setRtaFromToDatesByTrDate(fromDate: rowObj.TR_DATE); // This is the key part for dates
+
+              setRtaFields({
+                  amc: rowObj.MUT_CODE,
+                  branch: rowObj.BRANCH_CODE,
+                  status: 'N',
+                  tranType: 'REGULAR',
+                  investorName: rowObj.INVESTOR_NAME,
+                  amount: rowObj.AMOUNT,
+                  remarks: rowObj.REMARK
+              });
+
+
+
+              let rowDetails = Object.entries(rowObj)
+                  .map(([key, value]) => `${key}: ${value}`)
+                  .join('\n');
+
+              alert("Clicked Row Data:\n" + rowDetails);
+          });
+
+          $('#ddlRtaCheque').on('change', function () {
+              const selectedCode = $(this).val();
+              let valueToSet = '';
+
+              switch (selectedCode) {
+                  case '001':
+                      valueToSet = $('#hdnTrChe').text();
+                      break;
+                  case '002':
+                      valueToSet = $('#hdnTrFolio').text();
+                      break;
+                  case '003':
+                      valueToSet = $('#hdnTrApp').text();
+                      break;
+                  case '004':
+                      valueToSet = $('#hdnTrPan').text();
+                      break;
+                  case '005':
+                      valueToSet = $('#hdnTrBroker').text();
+                      break;
+                  default:
+                      valueToSet = '';
+              }
+
+              $('#txtRtaChequeNo').val(valueToSet);
+          });
+
+      });
+  </script>

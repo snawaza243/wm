@@ -1,0 +1,46 @@
+ $('#transactionTable tbody').on('click', 'tr', function () {
+     // Remove previous selection
+     $('#transactionTable tbody tr').removeClass('row-selected');
+
+     // Add selection highlight
+     $(this).addClass('row-selected');
+
+     // Collect data from each cell
+     let rowData = [];
+     $(this).find('td').each(function () {
+         rowData.push($(this).text().trim());
+     });
+
+     // Store in hidden spans (for example inside a container div)
+     let hiddenSpans = rowData.map((val, idx) =>
+         `<span class="hidden-row-data" id="rowData_${idx}" style="display:none;">${val}</span>`
+     );
+
+     // Append or replace in a container
+     $('#hiddenDataContainer').html(hiddenSpans.join(''));
+
+
+     let tranCode = $('#rowData_0').text(); // Example: 2nd column (index starts from 0)
+
+     let registrar = $('#rowData_6').text();
+     let clob_flag = $('#rowData_7').text();
+
+
+
+     let chkNo = $('#rowData_1').text();
+     let folioNo = $('#rowData_2').text();
+     let appNo = $('#rowData_3').text();
+     let panNo = $('#rowData_4').text();
+     let brockerId = $('#rowData_5').text();
+
+
+     setRegistrarRadio(registrar, clob_flag)
+
+     const ddlRtaChkData = [chkNo, folioNo, appNo, panNo, brockerId];
+     populateDropdownWithValues(ddlRtaChkData);
+
+     if (tranCode) {
+         alert('Click row tr = ' + tranCode);
+         return;
+     }
+ });
