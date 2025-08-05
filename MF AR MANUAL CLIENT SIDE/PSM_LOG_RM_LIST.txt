@@ -5,50 +5,28 @@ P_BY_VALUE      IN VARCHAR2,
 P_LOG_ID        IN VARCHAR2,
 P_ROLE_ID       IN VARCHAR2,
 P_CURSOR         OUT SYS_REFCURSOR  
-
 )
-AS
+IS
+V_QUERY         VARCHAR2(4000);
 BEGIN 
 
-    IF P_FOR = 'MF_AR_MANUAL_RECO' THEN  
-        IF P_BY IS NOT NULL THEN
-            IF P_BY = 'CHANNEL' THEN
-                OPEN P_CURSOR FOR                    
-                    SELECT RM_NAME, PAYROLL_ID, RM_CODE
-                    FROM EMPLOYEE_MASTER
-                    WHERE 1 = 1
-                    AND TYPE = 'A' 
-                    AND CATEGORY_ID IN (2001, 2018)
-                    AND SOURCE IN (SELECT BRANCH_ID FROM USERDETAILS_JI WHERE LOGIN_ID = P_LOG_ID AND ROLE_ID=P_ROLE_ID)
-                    ORDER BY RM_NAME;
-            ELSIF P_BY = 'BRANCH' THEN
-                OPEN P_CURSOR FOR 
-                    SELECT RM_NAME, PAYROLL_ID
-                    FROM EMPLOYEE_MASTER
-                    WHERE 1 = 1
-                    AND SOURCE IN (SELECT BRANCH_ID FROM USERDETAILS_JI WHERE LOGIN_ID = P_LOG_ID AND ROLE_ID=P_ROLE_ID)
-                    AND TYPE = 'A'
-                    AND CATEGORY_ID IN (2001, 2018)
-                    AND SOURCE = P_BY_VALUE
-                    ORDER BY RM_NAME;
-            END IF;
-        ELSE
-            OPEN P_CURSOR FOR 
-                    SELECT RM_NAME, PAYROLL_ID, RM_CODE
-                    FROM EMPLOYEE_MASTER
-                    WHERE 1 = 1
-                    AND TYPE = 'A' 
-                    AND CATEGORY_ID IN (2001, 2018)
-                    AND SOURCE IN (SELECT BRANCH_ID FROM USERDETAILS_JI WHERE LOGIN_ID = P_LOG_ID AND ROLE_ID=P_ROLE_ID)
-                    ORDER BY RM_NAME;
-        END IF;
-    ELSE
-        OPEN P_CURSOR FOR 
-            SELECT RM_NAME, PAYROLL_ID, RM_CODE
-            FROM EMPLOYEE_MASTER
-            WHERE 1 = 1
-            AND TYPE = 'A'
-            AND SOURCE IN (SELECT BRANCH_ID FROM USERDETAILS_JI WHERE LOGIN_ID = P_LOG_ID AND ROLE_ID=P_ROLE_ID)
-            ORDER BY RM_NAME;
-    END IF;  
+    V_QUERY := 'SELECT RM_NAME, PAYROLL_ID, RM_CODE ';
+    V_QUERY := V_QUERY|| ' FROM EMPLOYEE_MASTER EM ';
+    --V_QUERY := V_QUERY|| ' JOIN BRANCH_MASTER BM ON EM.SOURCE = BM.BRANCH_CODE ';
+    V_QUERY := V_QUERY|| ' WHERE 1=1 AND TYPE = ''A'' ';
+    V_QUERY := V_QUERY|| ' AND SOURCE IN (SELECT BRANCH_ID FROM USERDETAILS_JI WHERE LOGIN_ID = '''||P_LOG_ID||''' AND ROLE_ID='''||P_ROLE_ID||''') ';
+
+    IF P_FOR = 'MF_AR_MANUAL_RECO' THEN 
+        V_QUERY := V_QUERY|| ' AND CATEGORY_ID IN (''2001'', ''2018'') ';
+    END IF;
+
+    IF P_BY = 'BRANCH' AND P_BY_VALUE IS NOT NULL THEN
+        V_QUERY := V_QUERY|| ' AND SOURCE = '''||P_BY_VALUE||''' ';
+    END IF;
+    
+    V_QUERY := V_QUERY|| ' ORDER BY RM_NAME ';
+    
+    OPEN P_CURSOR FOR V_QUERY;
+    --OPEN P_CURSOR FOR select V_QUERY from dual;
 END;
+/

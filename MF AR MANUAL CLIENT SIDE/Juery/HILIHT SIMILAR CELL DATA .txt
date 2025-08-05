@@ -1,0 +1,278 @@
+🔹 2. Allow Partial or Approximate Matching
+
+if (rtaValue.includes(selectedValues[header]) || selectedValues[header].includes(rtaValue)) {
+    $(this).css('background-color', '#d4edda');
+}
+
+
+function levenshtein(a, b) {
+    const m = [], al = a.length, bl = b.length;
+    for (let i = 0; i <= al; i++) m[i] = [i];
+    for (let j = 0; j <= bl; j++) m[0][j] = j;
+
+    for (let i = 1; i <= al; i++) {
+        for (let j = 1; j <= bl; j++) {
+            m[i][j] = a[i - 1] === b[j - 1]
+                ? m[i - 1][j - 1]
+                : Math.min(m[i - 1][j - 1] + 1, m[i][j - 1] + 1, m[i - 1][j] + 1);
+        }
+    }
+    return m[al][bl];
+}
+
+
+const distance = levenshtein(rtaValue, selectedValues[header]);
+if (distance <= 2) { // Allow up to 2 characters difference
+    $(this).css('background-color', '#d4edda');
+}
+
+
+----- FUNCTIONS 
+
+            function highlightMatchingRTAColumns_0() {
+                const $rtaTable = $('#rtaGrid');
+                const $transTable = $('#transactionTable');
+
+                // Get header texts from both tables
+                const rtaHeaders = [];
+                $rtaTable.find('thead th').each(function () {
+                    rtaHeaders.push($(this).text().trim());
+                });
+
+                const transHeaders = [];
+                $transTable.find('thead th').each(function () {
+                    transHeaders.push($(this).text().trim());
+                });
+
+                // Loop through each row in rtaGrid
+                $rtaTable.find('tbody tr').each(function (rowIndex) {
+                    const $rtaRow = $(this);
+                    const $transRow = $transTable.find('tbody tr').eq(rowIndex); // Matching row
+
+                    if ($transRow.length === 0) return; // No matching row, skip
+
+                    // Loop each column
+                    $rtaRow.find('td').each(function (colIndex) {
+                        const header = rtaHeaders[colIndex];
+
+                        if (!header) return;
+
+                        // Check if this header exists in transactionTable
+                        const transColIndex = transHeaders.indexOf(header);
+                        if (transColIndex === -1) return; // No match, skip
+
+                        // Get the cell values
+                        const rtaValue = $(this).text().trim();
+                        const transValue = $transRow.find('td').eq(transColIndex).text().trim();
+
+                        // Compare values
+                        if (rtaValue && transValue && rtaValue === transValue) {
+                            // Match found: highlight in light green
+                            $(this).css('background-color', '#d4edda'); // Bootstrap's light green
+                        }
+                    });
+                });
+            }
+
+
+            function highlightMatchingRTAColumns_1() {
+                const $transTable = $('#transactionTable');
+                const $rtaTable = $('#rtaGrid');
+
+                // Get headers
+                const transHeaders = [];
+                $transTable.find('thead th').each(function () {
+                    transHeaders.push($(this).text().trim());
+                });
+
+                const rtaHeaders = [];
+                $rtaTable.find('thead th').each(function () {
+                    rtaHeaders.push($(this).text().trim());
+                });
+
+                // Get the selected row from transactionTable
+                const $selectedRow = $transTable.find('tbody tr.row-selected');
+                if ($selectedRow.length === 0) {
+                    alert("No selected row found in transactionTable.");
+                    return;
+                }
+
+                // Extract selected row values
+                const selectedValues = {};
+                $selectedRow.find('td').each(function (i) {
+                    const key = transHeaders[i];
+                    const value = $(this).text().trim().toLowerCase();
+                    selectedValues[key] = value;
+                });
+
+                // Loop through all rows in rtaGrid
+                $rtaTable.find('tbody tr').each(function () {
+                    const $rtaRow = $(this);
+
+                    $rtaRow.find('td').each(function (i) {
+                        const header = rtaHeaders[i];
+                        if (!header) return;
+
+                        // Only compare if header exists in both
+                        if (selectedValues.hasOwnProperty(header)) {
+                            const rtaValue = $(this).text().trim().toLowerCase();
+                            if (rtaValue.includes(selectedValues[header]) || selectedValues[header].includes(rtaValue)) {
+                            //if (rtaValue === selectedValues[header]) {
+                                $(this).css('background-color', '#d4edda'); // light green
+                            } else {
+                                $(this).css('background-color', ''); // reset if no match
+                            }
+                        }
+                    });
+                });
+            }
+
+            function highlightMatchingRTAColumns_2() {
+                const columnMap = {
+                    "TRAN_CODE": "TRAN_CODE",
+                    "TR_DATE": "TRAN_DATE",
+                    "INVESTOR_NAME": "INVESTOR_NAME",
+                    "ADDRESS": "ADDRESS",
+                    "CITY_NAME": "CITY_NAME",
+                    "AMC_NAME": "AMC_NAME",
+                    "SCH_NAME": "SCHEME_NAME",
+                    "AMOUNT": "AMOUNT",
+                    "FOLIO_NO": "FOLIO_NO",
+                    "CHEQUE_NO": "CHEQUE_NO",
+                    "APP_NO": "APP_NO",
+                    "RM_NAME": "RM_NAME",
+                    "BRANCH_NAME": "BRANCH_NAME"
+                };
+
+                // Get transaction table headers (used for mapping)
+                const tranHeaders = [];
+                $('#transactionTable thead th').each(function () {
+                    tranHeaders.push($(this).text().trim().toUpperCase());
+                });
+
+                // Get selected row from transactionTable
+                const $selectedRow = $('#transactionTable tbody tr.row-selected');
+                if ($selectedRow.length === 0) {
+                    alert('No selected row found in transactionTable!');
+                    return;
+                }
+
+                // Extract values from the selected row
+                const selectedData = {};
+                $selectedRow.find('td').each(function (index) {
+                    const key = tranHeaders[index];
+                    const value = $(this).text().trim().toLowerCase();
+                    selectedData[key] = value;
+                });
+
+                // Get rtaGrid headers
+                const rtaHeaders = [];
+                $('#rtaGrid thead th').each(function () {
+                    rtaHeaders.push($(this).text().trim().toUpperCase());
+                });
+
+                // Loop through all rows in rtaGrid and highlight matching cells
+                $('#rtaGrid tbody tr').each(function () {
+                    $(this).find('td').each((index, cell) => {
+                        const rtaKey = rtaHeaders[index];
+                        const tranKey = Object.keys(columnMap).find(key => columnMap[key] === rtaKey);
+                        if (tranKey && selectedData[tranKey] !== undefined) {
+                            const rtaValue = $(cell).text().trim().toLowerCase();
+                            const tranValue = selectedData[tranKey];
+
+                            if (rtaValue === tranValue) {
+                                $(cell).css('background-color', '#d4edda'); // light green
+                            } else {
+                                $(cell).css('background-color', ''); // remove highlight if not matching
+                            }
+                        }
+                    });
+                });
+            }
+
+            function highlightMatchingRTAColumns() {
+                const columnMap = {
+                    "TRAN_CODE": "TRAN_CODE",
+                    "TR_DATE": "TRAN_DATE",
+                    "INVESTOR_NAME": "INVESTOR_NAME",
+                    "ADDRESS": "ADDRESS",
+                    "CITY_NAME": "CITY_NAME",
+                    "AMC_NAME": "AMC_NAME",
+                    "SCH_NAME": "SCHEME_NAME",
+                    "AMOUNT": "AMOUNT",
+                    "FOLIO_NO": "FOLIO_NO",
+                    "CHEQUE_NO": "CHEQUE_NO",
+                    "APP_NO": "APP_NO",
+                    "RM_NAME": "RM_NAME",
+                    "BRANCH_NAME": "BRANCH_NAME"
+                };
+
+                // Get headers from transactionTable
+                const tranHeaders = [];
+                $('#transactionTable thead th').each(function () {
+                    tranHeaders.push($(this).text().trim().toUpperCase());
+                });
+
+                const $selectedRow = $('#transactionTable tbody tr.row-selected');
+                if ($selectedRow.length === 0) {
+                    alert('No selected row found in transactionTable!');
+                    return;
+                }
+
+                // Extract selected row values
+                const selectedData = {};
+                $selectedRow.find('td').each(function (index) {
+                    const key = tranHeaders[index];
+                    const value = $(this).text().trim().toLowerCase();
+                    selectedData[key] = value;
+                });
+
+                // RTA grid headers
+                const rtaHeaders = [];
+                $('#rtaGrid thead th').each(function () {
+                    rtaHeaders.push($(this).text().trim().toUpperCase());
+                });
+
+                // Compare and highlight
+                $('#rtaGrid tbody tr').each(function () {
+                    $(this).find('td').each((index, cell) => {
+                        const rtaKey = rtaHeaders[index];
+                        const tranKey = Object.keys(columnMap).find(k => columnMap[k] === rtaKey);
+
+                        if (tranKey && selectedData[tranKey] !== undefined) {
+                            const rtaValue = $(cell).text().trim().toLowerCase();
+                            const tranValue = selectedData[tranKey];
+
+                            if (rtaValue === tranValue) {
+                                // Exact match – Strong green
+                                $(cell).css('background-color', '#28a745').css('color', '#fff');
+                            } else if (isPartialMatch(tranValue, rtaValue)) {
+                                // Partial match – Light green
+                                $(cell).css('background-color', '#a9dfbf');
+                            } else {
+                                // No match – Clear background
+                                $(cell).css('background-color', '').css('color', '');
+                            }
+                        }
+                    });
+                });
+
+                // Partial match helper
+                function isPartialMatch(text1, text2) {
+                    if (!text1 || !text2) return false;
+
+                    const words1 = text1.split(/\s+/);
+                    const words2 = text2.split(/\s+/);
+
+                    let matchCount = 0;
+
+                    for (const word1 of words1) {
+                        if (words2.includes(word1)) {
+                            matchCount++;
+                        }
+                    }
+
+                    const matchRatio = matchCount / Math.max(words1.length, words2.length);
+                    return matchRatio >= 0.5;
+                }
+            }
