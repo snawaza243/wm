@@ -1,0 +1,114 @@
+<!-- Add these to your head section -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/css/toastr.min.css" rel="stylesheet" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/js/toastr.min.js"></script>
+
+<script>
+// Initialize Toastr with your preferred settings
+toastr.options = {
+  "closeButton": true,
+  "debug": false,
+  "newestOnTop": true,
+  "progressBar": true,
+  "positionClass": "toast-top-right",
+  "preventDuplicates": false,
+  "onclick": null,
+  "showDuration": "300",
+  "hideDuration": "1000",
+  "timeOut": "5000",
+  "extendedTimeOut": "1000",
+  "showEasing": "swing",
+  "hideEasing": "linear",
+  "showMethod": "fadeIn",
+  "hideMethod": "fadeOut"
+};
+
+// Unconfirmation button click handler
+$('#btnRtaUncomfPMS').click(function() {
+    const trCode = $('#hdnTrCode').val().trim();
+    const remark = $('#txtUnconfirmRemarks').val().trim();
+    const selectedTranType = $('input[name="tranType"]:checked').val();
+    
+    const isPMS = (selectedTranType === 'pms');
+    const isATM = (selectedTranType === 'atm');
+
+    // Validation
+    if (!trCode) {
+        toastr.warning('Please select a transaction record first');
+        return;
+    }
+
+    if (isPMS && !remark) {
+        toastr.warning('Please enter remarks for PMS unconfirmation');
+        $('#txtUnconfirmRemarks').focus();
+        return;
+    }
+
+    if (!isPMS && !isATM) {
+        toastr.warning('Please select either PMS or ATM transaction type to unconfirm');
+        return;
+    }
+
+    // Confirmation dialog with SweetAlert or native confirm
+    if (confirm(`Are you sure you want to unconfirm this ${isPMS ? 'PMS' : 'ATM'} transaction?`)) {
+        onUnconfirmPMSATM(trCode, remark, isPMS, isATM);
+    }
+});
+
+// AJAX unconfirmation function with Toastr
+function onUnconfirmPMSATM(trCode, remark, isPMS, isATM) {
+    toastr.info('Processing unconfirmation...', 'Please wait');
+    
+    $.ajax({
+        type: "POST",
+        url: "/masters/mf_ar_reconsilation.aspx/RtaUnConfirmPMS",
+        contentType: "application/json; charset=utf-8",
+        dataType: "json",
+        data: JSON.stringify({ 
+            trCode: trCode,
+            remark: remark,
+            pmsStatus: isPMS,
+            atmStatus: isATM
+        }),
+        success: function(res) {
+            toastr.clear(); // Clear the "please wait" toast
+            try {
+                const response = res.d ? JSON.parse(res.d) : res;
+                
+                if (response.Success) {
+                    toastr.success(response.Message, 'Success');
+                    
+                    // Refresh grid after delay
+                    setTimeout(() => {
+                        $('#transactionGrid').DataTable().ajax.reload(null, false);
+                    }, 1500);
+                    
+                    // Reset form
+                    $('#hdnTrCode').val('');
+                    $('#txtUnconfirmRemarks').val('');
+                } else {
+                    toastr.error(response.Message || "Unconfirmation failed", 'Error');
+                }
+            } catch (e) {
+                console.error("Response parsing error:", e);
+                toastr.error("Error processing server response", 'System Error');
+            }
+        },
+        error: function(xhr) {
+            toastr.clear();
+            const errorMsg = getErrorMessageFromResponse(xhr);
+            toastr.error(errorMsg, 'Unconfirmation Failed');
+            console.error("Unconfirmation error:", xhr.responseText);
+        }
+    });
+}
+
+// Helper function to extract error message
+function getErrorMessageFromResponse(xhr) {
+    try {
+        const errResponse = JSON.parse(xhr.responseText);
+        return errResponse.Message || errResponse.message || xhr.statusText;
+    } catch (e) {
+        return xhr.statusText || "Connection error occurred";
+    }
+}
+</script>

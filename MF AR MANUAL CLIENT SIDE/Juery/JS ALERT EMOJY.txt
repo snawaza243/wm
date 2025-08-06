@@ -1,0 +1,7 @@
+alert(`✅ ${result.message}`);
+
+
+alert(`⚠️ ${result.message}`);
+
+
+alert(`❌ ${result.message}`);

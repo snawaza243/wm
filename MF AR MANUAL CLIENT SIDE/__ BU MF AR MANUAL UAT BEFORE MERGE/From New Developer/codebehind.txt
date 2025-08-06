@@ -1,0 +1,1114 @@
+using System;
+using System.Web.UI;
+using System.Web.UI.WebControls;
+using System.Data;
+using WM.Controllers;
+using WM.Models;
+using static System.Runtime.CompilerServices.RuntimeHelpers;
+using Oracle.ManagedDataAccess.Client;
+using System.Web.Configuration;
+using System.Configuration;
+using System.Collections.Generic;
+using System.Web.Script.Services;
+using NPOI.SS.Formula.Functions;
+using System.Linq;
+using MathNet.Numerics.LinearAlgebra.Factorization;
+using System.Globalization;
+
+namespace WM.Masters
+{
+    public partial class MfManualReconciliation : System.Web.UI.Page
+    {
+        PsmController pc = new PsmController();
+        // create login and role session 112650, 29
+
+        string selectedTrCode = string.Empty;
+        string selectedTranCode = string.Empty;
+        string selectedTranAmount = string.Empty;
+
+
+        protected void Page_Load(object sender, EventArgs e)
+        {
+            //Session["LoginId"] = "112650";
+            //Session["roleId"] = "29";
+
+            if (!IsPostBack)
+            {
+                FillAMCList();
+                FillChannelList();
+                fillRMListUNFILTERD();
+                fillbranchlkist("");
+                FillRegionList();
+
+                //txtDateFrom.Text = "01/06/2025";
+                //txtDateTo.Text = "05/06/2025";
+
+                txtDateFrom.Text = DateTime.Now.ToString("dd/MM/yyyy");
+                txtDateTo.Text = DateTime.Now.ToString("dd/MM/yyyy");
+            }
+
+            selectedTrCode = hftran1stcode.Value;
+            selectedTranCode = hfSelectedTranCode.Value;
+            selectedTranAmount = hfSelectedAmount.Value;
+            //upMain.Update();
+        }
+
+        #region FillChannelList
+        private void FillChannelList()
+        {
+            DataTable dt = new WM.Controllers.MfManualReconciliationController().GetChannelList();
+            ddlChannel.DataSource = dt;
+            ddlChannel.DataTextField = "itemname";  
+            ddlChannel.DataValueField = "itemserialnumber";   
+            ddlChannel.DataBind();
+            ddlChannel.Items.Insert(0, new ListItem("", ""));
+            ddlChannel.Items.Insert(1, new ListItem("All", ""));
+        }
+         
+        protected void ddlBranchCategory_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            string selectedItemSerial = ddlChannel.SelectedValue;
+            DataTable dt = new MfManualReconciliationController().GetBranchDetails(selectedItemSerial);
+
+            ddlBranch.DataSource = dt;
+            ddlBranch.DataTextField = "Branch_name";
+            ddlBranch.DataValueField = "Branch_code";
+            ddlBranch.DataBind();
+
+            DropDownList2.DataSource = dt;
+            DropDownList2.DataTextField = "Branch_name";
+            DropDownList2.DataValueField = "Branch_code";
+            DropDownList2.DataBind();
+
+            ddlBranch.Items.Insert(0, new ListItem("", ""));
+            DropDownList2.Items.Insert(0, new ListItem("", ""));
+
+            ddlBranch.Items.Insert(1, new ListItem("All", ""));
+            DropDownList2.Items.Insert(1, new ListItem("All", ""));
+
+
+            DataTable rdt = new MfManualReconciliationController().Getregionbychannel(selectedItemSerial);
+
+            ddlRegion.DataSource = rdt;
+            ddlRegion.DataTextField = "REGION_NAME"; 
+            ddlRegion.DataValueField = "REGION_ID";  
+            ddlRegion.DataBind();
+
+            ddlRegion.Items.Insert(0, new ListItem("", ""));
+            ddlRegion.Items.Insert(1, new ListItem("All", ""));
+
+            DataTable zdt = new MfManualReconciliationController().Getzonebychannel(selectedItemSerial);
+
+            ddlZone.DataSource = zdt;
+            ddlZone.DataTextField = "ZONE_NAME"; 
+            ddlZone.DataValueField = "ZONE_ID";  
+            ddlZone.DataBind();
+
+            ddlZone.Items.Insert(0, new ListItem("", ""));
+            ddlZone.Items.Insert(1, new ListItem("All", ""));
+
+
+        }
+
+        private void fillbranchlkist(string check = "")
+        {
+                DataTable dt = new DataTable();
+                dt = new WM.Controllers.MfManualReconciliationController().Getbranchdropdown();
+
+            if (check == "1")
+            {
+                ddlBranch.DataSource = dt;
+                ddlBranch.DataTextField = "Branch_name";
+                ddlBranch.DataValueField = "Branch_code";
+                ddlBranch.DataBind();
+                ddlBranch.Items.Insert(0, new ListItem("", ""));
+                ddlBranch.Items.Insert(1, new ListItem("All", ""));
+
+
+                DropDownList2.DataSource = dt;
+                DropDownList2.DataTextField = "Branch_name";
+                DropDownList2.DataValueField = "Branch_code";
+                DropDownList2.DataBind();
+
+                DropDownList2.Items.Insert(0, new ListItem("", ""));
+
+                DropDownList2.Items.Insert(1, new ListItem("All", ""));
+            }
+            else if (check == "2")
+            {
+                DropDownList2.DataSource = dt;
+                DropDownList2.DataTextField = "Branch_name";
+                DropDownList2.DataValueField = "Branch_code";
+                DropDownList2.DataBind();
+
+                DropDownList2.Items.Insert(0, new ListItem("", ""));
+
+                DropDownList2.Items.Insert(1, new ListItem("All", ""));
+            }
+            else
+            {
+                ddlBranch.DataSource = dt;
+                ddlBranch.DataTextField = "Branch_name";
+                ddlBranch.DataValueField = "Branch_code";
+                ddlBranch.DataBind();
+                ddlBranch.Items.Insert(0, new ListItem("", ""));
+                ddlBranch.Items.Insert(1, new ListItem("All", ""));
+
+                DropDownList2.DataSource = dt;
+                DropDownList2.DataTextField = "Branch_name";
+                DropDownList2.DataValueField = "Branch_code";
+                DropDownList2.DataBind();
+
+                DropDownList2.Items.Insert(0, new ListItem("", ""));
+
+                DropDownList2.Items.Insert(1, new ListItem("All", ""));
+
+            }
+        }
+ 
+        private void FillAMCList()
+        {
+            // Get the list of AMCs from the controller
+            DataTable dt = new WM.Controllers.MfManualReconciliationController().GetAMCList(); // Ensure you have the correct controller reference
+
+
+            // Bind the data to the DropDownList
+            ddlAMC.DataSource = dt;
+            ddlAMC.DataTextField = "MUT_NAME"; // Corresponding to MUT_NAME in the procedure
+            ddlAMC.DataValueField = "MUT_CODE";   // Corresponding to MUT_CODE in the procedure
+            ddlAMC.DataBind();
+            DropDownList1.DataSource = dt;
+            DropDownList1.DataTextField = "MUT_NAME"; // Corresponding to MUT_NAME in the procedure
+            DropDownList1.DataValueField = "MUT_CODE";   // Corresponding to MUT_CODE in the procedure
+            DropDownList1.DataBind();
+
+            ddlAMC.Items.Insert(0, new ListItem("", ""));
+            DropDownList1.Items.Insert(0, new ListItem("", ""));
+
+            ddlAMC.Items.Insert(1, new ListItem("All", ""));
+            DropDownList1.Items.Insert(1, new ListItem("All", ""));
+        }
+        
+        private void FillRegionList()
+        {
+            // Get the region list from the controller
+            DataTable dt = new MfManualReconciliationController().GetRegion();
+
+            if (dt != null && dt.Rows.Count > 0)
+            {
+                // Set the data source for the DropDownList
+                ddlRegion.DataSource = dt;
+                ddlRegion.DataTextField = "REGION_NAME"; // Adjust according to your data field
+                ddlRegion.DataValueField = "REGION_ID";  // Adjust according to your data field
+                ddlRegion.DataBind();
+
+                //  DropDownList2.DataTextField = ddlBranch.SelectedItem.Text.Trim();
+                //  DropDownList2.DataValueField = ddlBranch.SelectedValue;
+            }
+            else
+            {
+                // If no regions are found, you may want to clear the DropDownList
+                ddlRegion.Items.Clear();
+            }
+
+            ddlRegion.Items.Insert(0, new ListItem("", ""));
+            ddlRegion.Items.Insert(1, new ListItem("All", ""));
+        }
+       
+        protected void ddlRegion_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            string selectedRegionId = ddlRegion.SelectedValue;
+            FillZoneList(selectedRegionId);
+        }
+
+        private void FillZoneList(string regionId)
+        {
+            // Assume branches are stored in a session or other variable
+            //string branches = (string)Session["Branches"];
+
+            // Get the zones list from the controller
+            DataTable dt = new MfManualReconciliationController().GetZonesByRegion(regionId);
+
+            if (dt != null && dt.Rows.Count > 0)
+            {
+                // Clear existing items and set the data source for the DropDownList
+                ddlZone.DataSource = dt;
+                ddlZone.DataTextField = "ZONE_NAME";
+                ddlZone.DataValueField = "ZONE_ID";
+                ddlZone.DataBind();
+            }
+            else
+            {
+                // Clear the dropdown if no zones are found
+                ddlZone.Items.Clear();
+            }
+
+            ddlZone.Items.Insert(0, new ListItem("", ""));
+            ddlZone.Items.Insert(1, new ListItem("All", ""));
+        }
+
+        protected void ddlzone_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            string selectedbranchbyzoneId = ddlZone.SelectedValue;
+            FillbranchbyzoneList(selectedbranchbyzoneId);
+        }
+
+        protected void FillbranchbyzoneList(string selectedbranchbyzoneId)   {
+          
+            DataTable dt = new MfManualReconciliationController().GetBranchbyzoneDetails(selectedbranchbyzoneId);
+            ddlBranch.DataSource = dt;
+            ddlBranch.DataTextField = "Branch_name";
+            ddlBranch.DataValueField = "Branch_code";
+            ddlBranch.DataBind();
+
+            DropDownList2.DataSource = dt;
+            DropDownList2.DataTextField = "Branch_name";
+            DropDownList2.DataValueField = "Branch_code";
+            DropDownList2.DataBind();
+
+            ddlBranch.Items.Insert(0, new ListItem("", ""));
+            DropDownList2.Items.Insert(0, new ListItem("", ""));
+
+            ddlBranch.Items.Insert(1, new ListItem("All", ""));
+            DropDownList2.Items.Insert(1, new ListItem("All", ""));
+
+        }
+
+        protected void ddlRmFill_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            string selectedItemSerial = ddlBranch.SelectedValue;
+
+            // DataTable dt = new MfManualReconciliationController().GetBranchDetails(selectedItemSerial);
+            DataTable dt = new WM.Controllers.MfManualReconciliationController().GetRM(selectedItemSerial);
+            ddlRM.DataSource = dt;
+            ddlRM.DataTextField = "RM_NAME";
+            ddlRM.DataValueField = "payroll_id";
+            ddlRM.DataBind();
+            ddlRM.Items.Insert(0, new ListItem("", ""));
+            ddlRM.Items.Insert(1, new ListItem("All", ""));
+        }
+        
+        private void fillRMListUNFILTERD()
+
+        {
+            DataTable dt = new WM.Controllers.MfManualReconciliationController().GetRMUNFILTERED();
+            ddlRM.DataSource = dt;
+            ddlRM.DataTextField = "RM_NAME";
+            ddlRM.DataValueField = "payroll_id";
+            ddlRM.DataBind();
+            ddlRM.Items.Insert(0, new ListItem("", ""));
+            ddlRM.Items.Insert(1, new ListItem("All", ""));
+        }
+         
+        protected void btnExit_Click(object sender, EventArgs e)
+        {
+            string loginId = Session["LoginId"]?.ToString();
+            string roleId = Session["roleId"]?.ToString();
+            Response.Redirect($"~/welcome?loginid={loginId}&roleid={roleId}");
+        }
+      
+        // tran search tran find tran
+        protected void btnSearchtrn_Click(object sender, EventArgs e)
+        {
+            SipMasterModel searchModel = new SipMasterModel
+            {
+                TranCode = string.IsNullOrEmpty(tarnCode.Text) ? (string)null : tarnCode.Text,
+            };
+
+            DataTable transactions = new WM.Controllers.sip_master_reconciliationController().GetBranchName(searchModel);
+            tranCodeGrid.DataSource = transactions;
+            tranCodeGrid.DataBind();
+
+            upMain.Update();
+        }
+
+ 
+        protected void btnReset_Click(object sender, EventArgs e)
+        {
+            // Reset DropDownLists to the first item
+            ddlRM.Items.Clear();
+            ddlAMC.SelectedIndex = 0;
+            ddlZone.Items.Clear();
+
+            lblRowCount.Text = string.Empty;
+
+            
+          //  FillAMCList();
+            FillChannelList();
+            fillbranchlkist("1");
+            FillRegionList();
+
+            // Clear TextBoxes
+          //  txtDateFrom.Text = string.Empty;
+          //  txtDateTo.Text = string.Empty;
+            txtAR.Text = string.Empty;
+            txtARNo.Text = string.Empty;
+
+            // Reset RadioButtonLists to the first item
+
+            //rblReconciliation.SelectedIndex = -1;
+            rblTranType.SelectedIndex = -1;
+            rblRegistrar.SelectedIndex = -1;
+
+
+            // Uncheck CheckBox
+            cbCOB.Checked = false;
+
+            // Optionally reset GridView (if needed)
+            GridTransaction.DataSource = null;
+            GridTransaction.DataBind();
+        }
+        
+
+        protected void Button1_Click(object sender , EventArgs e)
+        {
+            Clearfieldsofrta();
+        }
+        #endregion
+
+        #region Helping Function: clear, bind dt and empty, isValidString, isAllEmpty
+
+        private string tranCodetra
+        {
+            get { return ViewState["tranCodetra"] as string ?? string.Empty; }
+            set { ViewState["tranCodetra"] = value; }
+        }
+
+        protected void Clearfieldsofrta()
+        {
+            tarnCode.Text = string.Empty;
+            tranCodeGrid.DataSource = null;
+            tranCodeGrid.DataBind();
+
+            // Clear all TextBox controls
+            dateFromRta.Text = string.Empty;
+            dateToRta.Text = string.Empty;
+            txtChequeSearch.Text = string.Empty;
+            txtInvestorName.Text = string.Empty;
+            txtAmount.Text = string.Empty;
+            txtSearching.Text = string.Empty;
+            txtRemarks.Text = string.Empty;
+
+            DropDownList1.SelectedIndex = 0;
+            fillbranchlkist("1");
+
+            ddlChequeNo.SelectedIndex = 0;
+
+            rblReconciliationType.ClearSelection();
+
+            RadioButtonList1.ClearSelection();
+
+            GridView1.DataSource = null;
+            GridView1.DataBind();
+        }
+
+        private void BindDtGrid(DataTable dt, GridView gv, bool alertTrue = false, bool alertFalse = true, TextBox txtMsgCount = null, Label tblMsgCount = null)
+        {
+            if (dt.Rows.Count > 0)
+            {
+                gv.DataSource = dt;
+                gv.DataBind();
+                gv.Visible = true;
+
+                if (txtMsgCount != null)
+                {
+                    txtMsgCount.Text = dt.Rows.Count.ToString();
+                }
+
+                if (tblMsgCount != null)
+                {
+                    tblMsgCount.Text = dt.Rows.Count.ToString();
+                }
+                if (alertTrue)
+                {
+                    pc.ShowAlert(this, "Found " + dt.Rows.Count.ToString() + " record(s);");
+                }
+            }
+            else
+            {
+                gv.DataSource = null;
+                gv.DataBind();
+                gv.Visible = true;
+
+                if (txtMsgCount != null)
+                {
+                    txtMsgCount.Text = dt.Rows.Count.ToString();
+                }
+
+                if (tblMsgCount != null)
+                {
+                    tblMsgCount.Text = dt.Rows.Count.ToString();
+                }
+
+                if (alertFalse)
+                {
+                    pc.ShowAlert(this, "No records found ");
+                }
+            }
+
+        }
+
+        private void BindEmptyGrid(DataTable dt, GridView gv)
+        {
+            if (dt.Rows.Count <= 0)
+            {
+                gv.DataSource = null;
+                gv.DataBind();
+                gv.Visible = false;
+                pc.ShowAlert(this, "No records found for the given criteria.");
+                return;
+            }
+        }
+
+        private void BindDynamidColumGrid(DataTable dt, GridView GridView1)
+        {
+            GridView1.Columns.Clear();
+
+            // Add checkbox column first
+            TemplateField checkboxField = new TemplateField();
+            checkboxField.HeaderText = "";
+
+            checkboxField.ItemTemplate = new GridViewCheckBoxTemplate("tran_code", "amount");
+            GridView1.Columns.Add(checkboxField);
+
+            // Add dynamic columns from DataTable
+            foreach (DataColumn col in dt.Columns)
+            {
+                BoundField field = new BoundField();
+                field.DataField = col.ColumnName;
+                field.HeaderText = col.ColumnName.Replace("_", " "); // optional formatting
+                GridView1.Columns.Add(field);
+            }
+
+            GridView1.DataSource = dt;
+            GridView1.DataBind();
+            GridView1.Visible = true;
+        }
+
+        public class GridViewCheckBoxTemplate : ITemplate
+        {
+            private readonly string _tranCode1Field;
+            private readonly string _tranCode2Field;
+
+            public GridViewCheckBoxTemplate(string tranCode1Field, string tranCode2Field)
+            {
+                _tranCode1Field = tranCode1Field;
+                _tranCode2Field = tranCode2Field;
+            }
+
+            public void InstantiateIn(Control container)
+            {
+                LiteralControl lc = new LiteralControl();
+                lc.DataBinding += (sender, e) =>
+                {
+                    LiteralControl ctrl = (LiteralControl)sender;
+                    GridViewRow row = (GridViewRow)ctrl.NamingContainer;
+                    string tran1 = DataBinder.Eval(row.DataItem, _tranCode1Field)?.ToString() ?? "";
+                    string tran2 = DataBinder.Eval(row.DataItem, _tranCode2Field)?.ToString() ?? "";
+
+                    string html = $"<input type='checkbox' class='rta-checkbox' " +
+                                  $"data-tran1='{tran1}' data-tran2='{tran2}' onclick='onRtaRowSelect(this)' />";
+                    ctrl.Text = html;
+                };
+                container.Controls.Add(lc);
+            }
+        }
+
+
+
+        public static bool IsValidString(string input)
+        {
+            return !string.IsNullOrWhiteSpace(input);
+        }
+
+        public static bool IsAllValid(List<string> searchParams)
+        {
+            // Return false if any string is null, empty, or whitespace
+            return searchParams.All(param => !string.IsNullOrWhiteSpace(param));
+        }
+
+        public static bool IsAtleastValid(List<string> searchParams)
+        {
+            // Return true if at least one string is not null/empty/whitespace
+            return searchParams.Any(param => !string.IsNullOrWhiteSpace(param));
+        }
+        #endregion
+
+        #region btnGo_Click: SEARCH TR search find tr search 
+
+        protected void btnGo_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                #region INPUT VALUES
+                string channel = ddlChannel.SelectedValue;
+                string region = ddlRegion.SelectedValue;
+                string zone = ddlZone.SelectedValue;
+                string branch = ddlBranch.SelectedValue;
+                string rm = ddlRM.SelectedValue;
+                string dateFrom = txtDateFrom.Text.Trim();
+                string dateTo = txtDateTo.Text.Trim();
+                string amc = ddlAMC.SelectedValue;
+                string ar = txtAR.Text.Trim();
+                string reconciliationStatus = rblReconciliation.SelectedValue;
+                string cobFlag = cbCOB.Checked ? "1" : null;
+                string arNo = txtARNo.Text.Trim();
+                string tranType = rblTranType.SelectedValue;
+                string registrar = rblRegistrar.SelectedValue;
+                #endregion
+
+                #region LEAST ONE INPUT REQUIRED
+                if (string.IsNullOrWhiteSpace(region) && string.IsNullOrWhiteSpace(zone) &&
+                    string.IsNullOrWhiteSpace(branch) && string.IsNullOrWhiteSpace(rm) &&
+                    string.IsNullOrWhiteSpace(dateFrom) && string.IsNullOrWhiteSpace(dateTo) &&
+                    string.IsNullOrWhiteSpace(amc) && string.IsNullOrWhiteSpace(ar) &&
+                    string.IsNullOrWhiteSpace(arNo) && string.IsNullOrWhiteSpace(tranType)
+                   )
+                {
+                    pc.ShowAlert(this, "Please provide at least one search criterion");
+                    return;
+                }
+                #endregion
+
+                PerformSearch(channel, region, zone, branch, rm, dateFrom, dateTo, amc, ar, reconciliationStatus, cobFlag, arNo, tranType, registrar);
+                upMain.Update();
+            }
+            catch(Exception ex)
+            {
+                pc.ShowAlert(this, "Error in TR search: " + ex.Message);
+                return;
+            }
+        }
+
+        private void PerformSearch(string channel, string region, string zone, string branch, string rm, string dateFrom, string dateTo, string amc, string ar, string reconciliationStatus, string cobFlag ,string arNo, string tranType, string registrar)
+        {
+
+            GridTransaction.DataSource = null;
+            GridTransaction.DataBind();
+
+            GridView1.DataSource = null;
+            GridView1.DataBind();
+
+            rblRegistrar.SelectedIndex = -1;
+
+            dateFrom = (string.IsNullOrEmpty(arNo) ? dateFrom : null);
+            dateTo = (string.IsNullOrEmpty(arNo) ? dateTo : null);
+
+            DataTable dt = new MfManualReconciliationController().GetClientDetails(channel, region, zone, branch, rm, dateFrom, dateTo, amc, ar, reconciliationStatus, cobFlag, arNo, tranType, registrar);
+            BindDtGrid(dt, GridTransaction, false, true, null, lblRowCount);
+        }
+
+        // tr search grid tr grid row bound gr grid row bound
+        protected void GridTransaction_RowDataBound(object sender, GridViewRowEventArgs e)
+        {
+            if (e.Row.RowType == DataControlRowType.DataRow)
+            {
+                e.Row.Attributes["onclick"] = "onRowClick(this);";
+                e.Row.Style.Add("cursor", "pointer"); // Optional: make it look clickable
+            }
+        }
+
+
+
+
+        #endregion
+
+        #region btnSearch_Click: RTA SEARCH rta find 
+        protected void btnSearch_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                #region Input value
+                string rtaDtFrom = dateFromRta.Text;
+                string rtaDtTo = dateToRta.Text;
+                string status = rblReconciliationType.SelectedValue;
+                string amc = DropDownList1.SelectedValue;
+                string branch = DropDownList2.SelectedValue;
+                string chequeType = ddlChequeNo.SelectedValue;
+                string chequeSearch = txtChequeSearch.Text;
+                string investorName = txtInvestorName.Text;
+                string amount = txtAmount.Text;
+                string tranType = RadioButtonList1.SelectedValue;
+                string searchText = txtSearching.Text;
+                string rtTranType = rblTranType.SelectedValue?.ToString();
+                string trRegistrar = rblRegistrar.SelectedValue?.ToString();
+                #endregion
+
+                #region Validations
+                List<string> rtaParams = new List<string>
+{
+    rtaDtFrom,
+    rtaDtTo,
+    amc,   
+    chequeType,
+    chequeSearch,
+    investorName,
+    amount
+};
+
+                bool isValid = IsAtleastValid(rtaParams);
+
+                if (!isValid)
+                {
+                    pc.ShowAlert(this, "Please provide at least one search criterion");
+                    return;
+                }
+                #endregion
+
+                PerformSearch2(rtaDtFrom, rtaDtTo, status, amc, branch, chequeType, chequeSearch, investorName, amount, tranType, searchText, rtTranType, trRegistrar);
+                upMain.Update();
+            }
+
+            catch (Exception ex)
+            {
+                pc.ShowAlert(this, $"Error: {ex.Message}");
+                return;
+            }
+        }
+
+        private void PerformSearch2(string dateFrom, string dateTo, string status, string amc, string branch, string chequeType, string chequeSearch, string investorName, string amount  , string tranType, string searchText, string trTrantype, string trReg)
+        {
+            DataTable dt = new MfManualReconciliationController().SearchTransactions(dateFrom, dateTo, status, amc, branch, chequeType, chequeSearch, investorName, amount, tranType, searchText, trTrantype, trReg);
+
+
+            /* add a column in dt
+            // Step 1: Add the column to the end (if not already exists)
+            if (!dt.Columns.Contains("tran_code"))
+            {
+                dt.Columns.Add("tran_code", typeof(string));
+            }
+
+            // Step 2: Move the 'tran_code' column to the first position (index 0)
+            dt.Columns["tran_code"].SetOrdinal(0);
+
+            // Step 3: Copy values from 'unq_key' to 'tran_code'
+            foreach (DataRow row in dt.Rows)
+            {
+                row["tran_code"] = row["unq_key"]?.ToString();
+            }
+            */
+
+            if (dt.Rows.Count > 0)
+            {
+                //BindDynamidColumGrid(dt);
+                BindDtGrid(dt, GridView1, false, true, null, null);
+            }
+            else
+            {
+                BindEmptyGrid(dt, GridView1);
+            }
+            upMain.Update();
+
+        }
+
+        private void GridFill_RTADate_VB(DataTable dt, string tr_reg, string branch, string amc, string status, string tranType, 
+            string dtFrom, string dtTo, string chkType, string chkNo, string inv_name, string amt)
+        {
+            try
+            {
+                string SRMs = string.Empty;
+                string StrSql = "";
+
+                foreach (DataRow row in dt.Rows)
+                {
+                    row["tran_code"] = string.Empty;
+
+                    #region SELECT & JOIN
+                    StrSql = " SELECT tran_code";
+                    StrSql += StrSql + "    FROM employee_master e, ";
+                    StrSql += StrSql + "         branch_master b, ";
+                    StrSql += StrSql + "         mut_fund amc, ";
+                    StrSql += StrSql + "         scheme_info sch, ";
+                    StrSql += StrSql + "         TRANSACTION_ST@MF.BAJAJCAPITAL t, ";
+                    StrSql += StrSql + "         investor_master i,CITY_MASTER C ";
+                    StrSql += StrSql + "   WHERE I.CITY_ID=C.CITY_ID(+) ";
+                    StrSql += StrSql + "     AND t.client_code = i.inv_code ";
+                    StrSql += StrSql + "     AND to_char(t.rmcode) = e.rm_code ";
+                    StrSql += StrSql + "     AND t.BRANCH_CODE = b.branch_code   ";
+                    StrSql += StrSql + "     AND t.mut_code = amc.mut_code AND t.sch_code = sch.sch_code ";
+
+                    #endregion
+
+                    if (tr_reg == "C")
+                    {
+                        StrSql += StrSql + " AND  (DUP_FLAG2 = 0 OR (REG_TRAN_TYPE='TICOB' AND DUP_FLAG2 IN(0,9))) ";
+                    }
+
+                    if (branch != "" && branch != "ALL")
+                    {
+                        StrSql += StrSql + "      and b.BRANCH_CODE in (" + branch + ") ";
+                    }
+                    else
+                    {
+                        StrSql += StrSql + " and b.BRANCH_CODE in (SELECT BRANCH_ID FROM USERDETAILS_JI WHERE LOGIN_ID='" + pc.currentLoginID() + "' AND ROLE_ID='" + pc.currentRoleID() + "') ";
+                    }
+
+                    if (SRMs != "")
+                    {
+                        StrSql += StrSql + " and e.rm_code=" + SRMs + "";
+                    }
+
+                    if (amc != "null" && amc != "ALL")
+                    {
+                        StrSql += StrSql + " and to_char(t.mut_code) =' " + amc + "'";
+
+                    }
+
+                    if (status != null)
+                    {
+
+                        if (status == "Y")
+                        {
+                            StrSql += StrSql + " and t.rec_flag ='Y'";
+
+                        }
+                        else if (status == "N")
+                        {
+                            StrSql += StrSql + " and (t.rec_flag ='N' or rec_flag is null)";
+
+                        }
+                    }
+
+                    if (tranType != null)
+                    {
+                        if (tranType == "REGULAR")
+                        {
+                            StrSql += StrSql + " AND ((    UPPER (t.REG_TRANTYPE) NOT LIKE '%SYS%' AND UPPER (t.REG_TRANTYPE) NOT LIKE '%SIP%' AND TRIM(UPPER (t.REG_TRANTYPE)) NOT LIKE '%S T P IN%' ";
+                            StrSql += StrSql + " AND TRIM(UPPER (t.REG_TRANTYPE)) NOT LIKE '%S T P IN REJ%'";
+                            StrSql += StrSql + " AND TRIM(UPPER (t.REG_TRANTYPE)) NOT LIKE '%S T P IN REJ REVERSAL%'";
+                            StrSql += StrSql + " AND TRIM(UPPER (t.REG_TRANTYPE))NOT LIKE '%STP SWITCH IN%'";
+                            StrSql += StrSql + " AND TRIM(UPPER (t.REG_TRANTYPE)) NOT LIKE '%STPI%'";
+                            StrSql += StrSql + " AND TRIM(UPPER (t.REG_TRANTYPE)) NOT LIKE '%STPIR%'";
+                            StrSql += StrSql + " ) OR t.REG_TRANTYPE IS NULL) ";
+                        }
+                        else if (tranType == "SIP")
+                        {
+                            StrSql += StrSql + " AND (( UPPER (t.REG_TRANTYPE) LIKE '%SYS%'";
+                            StrSql += StrSql + " OR UPPER (t.REG_TRANTYPE) LIKE '%SIP%'";
+                            StrSql += StrSql + " OR TRIM(UPPER (t.REG_TRANTYPE))  LIKE '%S T P IN%'";
+                            StrSql += StrSql + " OR TRIM(UPPER (t.REG_TRANTYPE))  LIKE '%S T P IN REJ%'";
+                            StrSql += StrSql + " OR TRIM(UPPER (t.REG_TRANTYPE))  LIKE '%S T P IN REJ REVERSAL%'";
+                            StrSql += StrSql + " OR TRIM(UPPER (t.REG_TRANTYPE)) LIKE '%STP SWITCH IN%'";
+                            StrSql += StrSql + " OR TRIM(UPPER (t.REG_TRANTYPE))  LIKE '%STPI%'";
+                            StrSql += StrSql + " OR TRIM(UPPER (t.REG_TRANTYPE))  LIKE '%STPIR%')) ";
+                        }
+                    }
+
+                    if (tr_reg == "KCOB")
+                    {
+                        if (dtFrom != null)
+                        {
+                            StrSql += StrSql + " and tr_date>=TO_DATE('" + dtFrom + "','DD/MM/YYYY') ";
+                        }
+                        else if (dtTo != null)
+                        {
+                            StrSql += StrSql + " and tr_date<=TO_DATE('" + dtTo + "','DD/MM/YYYY') ";
+
+                        }
+
+                    }
+
+                    if (chkType != null && chkNo != null)
+                    {
+                        StrSql += StrSql + " AND ( ";
+
+                        if (chkType == "001")
+                        {
+                            StrSql += StrSql + " t.CHEQUE_NO = '" + chkNo + "'";
+
+                        }
+                        else if (chkType == "002")
+                        {
+                            StrSql += StrSql + " t.FOLIO_NO = '" + chkNo + "'";
+
+                        }
+                        else if (chkType == "003")
+                        {
+                            StrSql += StrSql + " t.APP_NO = '" + chkNo + "'";
+
+                        }
+                        else if (chkType == "004")
+                        {
+                            StrSql += StrSql + " (UPPER(t.PAN1) = UPPER('" + chkNo + "') OR UPPER(t.PAN2) = UPPER('" + chkNo + "') OR UPPER(t.PAN3) = UPPER('" + chkNo + "')) ";
+
+                        }
+                        else if (chkType == "005")
+                        {
+                            StrSql += StrSql + " t.REG_SUBBROK = '" + chkNo + "'";
+
+                        }
+                        StrSql += StrSql + " )";
+
+                    }
+
+                    if (inv_name != null)
+                    {
+                        StrSql += StrSql + " and upper(trim(T.inv_name)) like '%" + inv_name.Replace(" ", "%") + "%'";
+                    }
+
+                    if (amt != null)
+                    {
+                        StrSql += StrSql + " and abs(round(t.amount)) = " + amt + "";
+
+                    }
+
+                    StrSql += StrSql + "  AND LPAD (t.mut_code, 2) = 'MF' ";
+                    StrSql += StrSql + "     AND (t.asa <> 'C' OR t.asa IS NULL) ";
+                    StrSql += StrSql + "                                    AND t.tran_type IN ";
+                    StrSql += StrSql + "                                           ('PURCHASE', 'REINVESTMENT', ";
+                    StrSql += StrSql + "                                            'SWITCH IN') ";
+
+
+                    StrSql += StrSql + " and t.sch_code='" + row["sch_code"] + "' and t.FOLIO_NO='" + row["FOLIO_NO"] + "' ";
+
+                    if (tr_reg == "KCOB")
+                    {
+                        StrSql += StrSql + " AND T.TR_DATE=TO_DATE('" + row["TR_DATE"] + "','DD/MM/YYYY')";
+
+                    }
+                }
+
+                using (OracleConnection conn = new OracleConnection(WebConfigurationManager.ConnectionStrings["ConnectionStringVM"].ConnectionString))
+                {
+                    
+
+                    OracleCommand cmd = new OracleCommand(StrSql, conn);
+
+                    DataTable rtaGridData = new DataTable();
+
+                    try
+                    {
+                        conn.Open();
+                        using (OracleDataReader reader = cmd.ExecuteReader())
+                        {
+                            dt.Load(reader); // Load result into DataTable
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        // Handle exception
+                        throw new Exception("Error executing query: " + ex.Message);
+                    }
+                }
+
+
+            }
+            catch (Exception ex)
+            {
+                pc.ShowAlert(this, ex.Message);
+            }
+        }
+
+        protected void GridView1_RowDataBound(object sender, GridViewRowEventArgs e)
+        {
+            if (e.Row.RowType == DataControlRowType.DataRow)
+            {
+                e.Row.Attributes["onclick"] = "onGridRowClick(this);";
+                e.Row.Style["cursor"] = "pointer";
+            }
+        }
+
+
+
+        #endregion
+
+        #region RTA Button: Reconcile RTA Reco, Save Remark btn save remark, 
+
+
+        protected void btnReconcile_Click(object sender, EventArgs e)
+        {
+            string trCode = hftran1stcode.Value?.Trim();
+            string tranCode = hfSelectedTranCode.Value?.Trim().Replace("'","");
+            string logID = pc.currentLoginID();
+
+            if (string.IsNullOrEmpty(tranCode))
+            {
+                pc.ShowAlert(this, "Please select a transaction to reconcile.");
+                return;
+            }
+
+            if (!decimal.TryParse(hfSelectedAmount.Value, out decimal rawAmount))
+            {
+                pc.ShowAlert(this, "Invalid amount for the selected transaction.");
+                return;
+            }
+
+            try
+            {
+                string result = new MfManualReconciliationController().ReconcileTransactions(trCode, rawAmount, tranCode, logID);
+
+                if (!string.IsNullOrEmpty(result))
+                {
+                    pc.ShowAlert(this, result);
+                    return;
+                }
+                else
+                {
+                    pc.ShowAlert(this, "Reconciliation completed with no message returned.");
+                    return;
+                }
+            }
+            catch (Exception ex)
+            {
+                pc.ShowAlert(this, $"Error during reconciliation: {ex.Message}");
+                return;
+            }
+        }
+
+        protected void CmdSaveRemark_Click(object sender, EventArgs e)
+        {
+
+            try
+            {
+                string remarkText = txtRemarks.Text;
+                string tran1stcode = hftran1stcode.Value;
+                if (string.IsNullOrEmpty(tran1stcode))
+                {
+                    pc.ShowAlert(this, "First select any transaction to be remarked.");
+                    return;
+                }
+                
+                if (string.IsNullOrWhiteSpace(remarkText))
+                {
+                    pc.ShowAlert(this, "Please enter a remark before saving.");
+                    return;
+                }
+
+                MfManualReconciliationController controller = new MfManualReconciliationController();
+                controller.UpdateRemarkReco(tran1stcode, remarkText);
+                pc.ShowAlert(this, "The record has been remarked successfully.");
+            }
+            catch (Exception ex)
+            {
+                pc.ShowAlert(this, $"Error: {ex.Message}");
+                return;
+            }
+        }
+
+        #endregion
+
+        #region RTA Button: confirmPMS rta confirm pms, UnconfirmPMS rta unconfirm pms,
+        protected void cmdConfirm_Click(object sender, EventArgs e)
+        {
+            string tran1stcode = hftran1stcode.Value;
+            string remarks = txtRemarks.Text.Trim();
+            string user = pc.currentLoginID();
+            bool optPMS = rblTranType.SelectedValue == "pms";
+            bool optATM = rblTranType.SelectedValue == "atm";
+
+            if (!optATM && !optPMS)
+            {
+                pc.ShowAlert(this,"Select Either PMS or ATM Tran Type");
+            }
+
+            if (optPMS)
+            {
+                if (string.IsNullOrEmpty(tran1stcode))
+                {
+                    pc.ShowAlert(this,"First Select The Record You Want To Map");
+                    return;
+                }
+            }
+
+            if (optATM)
+            {
+                if (string.IsNullOrEmpty(tran1stcode))
+                {
+                    pc.ShowAlert(this,"First Select The Record You Want To Map");
+                    return;
+                }
+            }
+
+            try
+            {
+                using (OracleConnection conn = new OracleConnection(WebConfigurationManager.ConnectionStrings["ConnectionStringVM"].ConnectionString))
+                {
+                    conn.Open();
+                    using (OracleCommand cmd = new OracleCommand("PRA_PMS_TransactionReco", conn))
+                    {
+                        cmd.CommandType = CommandType.StoredProcedure;
+                        cmd.Parameters.Add("p_tran_code", OracleDbType.Varchar2).Value = tran1stcode;
+                        cmd.Parameters.Add("p_remarks", OracleDbType.Varchar2).Value = optPMS ? remarks : (object)DBNull.Value;
+                        cmd.Parameters.Add("p_user", OracleDbType.Varchar2).Value = user;
+                        cmd.Parameters.Add("p_opt_pms", OracleDbType.Boolean).Value = optPMS;
+                        cmd.Parameters.Add("p_opt_atm", OracleDbType.Boolean).Value = optATM;
+                        cmd.ExecuteNonQuery();
+                    }
+                }
+
+                pc.ShowAlert(this,"Record is confirmed successfully");
+                return;
+            }
+            catch (Exception ex)
+            {
+                pc.ShowAlert(this,"Error: " + ex.Message);
+                return;
+
+            }
+        }
+
+        protected void cmdUnconfirm_Click(object sender, EventArgs e)
+        {
+            string tran1stcode = hftran1stcode.Value;
+            string remarks = txtRemarks.Text.Trim();
+            string user = pc.currentLoginID();
+            bool optPMS = rblTranType.SelectedValue == "pms";
+            bool optATM = rblTranType.SelectedValue == "atm";
+
+            if (!optATM && !optPMS)
+            {
+                pc.ShowAlert(this,"Select Either PMS or ATM Tran Type");
+            }
+
+            if (optPMS)
+            {
+                if (string.IsNullOrEmpty(tran1stcode))
+                {
+                    pc.ShowAlert(this,"First Select The Record You Want To Unmap");
+                    return;
+                }
+
+            }
+
+            if (optATM)
+            {
+                if (string.IsNullOrEmpty(tran1stcode))
+                {
+                    pc.ShowAlert(this,"First Select The Record You Want To Unmap");
+                    return;
+                }
+            }
+
+            try
+            {
+                using (OracleConnection conn = new OracleConnection(WebConfigurationManager.ConnectionStrings["ConnectionStringVM"].ConnectionString))
+                {
+                    conn.Open();
+                    using (OracleCommand cmd = new OracleCommand("PRA_PMS_TransactionUnReco", conn))
+                    {
+                        cmd.CommandType = CommandType.StoredProcedure;
+                        cmd.Parameters.Add("p_tran_code", OracleDbType.Varchar2).Value = tran1stcode;
+                        cmd.Parameters.Add("p_remarks", OracleDbType.Varchar2).Value = optPMS ? remarks : (object)DBNull.Value;
+                        cmd.Parameters.Add("p_user", OracleDbType.Varchar2).Value = user;
+                        cmd.Parameters.Add("p_opt_pms", OracleDbType.Boolean).Value = optPMS;
+                        cmd.Parameters.Add("p_opt_atm", OracleDbType.Boolean).Value = optATM;
+                        cmd.ExecuteNonQuery();
+                    }
+                }
+
+                pc.ShowAlert(this,"Record is unconfirmed successfully");
+                return;
+            }
+            catch (Exception ex)
+            {
+                pc.ShowAlert(this,"Error: " + ex.Message);
+                return;
+            }
+        }
+
+
+
+        #endregion
+
+    }
+}
