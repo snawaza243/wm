@@ -72,7 +72,7 @@ BEGIN
     -- Return success message with counts
     OPEN P_CURSOR FOR 
     SELECT 'SUCCESS: ' || 
-           V_COUNT1 || ' record(s) updated in TRANSACTION_MF_TEMP1 (by TRAN_CODE), ' ||
+           V_COUNT1 || ' record(s) updated i0..........................n TRANSACTION_MF_TEMP1 (by TRAN_CODE), ' ||
            V_COUNT2 || ' record(s) updated in TRANSACTION_MF_TEMP1 (by BASE_TRAN_CODE), ' ||
            V_COUNT3 || ' record(s) updated in TRANSACTION_ST@MF.BAJAJCAPITAL' AS MESSAGE
     FROM DUAL;

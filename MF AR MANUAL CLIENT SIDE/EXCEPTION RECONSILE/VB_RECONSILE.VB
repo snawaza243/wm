@@ -17,20 +17,29 @@ If Len(MyRtaTrCode) > 4000 Then
 End If
 
 If MyDispatch = "N" Then
+    
     MyConn.Execute ("Update Transaction_mf_temp1 set  amount=" & Val(MyRtaAmount) & " , REC_FLAG='Y',RECO_DATE=TO_DATE(SYSDATE),REC_USER='" & Glbloginid & "',RTA_TRAN_CODE='" & Replace(MyRtaTrCode_1, "'", "") & "' WHERE TRAN_CODE='" & MyTrCode & "'")
+    
     MyConn.Execute ("Update Transaction_mf_temp1 set amount=" & Val(MyRtaAmount) & " , REC_FLAG='Y',RECO_DATE=TO_DATE(SYSDATE),REC_USER='" & Glbloginid & "',RTA_TRAN_CODE='" & Replace(MyRtaTrCode_1, "'", "") & "' WHERE BASE_TRAN_CODE='" & MyTrCode & "'")
+    
     MyConn.Execute ("Update Transaction_st@MF.BAJAJCAPITAL set REC_FLAG='Y',HO_TRAN_CODE='" & MyTrCode & "' where tran_code in (" & MyRtaTrCode & ")")
 
 
 
 Else
     If optTrail.Value = False Then
+        
         MyConn.Execute ("Update Transaction_mf_temp1 set  amount=" & Val(MyRtaAmount) & ",folio_no='" & MyRtaFolio & "' , REC_FLAG='Y',RECO_DATE=TO_DATE(SYSDATE),REC_USER='" & Glbloginid & "',RTA_TRAN_CODE='" & Replace(MyRtaTrCode_1, "'", "") & "' WHERE TRAN_CODE='" & MyTrCode & "'") ',tr_date=to_date('" & MyRtaTrDate & "', 'dd/mm/rrrr')
+        
         MyConn.Execute ("Update Transaction_mf_temp1 set amount=" & Val(MyRtaAmount) & ",folio_no='" & MyRtaFolio & "' ,  REC_FLAG='Y',RECO_DATE=TO_DATE(SYSDATE),REC_USER='" & Glbloginid & "',RTA_TRAN_CODE='" & Replace(MyRtaTrCode_1, "'", "") & "' WHERE BASE_TRAN_CODE='" & MyTrCode & "'") 'tr_date=to_date('" & MyRtaTrDate & "', 'dd/mm/rrrr'),
+        
         MyConn.Execute ("Update Transaction_st@MF.BAJAJCAPITAL set REC_FLAG='Y',HO_TRAN_CODE='" & MyTrCode & "' where tran_code in (" & MyRtaTrCode & ")")
     Else
+        
         MyConn.Execute ("Update Transaction_mf_temp1 set  amount=" & Val(MyRtaAmount) & ",folio_no='" & MyRtaFolio & "' ,tr_date=to_date('" & MyRtaTrDate & "', 'dd/mm/rrrr'), REC_FLAG='Y',RECO_DATE=TO_DATE(SYSDATE),REC_USER='" & Glbloginid & "',RTA_TRAN_CODE='" & Replace(MyRtaTrCode_1, "'", "") & "' WHERE TRAN_CODE='" & MyTrCode & "'") ',tr_date=to_date('" & MyRtaTrDate & "', 'dd/mm/rrrr')
+        
         MyConn.Execute ("Update Transaction_mf_temp1 set amount=" & Val(MyRtaAmount) & ",folio_no='" & MyRtaFolio & "', REC_FLAG='Y',RECO_DATE=TO_DATE(SYSDATE),REC_USER='" & Glbloginid & "',RTA_TRAN_CODE='" & Replace(MyRtaTrCode_1, "'", "") & "' WHERE BASE_TRAN_CODE='" & MyTrCode & "'") 'tr_date=to_date('" & MyRtaTrDate & "', 'dd/mm/rrrr'),
+        
         MyConn.Execute ("Update Transaction_st@MF.BAJAJCAPITAL set REC_FLAG='Y',HO_TRAN_CODE='" & MyTrCode & "' where tran_code in (" & MyRtaTrCode & ")")
     End If
 End If
