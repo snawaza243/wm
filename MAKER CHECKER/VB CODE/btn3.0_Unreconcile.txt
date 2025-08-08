@@ -1,0 +1,21 @@
+Private Sub CmdUnmap_Click()
+If MyTrCode = "" Then
+    MsgBox "First Double Click The Record , You Want To Map", vbInformation
+    Exit Sub
+End If
+If MyRtaTrCode = "" Then
+    MsgBox "First Double Click The Record , To Which You Want To Map", vbInformation
+    Exit Sub
+End If
+If MyDispatch = "N" Then
+    MyConn.Execute ("Update Transaction_mf_temp1 set remark_reco=null,PROCESSED=NULL,amount=orig_amount, REC_FLAG=NULL,RECO_DATE=NULL,REC_USER=NULL,RTA_TRAN_CODE=NULL WHERE TRAN_CODE='" & MyTrCode & "'")
+    MyConn.Execute ("Update Transaction_mf_temp1 set remark_reco=null,PROCESSED=NULL,amount=orig_amount, REC_FLAG=NULL,RECO_DATE=NULL,REC_USER=NULL,RTA_TRAN_CODE=NULL WHERE BASE_TRAN_CODE='" & MyTrCode & "'")
+    MyConn.Execute ("Update Transaction_st@MF.BAJAJCAPITAL set REC_FLAG=NULL,HO_TRAN_CODE=NULL where tran_code in(" & MyRtaTrCode & ")")
+Else
+    MyConn.Execute ("Update Transaction_mf_temp1 set remark_reco=null,PROCESSED=NULL,amount=orig_amount, REC_FLAG=NULL,RECO_DATE=NULL,REC_USER=NULL,RTA_TRAN_CODE=NULL WHERE TRAN_CODE='" & MyTrCode & "'") ', tr_date=ar_date
+    MyConn.Execute ("Update Transaction_mf_temp1 set remark_reco=null,PROCESSED=NULL,amount=orig_amount, REC_FLAG=NULL,RECO_DATE=NULL,REC_USER=NULL,RTA_TRAN_CODE=NULL WHERE BASE_TRAN_CODE='" & MyTrCode & "'") ',tr_date=ar_date
+    MyConn.Execute ("Update Transaction_st@MF.BAJAJCAPITAL set REC_FLAG=NULL,HO_TRAN_CODE=NULL where tran_code in(" & MyRtaTrCode & ")")
+End If
+MsgBox "Record Is Unreconciled Sucessfully", vbInformation
+End Sub
+

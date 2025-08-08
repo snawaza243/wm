@@ -1,0 +1,9 @@
+Private Sub cmdAudit_Click()
+Dim MyTrCode As String
+    MyTrCode = VSFCommGrdT.TextMatrix(VSFCommGrdT.Row, 0)
+    If MyTrCode <> "" Then
+        MyConn.Execute ("Update Transaction_mf_temp1 set audit_flag='Y' where tran_code='" & MyTrCode & "'")
+    End If
+    MsgBox "Audited Successfully", vbInformation
+End Sub
+
