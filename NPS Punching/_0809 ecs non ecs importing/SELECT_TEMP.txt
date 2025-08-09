@@ -1,0 +1,72 @@
+NPS_ECSTRAN_GENERATE_IMP
+
+
+
+
+PSM_NPS_NES_TBL_TEMP1 -- temp excel table
+PSM_NPS_NES_TBL_TEMP2
+PSM_NPS_NES_TEMP_CLEAN
+
+PSM_NPS_ECS_BULK_IMP 
+
+
+ALTER TABLE PSM_NPS_NES_TBL_TEMP1
+ADD REMARK VARCHAR2(200);
+CREATE TABLE PSM_NPS_NES_TBL_TEMP2
+AS
+SELECT *
+FROM PSM_NPS_NES_TBL_TEMP1
+WHERE 1 = 0;
+
+
+select * from PSM_NPS_NES_TBL_TEMP1;
+
+
+
+delete from PSM_NPS_NES_TBL_TEMP2 ;
+
+
+select * from PSM_NPS_NES_TBL_TEMP2;
+
+
+    UPDATE PSM_NPS_NES_TBL_TEMP2
+SET TR_DATE = 
+    TO_CHAR(
+        TO_DATE(
+            REGEXP_SUBSTR(TRIM(TR_DATE), '^\d{1,2}/\d{1,2}/\d{4}'),
+            'MM/DD/YYYY'
+        ),
+        'DD-MON-YYYY'
+    )
+WHERE REGEXP_LIKE(TRIM(TR_DATE), '^\d{1,2}/\d{1,2}/\d{4}');
+
+
+
+
+    UPDATE PSM_NPS_NES_TBL_TEMP2
+    SET    
+        -- Convert and validate dates
+        TR_DATE = CASE 
+                    WHEN REGEXP_LIKE(TRIM(TR_DATE), '^\d{2}-[A-Z]{3}-\d{4}$') THEN TRIM(TR_DATE)
+                    WHEN REGEXP_LIKE(TRIM(TR_DATE), '^\d{2}/\d{2}/\d{4}$') THEN 
+                        TO_CHAR(TO_DATE(TRIM(TR_DATE), 'DD/MM/YYYY'), 'DD-MON-YYYY')
+                    ELSE NULL
+                 END;
+        
+
+
+
+SELECT x.TR_DATE, t.TR_DATE
+FROM WEALTHMAKER.TRANSACTION_ST x,  PSM_NPS_NES_TBL_TEMP1 t
+WHERE x.MANUAL_ARNO = t.REF_TRAN_CODE
+AND to_date(TRUNC(x.TR_DATE), 'dd/mm/yyyy') = to_date( TRUNC(t.TR_DATE), 'dd/mm/yyyy');
+
+
+
+
+SELECT x.*
+FROM WEALTHMAKER.TRANSACTION_ST x
+WHERE x.MANUAL_ARNO in ( select  t.REF_TRAN_CODE from PSM_NPS_NES_TBL_TEMP1 t)
+AND TRUNC(x.TR_DATE) = TRUNC(t.TR_DATE);
+
+SELECT REF_TRAN_CODE AS Consumer_Code, IMPORT_DT AS Datsse, ECS_AMT AS Amount, Remark AS Remarks FROM PSM_NPS_NES_TBL_TEMP2

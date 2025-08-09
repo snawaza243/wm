@@ -1,0 +1,40 @@
+CREATE OR REPLACE PROCEDURE PSM_NPS_GENERATE_NPSNONECSIMP (
+    VChkZeroCommission IN VARCHAR2 -- equivalent to VChkZeroCommission in VB6
+) AS
+BEGIN
+    FOR rec IN (
+        SELECT REF_TRAN_CODE,
+               TR_DATE,
+               ECS_AMT,
+               CONSUMER_CODE
+        FROM NPS_NONECS_TBL_IMP
+    )
+    LOOP
+        IF rec.REF_TRAN_CODE IS NOT NULL THEN
+            DECLARE
+                v_count NUMBER;
+            BEGIN
+                -- Check if transaction already exists
+                SELECT COUNT(*)
+                  INTO v_count
+                  FROM TRANSACTION_ST
+                 WHERE MANUAL_ARNO = rec.REF_TRAN_CODE
+                   AND TRUNC(TR_DATE) = TRUNC(rec.TR_DATE);
+
+                -- If not found, call the generation procedure
+                IF v_count = 0 THEN
+                    NPS_NONECSTRAN_GENERATE_IMP(
+                        CONSUMERCODE => rec.CONSUMER_CODE,
+                        PFLAG        => VChkZeroCommission
+                    );
+                ELSE
+                    -- Update remark in tmpexcel table instead of Excel file
+                    UPDATE PSM_NPS_NES_TBL_TEMP1
+                       SET Remark = 'Not Inserted'
+                     WHERE TRIM(consumer_code) = TRIM(rec.REF_TRAN_CODE);
+                END IF;
+            END;
+        END IF;
+    END LOOP;
+END;
+/
