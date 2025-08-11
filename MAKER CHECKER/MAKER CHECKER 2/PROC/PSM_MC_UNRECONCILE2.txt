@@ -1,0 +1,62 @@
+CREATE OR REPLACE PROCEDURE WEALTHMAKER.PSM_MC_UNRECONCILE2 (
+    P_TRAN_CODE     IN  VARCHAR2,
+    P_RTA_TRAN_CODE IN  VARCHAR2,
+    P_CURSOR        OUT SYS_REFCURSOR
+)
+AS
+    V_ERROR_MSG VARCHAR2(4000);
+BEGIN
+    SAVEPOINT START_TRANSACTION;
+
+    IF P_TRAN_CODE IS NOT NULL AND P_RTA_TRAN_CODE IS NOT NULL THEN
+        
+        -- First update: by TRAN_CODE
+        UPDATE TRANSACTION_MF_TEMP1
+        SET REMARK_RECO = NULL,
+            PROCESSED   = NULL,
+            AMOUNT      = ORIG_AMOUNT,
+            REC_FLAG    = NULL,
+            RECO_DATE   = NULL,
+            REC_USER    = NULL,
+            RTA_TRAN_CODE = NULL
+        WHERE TRAN_CODE = P_TRAN_CODE;
+
+        -- Second update: by BASE_TRAN_CODE
+        UPDATE TRANSACTION_MF_TEMP1
+        SET REMARK_RECO = NULL,
+            PROCESSED   = NULL,
+            AMOUNT      = ORIG_AMOUNT,
+            REC_FLAG    = NULL,
+            RECO_DATE   = NULL,
+            REC_USER    = NULL,
+            RTA_TRAN_CODE = NULL
+        WHERE BASE_TRAN_CODE = P_TRAN_CODE;
+
+        -- Third update: remote table
+        UPDATE transaction_st@MF.BAJAJCAPITAL
+        SET REC_FLAG = NULL,
+            HO_TRAN_CODE = NULL
+        WHERE TRAN_CODE = P_RTA_TRAN_CODE;
+
+        COMMIT;
+
+        OPEN P_CURSOR FOR
+        SELECT 'SUCCESS: Transaction unreco completed successfully' AS MESSAGE
+        FROM DUAL;
+
+    ELSE
+        OPEN P_CURSOR FOR
+        SELECT 'ERROR: AR not available' AS MESSAGE
+        FROM DUAL;
+        RETURN;
+    END IF;
+
+EXCEPTION
+    WHEN OTHERS THEN
+        ROLLBACK TO START_TRANSACTION;
+        V_ERROR_MSG := SQLERRM;
+        OPEN P_CURSOR FOR
+        SELECT 'ERROR: ' || V_ERROR_MSG AS MESSAGE
+        FROM DUAL;
+END;
+/

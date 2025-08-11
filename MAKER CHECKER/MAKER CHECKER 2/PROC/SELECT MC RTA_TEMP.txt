@@ -1,0 +1,19 @@
+
+SELECT  t.rta_tran_code,   T.FOLIO_NO,    T.SCH_CODE,    T.TR_DATE,    T.TRAN_TYPE,    IM.INVESTOR_NAME AS INV_NAME,    IM.ADDRESS1 || ', ' || IM.ADDRESS2 AS ADDRESS,
+                    '' AS BROKER_CODE,    CM.CITY_NAME,    SCH.SCH_NAME,    T.MUT_CODE,    M.MUT_NAME,    B.BRANCH_NAME,    T.APP_NO,    T.CHEQUE_NO,    
+                    T.AMOUNT,    T.BUSI_BRANCH_CODE,
+                    T.BUSINESS_RMCODE,    T.TRAN_CODE AS UNIQUE_TRAN
+                FROM TRANSACTION_MF_TEMP1 T
+                LEFT JOIN INVESTOR_MASTER IM 
+                       ON IM.INV_CODE = T.CLIENT_CODE
+                LEFT JOIN CITY_MASTER CM
+                       ON CM.CITY_ID = IM.CITY_ID
+                LEFT JOIN SCHEME_INFO SCH
+                       ON SCH.SCH_CODE = T.SCH_CODE
+                LEFT JOIN MUT_FUND M
+                       ON M.MUT_CODE = T.MUT_CODE
+                LEFT JOIN BRANCH_MASTER B
+                       ON B.BRANCH_CODE = T.BRANCH_CODE
+                LEFT JOIN EMPLOYEE_MASTER EM
+                       ON EM.RM_CODE = T.RMCODE
+                WHERE T.TRAN_CODE = 'TR23104634' ORDER BY TR_DATE, rm_name
