@@ -1,0 +1,176 @@
+CREATE OR REPLACE PROCEDURE WEALTHMAKER.PSM_MC_GET_TR2 (
+    P_X                     IN VARCHAR2, 
+    P_REGION                IN BRANCH_MASTER.REGION_ID%TYPE,
+    P_ZONE                  IN BRANCH_MASTER.ZONE_ID%TYPE,
+    P_BRANCH                IN BRANCH_MASTER.BRANCH_CODE%TYPE,
+    P_RM                    IN TRANSACTION_MF_TEMP1.RMCODE%TYPE,
+    P_FROMDATE              IN VARCHAR2,
+    P_TODATE                IN VARCHAR2,
+    P_AMC                   IN TRANSACTION_MF_TEMP1.MUT_CODE%TYPE,
+    P_AR                    IN TRANSACTION_MF_TEMP1.TRAN_CODE%TYPE,
+    P_RECONCILIATIONSTATUS  IN CHAR, 
+    P_LOG_ID                IN VARCHAR2,
+    P_ROLE_ID               IN VARCHAR2,
+    P_CURSOR                OUT SYS_REFCURSOR
+) AS
+    V_QUERY         VARCHAR2(4000);
+    V_REG           VARCHAR2(30);
+    V_BRANCH_CAT    VARCHAR2(30) := NULL;
+    V_SRM_CODE      VARCHAR2(30) := NULL;
+    MyTranCode      VARCHAR2(50) := NULL;
+    dummy           DATE; -- For date validation
+BEGIN
+    -- Validate date parameters
+    IF P_FROMDATE IS NOT NULL THEN
+        BEGIN
+            SELECT TO_DATE(P_FROMDATE, 'DD/MM/YYYY') INTO dummy FROM dual;
+        EXCEPTION
+            WHEN OTHERS THEN
+                RAISE_APPLICATION_ERROR(-20001, 'Invalid FROM date format. Use DD/MM/YYYY');
+        END;
+    END IF;
+    
+    IF P_TODATE IS NOT NULL THEN
+        BEGIN
+            SELECT TO_DATE(P_TODATE, 'DD/MM/YYYY') INTO dummy FROM dual;
+        EXCEPTION
+            WHEN OTHERS THEN
+                RAISE_APPLICATION_ERROR(-20002, 'Invalid TO date format. Use DD/MM/YYYY');
+        END;
+    END IF;
+
+    IF P_X = '1' THEN 
+        MyTranCode := P_AR;
+        
+        V_QUERY := 'SELECT FOLIO_NO, SCH_CODE, TR_DATE, TRAN_TYPE, ';
+        V_QUERY := V_QUERY || 'MAX(inv_name) Inv_Name, MAX(ADDRESS) ADDRESS, ';
+        V_QUERY := V_QUERY || 'MAX(BROKER_CODE) BROKER_CODE, MAX(CITY_NAME) CITY_NAME, max(sch_name) SCH_NAME, ';
+        V_QUERY := V_QUERY || 'MAX(MUT_CODE) MUT_CODE, MAX(MUT_NAME) MUT_NAME, MAX(RM_NAME) RM_NAME, MAX(BRANCH_NAME) BRANCH_NAME, MAX(APP_NO) APP_NO, ';
+        V_QUERY := V_QUERY || 'MAX(CHEQUE_NO) CHEQUE_NO, SUM(AMOUNT) AMOUNT, ';
+        V_QUERY := V_QUERY || 'MAX(BUSI_BRANCH_CODE) BUSI_BRANCH_CODE, ';
+        V_QUERY := V_QUERY || 'MAX(BUSINESS_RMCODE) BUSINESS_RMCODE, GETTRANCODE(FOLIO_NO,SCH_CODE,TR_DATE,TRAN_TYPE) UNIQUE_TRAN ';
+        V_QUERY := V_QUERY || 'FROM ( ';
+        V_QUERY := V_QUERY || 'SELECT tran_type, t.inv_name, (i.ADDRESS1||'',''||i.ADDRESS2||'',''||i.EMAIL) address, ';
+        V_QUERY := V_QUERY || 'REG_SUBBROK broker_code, c.city_name, ';
+        V_QUERY := V_QUERY || 't.sch_code, sch_name sch_name, t.mut_code, amc.mut_name mut_name, rm_name, ';
+        V_QUERY := V_QUERY || 'branch_name, ';
+        V_QUERY := V_QUERY || 'app_no, folio_no, cheque_no, ';
+        V_QUERY := V_QUERY || 'amount, t.tran_code, reg_date as tr_date, ';
+        V_QUERY := V_QUERY || 'busi_branch_code, business_rmcode ';
+        V_QUERY := V_QUERY || 'FROM employee_master e, ';
+        V_QUERY := V_QUERY || 'branch_master b, ';
+        V_QUERY := V_QUERY || 'mut_fund amc, ';
+        V_QUERY := V_QUERY || 'scheme_info sch, ';
+        V_QUERY := V_QUERY || 'TRANSACTION_ST@MF.BAJAJCAPITAL t, ';
+        V_QUERY := V_QUERY || 'investor_master i, CITY_MASTER C ';
+        V_QUERY := V_QUERY || 'WHERE I.CITY_ID=C.CITY_ID(+) ';
+        V_QUERY := V_QUERY || 'AND t.client_code = i.inv_code ';
+        V_QUERY := V_QUERY || 'AND to_char(t.rmcode) = e.rm_code ';
+        V_QUERY := V_QUERY || 'AND t.BRANCH_CODE = b.branch_code ';
+        V_QUERY := V_QUERY || 'AND t.mut_code = amc.mut_code AND t.sch_code = sch.sch_code AND (DUP_FLAG2 = 0 OR (REG_TRAN_TYPE=''TICOB'' AND DUP_FLAG2 IN(0,9))) ';
+        
+        IF V_SRM_CODE IS NOT NULL THEN
+            V_QUERY := V_QUERY || 'AND E.RM_CODE = ''' || V_SRM_CODE || ''' ';
+        END IF;
+
+        IF MyTranCode IS NOT NULL THEN
+            V_QUERY := V_QUERY || 'AND t.tran_code IN (''' || REPLACE(MyTranCode, ',', ''',''') || ''') ';
+        END IF;
+
+        V_QUERY := V_QUERY || 'AND (t.asa <> ''C'' OR t.asa IS NULL) ';
+        V_QUERY := V_QUERY || 'AND t.tran_type IN (''PURCHASE'', ''REINVESTMENT'', ''SWITCH IN'') ';
+        V_QUERY := V_QUERY || 'ORDER BY TR_Date, rm_name ';
+        V_QUERY := V_QUERY || ') ';
+        V_QUERY := V_QUERY || 'GROUP BY FOLIO_NO, SCH_CODE, TR_DATE, TRAN_TYPE ';
+        
+    V_QUERY := 'SELECT    T.FOLIO_NO,    T.SCH_CODE,    T.TR_DATE,    T.TRAN_TYPE,    IM.INVESTOR_NAME AS INV_NAME,    IM.ADDRESS1 || '', '' || IM.ADDRESS2 AS ADDRESS,
+    '''' AS BROKER_CODE,    CM.CITY_NAME,    SCH.SCH_NAME,    T.MUT_CODE,    M.MUT_NAME,    B.BRANCH_NAME,    T.APP_NO,    T.CHEQUE_NO,    T.AMOUNT,    T.BUSI_BRANCH_CODE,
+    T.BUSINESS_RMCODE,    T.TRAN_CODE AS UNIQUE_TRAN
+FROM TRANSACTION_MF_TEMP1 T
+LEFT JOIN INVESTOR_MASTER IM 
+       ON IM.INV_CODE = T.CLIENT_CODE
+LEFT JOIN CITY_MASTER CM
+       ON CM.CITY_ID = IM.CITY_ID
+LEFT JOIN SCHEME_INFO SCH
+       ON SCH.SCH_CODE = T.SCH_CODE
+LEFT JOIN MUT_FUND M
+       ON M.MUT_CODE = T.MUT_CODE
+LEFT JOIN BRANCH_MASTER B
+       ON B.BRANCH_CODE = T.BRANCH_CODE
+WHERE T.TRAN_CODE = ''' || MyTranCode || '''';
+
+        
+        
+    ELSIF P_X = '2' THEN 
+        V_QUERY := 'SELECT inv.Investor_Name, inv.address1||'',''||inv.address2||'',''||inv.phone||'',''||inv.email address, ct.city_name ';
+        V_QUERY := V_QUERY || ', mf.bank_name, mf.client_code, mf.sch_code sch_code, mf.mut_code, rm_name, branch_name, panno, ';
+        V_QUERY := V_QUERY || 'amc.mut_name mut_Name, Sch_Name Sch_Name, tr_date, TRAN_TYPE, App_No, folio_no, payment_mode, ';
+        V_QUERY := V_QUERY || 'cheque_no, CHEQUE_DATE, Amount, Sip_Type, lEAD_nO, LEAD_NAME, TRAN_code, b.branch_code, BUSINESS_RMCODE ';
+        V_QUERY := V_QUERY || 'FROM city_master ct, employee_master e, investor_master inv, branch_master b, ';
+        V_QUERY := V_QUERY || 'ALLCOMPANY amc, ALLSCHEME sch, TRANSACTION_MF_TEMP1 mf ';
+        V_QUERY := V_QUERY || 'WHERE MF.MOVE_FLAG1 IS NULL AND MF.SIP_ID IS NULL AND inv.city_id=ct.city_id ';
+        V_QUERY := V_QUERY || 'AND mf.client_code=inv.inv_code AND to_char(mf.BUSINESS_RMCODE)=to_char(e.payroll_id) ';
+        V_QUERY := V_QUERY || 'AND mf.BUSI_BRANCH_CODE=b.branch_code ';
+        
+        IF P_BRANCH IS NOT NULL THEN
+            V_QUERY := V_QUERY || 'AND mf.mut_code=amc.mut_code AND mf.sch_code=sch.sch_code AND b.branch_code = ''' || P_BRANCH || ''' ';
+        ELSE
+            V_QUERY := V_QUERY || 'AND mf.mut_code=amc.mut_code AND mf.sch_code=sch.sch_code ';
+            V_QUERY := V_QUERY || 'AND b.branch_code IN (SELECT BRANCH_ID FROM USERDETAILS_JI WHERE LOGIN_ID='''||P_LOG_ID||''' AND ROLE_ID='''||P_ROLE_ID||''') ';
+        END IF;
+
+        IF P_REGION IS NOT NULL THEN
+            V_QUERY := V_QUERY || 'AND B.REGION_ID = ''' || P_REGION || ''' ';
+        END IF;
+
+        IF P_AR IS NOT NULL THEN
+            V_QUERY := V_QUERY || 'AND MF.TRAN_CODE = ''' || P_AR || ''' ';
+        END IF;
+
+        IF P_ZONE IS NOT NULL THEN
+            V_QUERY := V_QUERY || 'AND B.ZONE_ID = ''' || P_ZONE || ''' ';
+        END IF;
+        
+        IF P_RM IS NOT NULL THEN
+            V_QUERY := V_QUERY || 'AND E.PAYROLL_ID = ''' || P_RM || ''' ';
+        END IF;
+
+        IF V_SRM_CODE IS NOT NULL THEN
+            V_QUERY := V_QUERY || 'AND E.RM_CODE = ''' || V_SRM_CODE || ''' ';
+        END IF;
+
+        IF P_AMC IS NOT NULL THEN
+            V_QUERY := V_QUERY || 'AND MF.MUT_CODE = ''' || P_AMC || ''' ';
+        END IF;
+
+        IF P_RECONCILIATIONSTATUS IS NOT NULL THEN
+            IF P_RECONCILIATIONSTATUS = 'M' THEN
+                V_QUERY := V_QUERY || 'AND mf.rec_flag=''Y'' AND mf.rec_user<>''Auto'' ';
+            ELSIF P_RECONCILIATIONSTATUS = 'A' THEN
+                V_QUERY := V_QUERY || 'AND mf.rec_user=''Auto'' AND mf.rec_flag=''Y'' ';
+            END IF;
+        END IF;
+
+        V_QUERY := V_QUERY || 'AND mf.audit_flag IS NULL ';
+    
+        IF P_FROMDATE IS NOT NULL THEN
+            V_QUERY := V_QUERY || 'AND to_date(reco_date) >= TO_DATE('''||P_FROMDATE||''',''DD/MM/YYYY'') ';
+        END IF;
+
+        IF P_TODATE IS NOT NULL THEN
+            V_QUERY := V_QUERY || 'AND to_date(reco_date) <= TO_DATE('''||P_TODATE||''',''DD/MM/YYYY'') ';
+        END IF;
+    END IF;
+    
+    V_QUERY := V_QUERY || 'ORDER BY TR_DATE, rm_name';
+ 
+    OPEN P_CURSOR FOR V_QUERY;
+    --OPEN P_CURSOR FOR select V_QUERY from dual;
+    
+EXCEPTION
+    WHEN OTHERS THEN
+       
+        -- Re-raise the error
+        RAISE;
+END PSM_MC_GET_TR2;
+/

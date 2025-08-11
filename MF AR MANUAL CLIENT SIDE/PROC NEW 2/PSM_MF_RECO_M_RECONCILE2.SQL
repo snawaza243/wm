@@ -99,7 +99,7 @@ BEGIN
             EXECUTE IMMEDIATE v_sql;
         ELSE
             -- Regular transaction type updates
-            UPDATE Transaction_mf_temp1 
+            UPDATE Transaction_mf_temp1  
             SET amount = MyRtaAmount,
                 folio_no = MyRtaFolio,
                 tr_date = NVL(TO_DATE(MyRtaTrDate, 'dd/mm/rrrr'), NULL),

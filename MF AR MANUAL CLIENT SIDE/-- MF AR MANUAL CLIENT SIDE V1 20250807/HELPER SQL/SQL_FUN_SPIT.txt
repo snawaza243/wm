@@ -1,0 +1,44 @@
+CREATE OR REPLACE TYPE t_strlist AS TABLE OF VARCHAR2(4000);
+/
+
+CREATE OR REPLACE FUNCTION PSM_split_csv (
+    p_list    IN VARCHAR2,
+    p_delim   IN VARCHAR2 DEFAULT ','
+) RETURN t_strlist PIPELINED
+AS
+    v_start PLS_INTEGER := 1;
+    v_end   PLS_INTEGER;
+    v_token VARCHAR2(4000);
+BEGIN
+    LOOP
+        v_end := INSTR(p_list, p_delim, v_start);
+        IF v_end = 0 THEN
+            v_token := TRIM(SUBSTR(p_list, v_start));
+            IF v_token IS NOT NULL THEN
+                PIPE ROW(v_token);
+            END IF;
+            EXIT;
+        ELSE
+            v_token := TRIM(SUBSTR(p_list, v_start, v_end - v_start));
+            IF v_token IS NOT NULL THEN
+                PIPE ROW(v_token);
+            END IF;
+            v_start := v_end + LENGTH(p_delim);
+        END IF;
+    END LOOP;
+    RETURN;
+END;
+/
+
+
+DECLARE
+    varx VARCHAR2(100) := 'ZBC,SDF,ASD';
+BEGIN
+    UPDATE mytable
+    SET x = '1'
+    WHERE code IN (
+        SELECT COLUMN_VALUE
+        FROM TABLE(split_csv(varx))
+    );
+END;
+/

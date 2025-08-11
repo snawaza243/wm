@@ -1,0 +1,71 @@
+/* Formatted on 11/08/2025 10:34:24 (QP5 v5.336) */
+  SELECT FOLIO_NO,
+         SCH_CODE,
+         TR_DATE,
+         TRAN_TYPE,
+         MAX (inv_name)             Inv_Name,
+         MAX (ADDRESS)              ADDRESS,
+         MAX (BROKER_CODE)          BROKER_CODE,
+         MAX (CITY_NAME)            CITY_NAME,
+         MAX (sch_name)             SCH_NAME,
+         MAX (MUT_CODE)             MUT_CODE,
+         MAX (MUT_NAME)             MUT_NAME,
+         MAX (RM_NAME)              RM_NAME,
+         MAX (BRANCH_NAME)          BRANCH_NAME,
+         MAX (APP_NO)               APP_NO,
+         MAX (CHEQUE_NO)            CHEQUE_NO,
+         SUM (AMOUNT)               AMOUNT,
+         MAX (BUSI_BRANCH_CODE)     BUSI_BRANCH_CODE,
+         MAX (BUSINESS_RMCODE)      BUSINESS_RMCODE,
+         GETTRANCODE (FOLIO_NO,
+                      SCH_CODE,
+                      TR_DATE,
+                      TRAN_TYPE)    UNIQUE_TRAN
+    FROM (  SELECT tran_type,
+                   t.inv_name,
+                   (i.ADDRESS1 || ',' || i.ADDRESS2 || ',' || i.EMAIL)
+                       address,
+                   REG_SUBBROK
+                       broker_code,
+                   c.city_name,
+                   t.sch_code,
+                   sch_name
+                       sch_name,
+                   t.mut_code,
+                   amc.mut_name
+                       mut_name,
+                   rm_name,
+                   branch_name,
+                   app_no,
+                   folio_no,
+                   cheque_no,
+                   amount,
+                   t.tran_code,
+                   reg_date
+                       AS tr_date,
+                   busi_branch_code,
+                   business_rmcode
+              FROM employee_master             e,
+                   branch_master               b,
+                   mut_fund                    amc,
+                   scheme_info                 sch,
+                   TRANSACTION_ST@MF.BAJAJCAPITAL t,
+                   investor_master             i,
+                   CITY_MASTER                 C
+             WHERE     I.CITY_ID = C.CITY_ID(+)
+                   AND t.client_code = i.inv_code
+                   AND TO_CHAR (t.rmcode) = e.rm_code
+                   AND t.BRANCH_CODE = b.branch_code
+                   AND t.mut_code = amc.mut_code
+                   AND t.sch_code = sch.sch_code
+                   AND (   DUP_FLAG2 = 0
+                        OR (REG_TRAN_TYPE = 'TICOB' AND DUP_FLAG2 IN (0, 9)))
+                   AND t.tran_code IN ('TR24148257')
+                   AND (t.asa <> 'C' OR t.asa IS NULL)
+                   AND t.tran_type IN ('PURCHASE', 'REINVESTMENT', 'SWITCH IN')
+          ORDER BY TR_Date, rm_name)
+GROUP BY FOLIO_NO,
+         SCH_CODE,
+         TR_DATE,
+         TRAN_TYPE
+ORDER BY TR_DATE, rm_name
