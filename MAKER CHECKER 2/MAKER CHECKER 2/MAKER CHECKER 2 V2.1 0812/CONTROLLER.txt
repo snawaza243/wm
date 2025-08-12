@@ -1,0 +1,191 @@
+using System;
+using System.Data;
+using Oracle.ManagedDataAccess.Client;
+using System.Web.Configuration;
+using Oracle.ManagedDataAccess.Types;
+using System.Web;
+
+
+namespace WM.Controllers
+{
+    public class MakerCheckerController
+    {
+        PsmController pc  = new PsmController();
+        OracleConnection connection = new OracleConnection(WebConfigurationManager.ConnectionStrings["ConnectionStringVM"].ConnectionString);
+
+        #region MAKER CHECKER 2
+
+        public DataTable GetMakerCheckerTransactoinsController(string x, string region, string zone, string branch, string rm, string dateFrom, string dateTo, string amc, string ar, string recoStatus)
+        {
+            PsmController pc = new PsmController();
+            DataTable dt = new DataTable();
+
+            using (OracleConnection conn = new OracleConnection(WebConfigurationManager.ConnectionStrings["ConnectionStringVM"].ConnectionString))
+            {
+                using (OracleCommand cmd = new OracleCommand("WEALTHMAKER.PSM_MC_GET_TR2", conn))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.Add("P_X", OracleDbType.Varchar2).Value = x;
+                    cmd.Parameters.Add("P_REGION", OracleDbType.Varchar2).Value = (object)region ?? DBNull.Value;
+                    cmd.Parameters.Add("P_ZONE", OracleDbType.Varchar2).Value = (object)zone ?? DBNull.Value;
+                    cmd.Parameters.Add("P_BRANCH", OracleDbType.Varchar2).Value = (object)branch ?? DBNull.Value;
+                    cmd.Parameters.Add("P_RM", OracleDbType.Varchar2).Value = (object)rm ?? DBNull.Value;
+                    cmd.Parameters.Add("P_FROMDATE", OracleDbType.Varchar2).Value = (object)dateFrom ?? DBNull.Value;
+                    cmd.Parameters.Add("P_TODATE", OracleDbType.Varchar2).Value = (object)dateTo ?? DBNull.Value;
+                    cmd.Parameters.Add("P_AMC", OracleDbType.Varchar2).Value = (object)amc ?? DBNull.Value;
+                    cmd.Parameters.Add("P_AR", OracleDbType.Varchar2).Value = (object)ar ?? DBNull.Value;
+                    cmd.Parameters.Add("P_RECONCILIATIONSTATUS", OracleDbType.Char).Value = (object)recoStatus ?? DBNull.Value;
+                    cmd.Parameters.Add("P_LOG_ID", OracleDbType.Varchar2).Value = pc.currentLoginID();
+                    cmd.Parameters.Add("P_ROLE_ID", OracleDbType.Varchar2).Value = pc.currentRoleID();
+                    cmd.Parameters.Add("P_CURSOR", OracleDbType.RefCursor).Direction = ParameterDirection.Output;
+
+                    try
+                    {
+                        conn.Open();
+                        using (OracleDataAdapter da = new OracleDataAdapter(cmd))
+                        {
+                            da.Fill(dt);
+                        }
+
+
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new Exception("Error: " + ex.Message);
+                    }
+                    finally
+                    {
+                        cmd?.Dispose();
+
+                        if (conn != null)
+                        {
+                            if (conn.State == ConnectionState.Open)
+                            {
+                                try { conn.Close(); }
+                                catch (Exception ex)
+                                {
+                                    throw new Exception("Error: " + ex.Message);
+                                }
+                            }
+                            conn.Dispose();
+                        }
+                    }
+                }
+            }
+            return dt;
+        }
+
+
+        public (bool Success, string Message) SetAuditARController(string ar)
+        {
+            string message = "";
+
+            using (OracleConnection conn = new OracleConnection(WebConfigurationManager.ConnectionStrings["ConnectionStringVM"].ConnectionString))
+            using (OracleCommand cmd = new OracleCommand("WEALTHMAKER.PSM_MC_AUDIT_TR2", conn))
+            {
+                cmd.CommandType = CommandType.StoredProcedure;
+
+                // Input parameter
+                cmd.Parameters.Add("P_AR_NO", OracleDbType.Varchar2).Value = ar ?? (object)DBNull.Value;
+
+                // Output cursor
+                var outCursor = new OracleParameter("P_CURSOR", OracleDbType.RefCursor)
+                {
+                    Direction = ParameterDirection.Output
+                };
+                cmd.Parameters.Add(outCursor);
+
+                try
+                {
+                    conn.Open();
+                    cmd.ExecuteNonQuery();
+
+                    using (var reader = ((OracleRefCursor)outCursor.Value).GetDataReader())
+                    {
+                        if (reader.Read())
+                        {
+                            message = reader["MESSAGE"].ToString();
+                            bool success = !message.StartsWith("ERROR:");
+                            return (success, message);
+                        }
+                    }
+
+                    return (false, "No response from procedure.");
+                }
+                catch (OracleException ex)
+                {
+                    return (false, "Database Error: " + ex.Message);
+                }
+                catch (Exception ex)
+                {
+                    return (false, "System Error: " + ex.Message);
+                }
+                finally
+                {
+                    if (conn.State == ConnectionState.Open)
+                        conn.Close();
+                }
+            }
+        }
+
+
+        public (bool Success, string Message) SetArUnreconcileController(string p_tran_code, string p_rta_tran_code)
+        {
+            string message = "";
+
+            using (OracleConnection conn = new OracleConnection(WebConfigurationManager.ConnectionStrings["ConnectionStringVM"].ConnectionString))
+            using (OracleCommand cmd = new OracleCommand("WEALTHMAKER.PSM_MC_UNRECONCILE2", conn))
+            {
+                cmd.CommandType = CommandType.StoredProcedure;
+
+                // Input parameters
+                cmd.Parameters.Add("P_TRAN_CODE", OracleDbType.Varchar2).Value = p_tran_code ?? (object)DBNull.Value;
+                cmd.Parameters.Add("P_RTA_TRAN_CODE", OracleDbType.Varchar2).Value = p_rta_tran_code ?? (object)DBNull.Value;
+
+                // Output cursor
+                var outCursor = new OracleParameter("P_CURSOR", OracleDbType.RefCursor)
+                {
+                    Direction = ParameterDirection.Output
+                };
+                cmd.Parameters.Add(outCursor);
+
+                try
+                {
+                    conn.Open();
+                    cmd.ExecuteNonQuery();
+
+                    using (var reader = ((OracleRefCursor)outCursor.Value).GetDataReader())
+                    {
+                        if (reader.Read())
+                        {
+                            message = reader["MESSAGE"].ToString();
+                            bool success = !message.StartsWith("ERROR:", StringComparison.OrdinalIgnoreCase);
+                            return (success, message);
+                        }
+                    }
+
+                    return (false, "No response from procedure.");
+                }
+                catch (OracleException ex)
+                {
+                    return (false, "Database Error: " + ex.Message);
+                }
+                catch (Exception ex)
+                {
+                    return (false, "System Error: " + ex.Message);
+                }
+                finally
+                {
+                    if (conn.State == ConnectionState.Open)
+                        conn.Close();
+                }
+            }
+        }
+
+
+        #endregion
+    
+    }
+
+
+}

@@ -1,0 +1,8 @@
+  UPDATE transaction_st@MF.BAJAJCAPITAL
+        SET REC_FLAG = NULL,
+            HO_TRAN_CODE = NULL
+        WHERE TRAN_CODE  IN (
+            SELECT REGEXP_SUBSTR(V_RTA_TRAN_CODE, '[^,]+', 1, LEVEL) AS code
+            FROM dual
+            CONNECT BY REGEXP_SUBSTR(V_RTA_TRAN_CODE, '[^,]+', 1, LEVEL) IS NOT NULL
+        );

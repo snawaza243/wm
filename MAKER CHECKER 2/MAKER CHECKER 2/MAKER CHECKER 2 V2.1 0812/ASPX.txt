@@ -1,0 +1,1343 @@
+<%@ Page Title="Maker Checker 2"
+    Language="C#" MasterPageFile="~/vmSite.Master" AutoEventWireup="true"
+    CodeBehind="MakerChecker.aspx.cs" Inherits="WM.Masters.MakerChecker" MaintainScrollPositionOnPostback="true" %>
+
+<asp:Content ID="Content1" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
+    <!-- jQuery (only once, pick one version) -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <!-- Other Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+
+    <script>
+        function onLoadCall() {
+            checkUserSession();
+
+            $(document).ajaxStart(function () {
+                 checkUserSession();
+                showLoader();
+            });
+
+            $(document).ajaxStop(function () {
+                hideLoader();
+            });
+
+            setCurrentDateToInput('txtDateFrom');
+            setCurrentDateToInput('txtDateTo');
+
+            loadRegionList();
+            loadZoneList();
+            loadBranchList();
+            loadAMCList();
+            loadRMList();
+            //$('#autoReconciled').prop('checked', true);
+            enableAutoDateFormat("txtDateFrom");
+            enableAutoDateFormat("txtDateTo");
+            enableAutoDateFormat("txtRtaDateFrom");
+            enableAutoDateFormat("txtRtaDateTo");
+            //makeTableColumnsResizable("transactionTable"); 
+
+
+
+        }
+
+        function loadMCTRList(x) {
+            //alert('Entering loadMCTRList with x=' + x);
+
+            // Validate input
+            if (x !== '1' && x !== '2') {
+                alert('Invalid x parameter: ' + x);
+                return;
+            }
+            const newTr = $('#hdnTrCode').text();
+
+            // Get form values
+            const region = $('#ddlRegion').val() || '';
+            const zone = $('#ddlZone').val() || '';
+            const branch = $('#ddlBranch').val() || '';
+            const rm = $('#ddlRM').val() || '';
+            const amc = $('#ddlAMC').val() || '';
+            const recoStatus = $('input[name="recoStatus"]:checked').val() || '';
+            const ar = (x == '1' && newTr) ? newTr : ($('#txtARNo').val() || '').trim();
+            const dateFrom = !ar ? $('#txtDateFrom').val() : '';
+            const dateTo = !ar ? $('#txtDateTo').val() : '';
+
+            // Validation for X=2
+            if (x === '2' && !ar && (!dateFrom || !dateTo)) {
+                alert("⚠️ Please enter AR No or both From Date and To Date.");
+                return;
+            }
+
+            // AJAX Call
+            $.ajax({
+                type: "POST",
+                url: "/masters/maker_checker.aspx/GetMCTRList",
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                data: JSON.stringify({
+                    x: x,
+                    region: region,
+                    zone: zone,
+                    branch: branch,
+                    rm: rm,
+                    dateFrom: dateFrom,
+                    dateTo: dateTo,
+                    amc: amc,
+                    ar: ar,
+                    recoStatus: recoStatus
+                }),
+                success: function (response) {
+                    try {
+                        const result = JSON.parse(response.d);
+                        if (!result.success) {
+                            alert(`Error:${result.message}`)
+                            if (x === '2') {
+                                $('#trCount').text('Count: 0');
+                                $("#table1 tbody, #table2 tbody").empty();
+                            } else {
+                                $("#table1 tbody").empty();
+                            }
+                        } else {
+
+                        }
+
+                        if (!result.data || result.data.length === 0) {
+                            alert("No records found matching your criteria");
+                            if (x === '2') {
+                                $('#trCount').text('Count: 0');
+                            }
+                        }
+
+                        const rowCount = result.data.length;
+                        if (x === '2') {
+                            $('#trCount').text('Count: ' + rowCount);
+                            //$('#trCount').css('color', 'green');
+                        }
+
+
+                        if (x === '2') {
+                            $("#table1 tbody, #table2 tbody").empty();
+                        }
+                        else if (x === '1') {
+                            $("#table1 tbody").empty();
+                        }
+
+                        if (x === '1') {
+                            populateTable1(result.data);
+                            $("#table1").show();
+                        } else {
+                            populateTable2(result.data);
+                            $("#table2").show();
+                        }
+
+                    } catch (e) {
+                        const errorMsg = "Error processing server response: " +
+                            (e.message || "Unknown error") +
+                            "\n\nTechnical details:\n" +
+                            (e.stack || "No stack trace available");
+                        alert(errorMsg);
+                    }
+                },
+                error: function (xhr, status, error) {
+                    let errorMsg = "An error occurred while loading data";
+                    try {
+                        const response = JSON.parse(xhr.responseText);
+                        errorMsg = response.Message || errorMsg;
+                    } catch (e) {
+                        errorMsg = xhr.statusText || errorMsg;
+                    }
+                    alert(errorMsg);
+
+                },
+                complete: function () {
+                }
+            });
+        }
+
+        function populateTable1(data) {
+            const rows = data.map(item => `
+            <tr>
+                <td>${escapeHtml(item.UNIQUE_TRAN || '')}</td>
+                <td>${formatDateToDMY(item.TR_DATE)}</td>
+                <td>${escapeHtml(item.INV_NAME || '')}</td>
+                <td>${escapeHtml(item.ADDRESS || '')}</td>
+                <td>${escapeHtml(item.CITY_NAME || '')}</td>
+                <td>${escapeHtml(item.MUT_NAME || '')}</td>
+                <td>${escapeHtml(item.SCH_NAME || '')}</td>
+                <td>${formatCurrency(item.AMOUNT)}</td>
+                <td>${escapeHtml(item.FOLIO_NO || '')}</td>
+                <td>${escapeHtml(item.CHEQUE_NO || '')}</td>
+                <td>${escapeHtml(item.APP_NO || '')}</td>
+                <td>${escapeHtml(item.RM_NAME || '')}</td>
+                <td>${escapeHtml(item.BRANCH_NAME || '')}</td>
+                <td>${escapeHtml(item.BROKER_CODE || '')}</td>
+            </tr>
+        `).join('');
+            $("#table1 tbody").html(rows);
+        }
+
+        function populateTable2(data) {
+            const rows = data.map(item => `
+            <tr>
+                <td>${escapeHtml(item.TRAN_CODE || '')}</td>
+                <td>${formatDateToDMY(item.TR_DATE)}</td>
+                <td>${escapeHtml(item.INVESTOR_NAME || '')}</td>
+                <td>${escapeHtml(item.ADDRESS || '')}</td>
+                <td>${escapeHtml(item.CITY_NAME || '')}</td>
+                <td>${escapeHtml(item.MUT_NAME || '')}</td>
+                <td>${escapeHtml(item.SCH_NAME || '')}</td>
+                <td>${(item.AMOUNT)}</td>
+                <td>${escapeHtml(item.FOLIO_NO || '')}</td>
+                <td>${escapeHtml(item.CHEQUE_NO || '')}</td>
+                <td>${escapeHtml(item.APP_NO || '')}</td>
+                <td>${escapeHtml(item.RM_NAME || '')}</td>
+                <td>${escapeHtml(item.BRANCH_NAME || '')}</td>
+                <td>${escapeHtml(item.REMARK_RECO || '')}</td>
+
+            </tr>
+        `).join('');
+            $("#table2 tbody").html(rows);
+        }
+
+        // Helper functions
+        function formatDateToDMY(dateString) {
+            if (!dateString) return '';
+            try {
+                const date = new Date(dateString);
+                if (isNaN(date)) return dateString;
+                const day = date.getDate().toString().padStart(2, '0');
+                const month = (date.getMonth() + 1).toString().padStart(2, '0');
+                const year = date.getFullYear();
+                return `${day}/${month}/${year}`;
+            } catch (e) {
+                return dateString;
+            }
+        }
+
+        function formatCurrency(amount) {
+            const num = parseFloat(amount);
+            return isNaN(num) ? '0.00' : num.toFixed(2);
+        }
+
+        function escapeHtml(unsafe) {
+            return unsafe.toString()
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        function showError(message) {
+            $("#errorDisplay").text(message).show();
+        }
+
+        function showNoRecords() {
+            showError("No records found matching your criteria");
+        }
+
+        function showAjaxError(xhr) {
+            let errorMsg = "An error occurred while loading data";
+            try {
+                const response = JSON.parse(xhr.responseText);
+                errorMsg = response.Message || errorMsg;
+            } catch (e) {
+                errorMsg = xhr.statusText || errorMsg;
+            }
+            showError(errorMsg);
+        }
+    </script>
+
+    <script>
+        $(document).ready(function () {
+
+            //#region ---------- HELPING FUNCTION: VALIDATION ONLOAD, AND LOADER ----------
+
+            function checkUserSession() {
+                const loginId = $('#' + '<%= hdnLoginId.ClientID %>').val();
+                const roleId = $('#' + '<%= hdnRoleId.ClientID %>').val();
+
+                if (!loginId || !roleId) {
+                    alert("Session expired or invalid. Please Login");
+                    window.location.href = 'https://www.wealthmaker.in/login_new.aspx';
+                }
+            }
+
+            function showLoader() {
+                if ($('#customLoader').length) {
+                    $('#customLoader').show();
+                    return;
+                }
+
+                const loaderHtml = `
+        <div id="customLoader" style="
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.2);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;">
+            <div style="
+                background-color: white;
+                color: black;
+                padding: 20px 30px;
+                width: 250px;
+                text-align: center;
+                border-radius: 5px;
+                font-weight: bold;
+                font-size: 16px;">
+                Please wait...
+            </div>
+        </div>
+    `;
+                $('body').append(loaderHtml);
+            }
+
+            function hideLoader() {
+                $('#customLoader').fadeOut(300, function () {
+                    $(this).remove(); // Optional: remove from DOM
+                });
+            }
+
+            function syncScrollJs() {
+                var grid1 = document.getElementsByClassName('ctm-table-container');
+                var grid2 = document.getElementsByClassName('ctm-table-container');
+
+                if (!grid1 || !grid2) return;
+
+                grid1.addEventListener('scroll', function () {
+                    grid2.scrollLeft = grid1.scrollLeft;
+                });
+
+                grid2.addEventListener('scroll', function () {
+                    grid1.scrollLeft = grid2.scrollLeft;
+                });
+            }
+
+            function syncScrollJQuery(selector1, selector2) {
+                var $grid1 = $(selector1);
+                var $grid2 = $(selector2);
+
+                if ($grid1.length === 0 || $grid2.length === 0) return;
+
+                $grid1.on('scroll', function () {
+                    $grid2.scrollLeft($grid1.scrollLeft());
+                });
+
+                $grid2.on('scroll', function () {
+                    $grid1.scrollLeft($grid2.scrollLeft());
+                });
+            }
+
+            function syncVerticalScrollByClassAndTableContainer() {
+                const containers = document.getElementsByClassName('ctm-table-container');
+
+                if (containers.length < 2) return;
+
+                const container1 = containers[0];
+                const container2 = containers[1];
+
+                let isSyncingScroll = false;
+
+                container1.addEventListener('scroll', function () {
+                    if (isSyncingScroll) return;
+                    isSyncingScroll = true;
+                    container2.scrollTop = container1.scrollTop;
+                    isSyncingScroll = false;
+                });
+
+                container2.addEventListener('scroll', function () {
+                    if (isSyncingScroll) return;
+                    isSyncingScroll = true;
+                    container1.scrollTop = container2.scrollTop;
+                    isSyncingScroll = false;
+                });
+            }
+
+            function syncScroll() {
+                var grid1 = document.getElementById('table2-container');
+                var grid2 = document.getElementById('table1-container');
+
+                if (!grid1 || !grid2) return;
+
+                grid1.addEventListener('scroll', function () {
+                    grid2.scrollLeft = grid1.scrollLeft;
+                });
+
+                grid2.addEventListener('scroll', function () {
+                    grid1.scrollLeft = grid2.scrollLeft;
+                });
+
+
+            }
+
+            function setCurrentDateToInput(inputId) {
+                const now = new Date();
+                const day = String(now.getDate()).padStart(2, '0');
+                const month = String(now.getMonth() + 1).padStart(2, '0'); // Months are 0-based
+                const year = now.getFullYear();
+
+                const formattedDate = `${day}/${month}/${year}`;
+                $('#' + inputId).val(formattedDate);
+
+
+
+            }
+
+
+            function formatDateToDMY(dateStr) {
+                if (!dateStr) return '';
+
+                const date = new Date(dateStr);
+
+                if (isNaN(date.getTime())) return '';
+
+                const day = ('0' + date.getDate()).slice(-2);
+                const month = ('0' + (date.getMonth() + 1)).slice(-2);
+                const year = date.getFullYear();
+
+                return `${day}/${month}/${year}`;
+            }
+
+            function enableAutoDateFormat(inputId) {
+                const $input = $("#" + inputId);
+
+
+                // Auto-format on input
+                $input.on("input", function () {
+                    let val = $(this).val().replace(/\D/g, ""); // Only digits
+                    if (val.length > 8) val = val.slice(0, 8);
+
+                    let formatted = val;
+                    if (val.length > 4) {
+                        formatted = val.slice(0, 2) + '/' + val.slice(2, 4) + '/' + val.slice(4);
+                    } else if (val.length > 2) {
+                        formatted = val.slice(0, 2) + '/' + val.slice(2);
+                    }
+
+                    $(this).val(formatted);
+                });
+
+                // Validate on blur
+                $input.on("blur", function () {
+                    let val = $(this).val();
+
+                    if (val === "") {
+                        // Empty is allowed → reset any invalid styling
+                        $(this).removeClass('invalid-date');
+                        return;
+                    }
+
+                    if (!isValidDate(val)) {
+                        //$(this).val(''); // Clear invalid input
+                        $(this).addClass('invalid-date'); // Add red border via CSS class
+                    } else {
+                        $(this).removeClass('invalid-date'); // Remove red border if valid
+                    }
+                });
+
+                // Helper function: validate dd/mm/yyyy format and actual date
+                function isValidDate(dateStr) {
+                    const regex = /^(\d{2})\/(\d{2})\/(\d{4})$/;
+                    const match = dateStr.match(regex);
+                    if (!match) return false;
+
+                    const day = parseInt(match[1], 10);
+                    const month = parseInt(match[2], 10) - 1; // JS months: 0–11
+                    const year = parseInt(match[3], 10);
+
+                    const date = new Date(year, month, day);
+                    return (
+                        date.getFullYear() === year &&
+                        date.getMonth() === month &&
+                        date.getDate() === day
+                    );
+                }
+            }
+
+            function clearDropdown(dropdownId) {
+                $("#" + dropdownId).empty();
+            }
+
+            function makeTableColumnsResizable(tableId) {
+                // Check if CSS for this tableId already exists
+                if (!document.getElementById("resizableTableStyles_" + tableId)) {
+                    const css = `
+              #${tableId} {
+                  table-layout: fixed;
+                  width: 100%;
+              }
+
+              #${tableId} th {
+                  width: 150px;
+                  position: relative;
+                  overflow: hidden;
+              }
+
+              #${tableId} .resizer {
+                  position: absolute;
+                  right: 0;
+                  top: 0;
+                  width: 5px;
+                  height: 100%;
+                  cursor: col-resize;
+                  user-select: none;
+                  z-index: 1;
+              }
+
+              #${tableId} th:hover .resizer {
+                  background-color: rgba(0, 0, 0, 0.1);
+              }
+          `;
+
+                    const style = document.createElement("style");
+                    style.id = "resizableTableStyles_" + tableId;
+                    style.innerHTML = css;
+                    document.head.appendChild(style);
+                }
+
+                const table = document.getElementById(tableId);
+                const ths = table.querySelectorAll("th");
+
+                ths.forEach(th => {
+                    if (!th.style.width) {
+                        th.style.width = th.offsetWidth + "px";
+                    }
+
+                    const resizer = document.createElement("div");
+                    resizer.classList.add("resizer");
+                    th.appendChild(resizer);
+
+                    let startX, startWidth;
+
+                    resizer.addEventListener("mousedown", function (e) {
+                        startX = e.pageX;
+                        startWidth = th.offsetWidth;
+
+                        function onMouseMove(e) {
+                            const newWidth = startWidth + (e.pageX - startX);
+                            th.style.width = newWidth + "px";
+                        }
+
+                        function onMouseUp() {
+                            document.removeEventListener("mousemove", onMouseMove);
+                            document.removeEventListener("mouseup", onMouseUp);
+                        }
+
+                        document.addEventListener("mousemove", onMouseMove);
+                        document.addEventListener("mouseup", onMouseUp);
+
+                        e.preventDefault();
+                    });
+                });
+            }
+
+            function RedirectToWelcomePage() {
+                const loginId = $("#<%= hdnLoginId.ClientID %>").val();
+                const roleId = $("#<%= hdnRoleId.ClientID %>").val();
+                const encodedLoginId = encodeURIComponent(loginId);
+                const encodedRoleId = encodeURIComponent(roleId);
+                const url = `/welcome?loginid=${encodedLoginId}&roleid=${encodedRoleId}`;
+                window.location.href = url; // Uncomment to redirect
+            }
+
+            function ExportTableToExcel_1(tableId, filePrefix) {
+                try {
+                    const $table = $(`#${tableId}`);
+                    const rowCount = $table.find('tbody tr').length;
+
+                    if (rowCount === 0 || $table.find('tbody tr:visible').length === 0) {
+                        alert(`⚠️ No data available in the table to export.`);
+                        return;
+                    }
+                    const tableElem = document.getElementById(tableId);
+                    const wb = XLSX.utils.table_to_book(tableElem, { sheet: "Transactions" });
+                    const fileName = `${filePrefix}_Transaction_List.xlsx`;
+                    XLSX.writeFile(wb, fileName);
+                    alert(`✅ Excel file "${fileName}" has been downloaded successfully.`);
+                } catch (error) {
+                    alert(`❌ Error during export: ${error.message}`);
+                }
+            }
+
+
+            //#endregion ---------- HELPING: ONLOAD ----------
+
+            //#region ---------- HELPING FUNCTION: DDL DATA LOAD AJAX ----------
+
+
+            function loadRegionList() {
+                //alert(' region list');
+
+                $.ajax({
+                    type: "POST",
+                    url: "/masters/maker_checker.aspx/GetRegionList",
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    data: JSON.stringify({}), // Required for WebMethod, even if no params
+                    success: function (res) {
+                        let { data } = JSON.parse(res.d);
+                        data.unshift({ text: "All", value: "" });
+                        let optionsHtml = data.map(r => `<option value="${r.value}">${r.text}</option>`);
+                        $("#ddlRegion").html(optionsHtml.join(''));
+                    },
+                    error: function (xhr, status, error) {
+                        alert("❌ Error loading region list: " + xhr.responseText);
+                    }
+                });
+            }
+
+            function loadZoneList() {
+                //alert(' zone list');
+
+                $.ajax({
+                    type: "POST",
+                    url: "/masters/maker_checker.aspx/GetZoneList", // Replace with actual ASPX page name
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    success: function (res) {
+                        let { data } = JSON.parse(res.d);
+                        data.unshift({ text: "All", value: "" });
+                        let optionsHtml = data.map(r => `<option value="${r.value}">${r.text}</option>`);
+                        $("#ddlZone").html(optionsHtml.join(''));
+                    },
+                    error: function (xhr, status, error) {
+                        alert("❌ Error loading zone list: " + xhr.responseText);
+                    }
+                });
+            }
+
+            function loadBranchList() {
+                //alert(' branch list');
+
+                $.ajax({
+                    type: "POST",
+                    url: "/masters/maker_checker.aspx/GetBranchList", // Replace with actual ASPX page name
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    success: function (res) {
+                        let { data } = JSON.parse(res.d);
+                        data.unshift({ text: "All", value: "" });
+                        let optionsHtml = data.map(r => `<option value="${r.value}">${r.text}</option>`);
+                        $("#ddlBranch").html(optionsHtml.join(''));
+                        $("#ddlRtaBranch").html(optionsHtml.join(''));
+                    },
+                    error: function (xhr, status, error) {
+                        alert("❌ Error loading branch list: " + xhr.responseText);
+                    }
+                });
+            }
+
+            function loadRMList() {
+                //alert(' rm list');
+
+                $.ajax({
+                    type: "POST",
+                    url: "/masters/maker_checker.aspx/GetRmList", // Replace with actual ASPX page name
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    success: function (res) {
+                        let { data } = JSON.parse(res.d);
+                        data.unshift({ text: "All", value: "" });
+                        let optionsHtml = data.map(r => `<option value="${r.value}">${r.text}</option>`);
+                        $("#ddlRM").html(optionsHtml.join(''));
+                    },
+                    error: function (xhr, status, error) {
+                        alert("❌ Error loading RM list: " + xhr.responseText);
+                    }
+                });
+            }
+
+            function loadAMCList() {
+                //alert(' amc list');
+
+                $.ajax({
+                    type: "POST",
+                    url: "/masters/maker_checker.aspx/GetAMCList", // Replace with actual ASPX page name
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    success: function (res) {
+                        let { data } = JSON.parse(res.d);
+                        data.unshift({ text: "All", value: "" });
+                        let optionsHtml = data.map(r => `<option value="${r.value}">${r.text}</option>`);
+                        $("#ddlAMC").html(optionsHtml.join(''));
+                        $("#ddlRtaAMC").html(optionsHtml.join(''));
+                    },
+                    error: function (xhr, status, error) {
+                        alert("❌ Error loading AMC list: " + xhr.responseText);
+                    }
+                });
+            }
+
+            function loadZoneByRegion(regionCode) {
+                //alert(' zone by region ');
+
+                $.ajax({
+                    url: "/masters/maker_checker.aspx/GetZoneListByRegion",
+                    method: "POST",
+                    data: JSON.stringify({ region: regionCode }),
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    success: function (res) {
+                        let { data } = JSON.parse(res.d);
+                        data.unshift({ text: "All", value: "" });
+                        let options = data.map(x => `<option value="${x.value}">${x.text}</option>`);
+                        $("#ddlZone").html(options.join(''));
+                    },
+                    error: function (xhr, status, error) {
+                        alert("❌ Error loading zone by region: " + xhr.responseText);
+                    }
+                });
+            }
+
+            function loadBranchByZone(zoneCode) {
+                //alert(' branch by zone');
+
+                $.ajax({
+                    url: "/masters/maker_checker.aspx/GetBranchListByZone",
+                    method: "POST",
+                    data: JSON.stringify({ zone: zoneCode }),
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    success: function (res) {
+                        let { data } = JSON.parse(res.d);
+                        data.unshift({ text: "All", value: "" });
+                        let options = data.map(x => `<option value="${x.value}">${x.text}</option>`);
+                        $("#ddlBranch").html(options.join(''));
+                    },
+                    error: function (xhr, status, error) {
+                        alert("❌ Error loading branch by zone: " + xhr.responseText);
+                    }
+                });
+            }
+
+            function loadRMListByBrnach(value) {
+                //alert(' rm by branch ');
+
+                $.ajax({
+                    url: "/masters/maker_checker.aspx/GetRmListByBranch",
+                    method: "POST",
+                    data: JSON.stringify({ branchCode: value }),
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    success: function (res) {
+                        let { data } = JSON.parse(res.d);
+                        data.unshift({ text: "All", value: "" });
+                        let options = data.map(x => `<option value="${x.value}">${x.text}</option>`);
+                        $("#ddlRM").html(options.join(''));
+                    },
+                    error: function (xhr, status, error) {
+                        alert("❌ Error loading RM list: " + xhr.responseText);
+                    }
+                });
+
+            }
+
+            //#endregion ---------- HELPING FUNCTION: DDL DATA LOAD AJAX ----------
+
+            //#region ONLOAD 
+            checkUserSession();
+
+            $(document).ajaxStart(function () {
+                checkUserSession();
+                showLoader();
+            });
+
+            $(document).ajaxStop(function () {
+                hideLoader();
+            });
+
+            setCurrentDateToInput('txtDateFrom');
+            setCurrentDateToInput('txtDateTo');
+            //$('#txtDateFrom').val('01/06/2025');
+            //$('#txtDateTo').val('05/06/2025');
+
+            loadRegionList();
+            loadZoneList();
+            loadBranchList();
+            loadAMCList();
+            loadRMList();
+            //$('#autoReconciled').prop('checked', true);
+            enableAutoDateFormat("txtDateFrom");
+            enableAutoDateFormat("txtDateTo");
+            makeTableColumnsResizable("table1");
+            makeTableColumnsResizable("table2");
+            //syncScrollJs()
+            //syncScroll("table1", "table2")
+            syncVerticalScrollByClassAndTableContainer();
+            syncScroll();
+            //#endregion ONLOAD
+
+            //#region ONCHNAGE
+
+            // REGION
+            $("#ddlRegion").change(function () {
+                //alert('Region changed to: ' + $(this).val());
+
+                let value = $(this).val();
+
+                if (!value || value === null) {
+                    loadZoneList();
+                    loadBranchList();
+                } else {
+                    loadZoneByRegion(value);
+                }
+                loadRMList();
+            });
+
+            // ZONE
+            $("#ddlZone").change(function () {
+                //alert('Zone changed to: ' + $(this).val());
+                let value = $(this).val();
+                if (!value || value === null) {
+                    loadBranchList();
+                } else {
+                    loadBranchByZone(value);
+                }
+                loadRMList();
+            });
+
+            // BRANCH
+            $("#ddlBranch").change(function () {
+                //alert('Branch changed to: ' + $(this).val());
+                let value = $(this).val();
+
+                if (!value || value === null) {
+                    loadRMList();
+                } else {
+                    loadRMListByBrnach(value);
+                }
+
+            });
+
+            //#endregion
+
+            //#region Go Button Click Handler: TR Search and load TR Data in table2
+            $('#btnGo').on('click', function (e) {
+                e.preventDefault();
+                //alert('Go button clicked - loading data...');
+
+                loadMCTRList("2"); // Or pass the appropriate x value
+            });
+
+            //#endregion
+
+            //#region  On Row DblClick for TR Selection and Click for RTA Selection& Calling load RTA Data in table1
+            $('#table2 tbody').on('dblclick', 'tr', function () {
+                //alert('Row double-clicked!');
+
+                $('#table2 tr').removeClass('row-selected');
+
+                $(this).addClass('row-selected');
+
+                var cells = $(this).find('td');
+
+                var rowData = {
+                    TRAN_CODE: cells.eq(0).text().trim(),
+                    TR_DATE: cells.eq(1).text().trim(),
+                    INVESTOR_NAME: cells.eq(2).text().trim(),
+                    ADDRESS: cells.eq(3).text().trim(),
+                    CITY_NAME: cells.eq(4).text().trim(),
+                    MUT_NAME: cells.eq(5).text().trim(),
+                    SCH_NAME: cells.eq(6).text().trim(),
+                    AMOUNT: cells.eq(7).text().trim(),
+                    FOLIO_NO: cells.eq(8).text().trim(),
+                    CHEQUE_NO: cells.eq(9).text().trim(),
+                    APP_NO: cells.eq(10).text().trim(),
+                    RM_NAME: cells.eq(11).text().trim(),
+                    BRANCH_NAME: cells.eq(12).text().trim(),
+                    REMARK_RECO: cells.eq(13).text().trim()
+
+                };
+
+                $('#hdnTrCode').text(rowData.TRAN_CODE);
+
+                $('#txtRemarks').val('');
+
+                $('#txtRemarks').val(rowData.REMARK_RECO);
+
+                const newTr = $('#hdnTrCode').text();
+                loadMCTRList('1');
+                //alert("Investor: " + rowData.INVESTOR_NAME + "\nAmount: " + rowData.AMOUNT +   "\nScheme: " + rowData.SCH_NAME +  "\nNewTR: " + newTr  );
+            });
+
+            $('#table1 tbody').on('click', 'tr', function () {
+                //alert('Row single-clicked!');
+
+                $('#table1 tr').removeClass('row-selected');
+
+                $(this).addClass('row-selected');
+
+                var cells = $(this).find('td');
+
+                var rowData = {
+                    RTA_TRAN_CODE: cells.eq(0).text().trim(),
+                    TR_DATE: cells.eq(1).text().trim(),
+                    INVESTOR_NAME: cells.eq(2).text().trim(),
+                    ADDRESS: cells.eq(3).text().trim(),
+                    CITY_NAME: cells.eq(4).text().trim(),
+                    MUT_NAME: cells.eq(5).text().trim(),
+                    SCH_NAME: cells.eq(6).text().trim(),
+                    AMOUNT: cells.eq(7).text().trim(),
+                    FOLIO_NO: cells.eq(8).text().trim(),
+                    CHEQUE_NO: cells.eq(9).text().trim(),
+                    APP_NO: cells.eq(10).text().trim(),
+                    RM_NAME: cells.eq(11).text().trim(),
+                    BRANCH_NAME: cells.eq(12).text().trim()
+                };
+
+                $('#hdnRtaCode').text('');
+                $('#hdnRtaCode').text(rowData.RTA_TRAN_CODE);
+
+                //const newTr = $('#hdnRtaCode').text();
+                //alert("Investor: " + rowData.INVESTOR_NAME + "\nAmount: " + rowData.AMOUNT +   "\nScheme: " + rowData.SCH_NAME +  "\nNewTR: " + newTr  );
+            });
+
+            //#endregion
+
+            //#region Function to handle Audit AR
+            function auditAR(trCode) {
+                if (!trCode) {
+                    alert('⚠️ Transaction Code is required.');
+                    return;
+                }
+
+                //alert('📝 Audit AR logic initiated.');
+                //alert('Selected TR: ' + trCode);
+
+                $.ajax({
+                    type: "POST",
+                    url: "/Masters/maker_checker.aspx/AuditAR",
+                    data: JSON.stringify({ TRCode: trCode }),
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    success: function (response) {
+                        let result;
+
+                        try {
+                            result = JSON.parse(response.d);  
+                        } catch (e) {
+                            alert("❌ Failed to parse server response.");
+                            return;
+                        }
+
+                        if (result.success) {
+                            alert(`✅ ${result.message}`);
+                            // RELOAD TR LIST AFTER AUDIT OR REMOVE THE AUDTED AR
+                            removeRowByTrCode(trCode);
+                        } else {
+                            alert(`⚠️ ${result.message}`);
+                        }
+
+                        $('#hdnTrCode').text('');
+                        $('#hdnRtaCode').text('');
+
+                    },
+                    error: function (xhr, status, error) {
+                        let errorMsg = "Auditing AR failed - server error";
+                        try {
+                            const errResponse = JSON.parse(xhr.responseText);
+                            errorMsg = errResponse.Message || errResponse.message || errorMsg;
+                        } catch (e) {
+                            errorMsg = xhr.statusText || errorMsg;
+                        }
+
+                        alert(`❌ Error: ${errorMsg}`);
+                    }
+                });
+            }
+
+            function removeRowByTrCode(trCode) {
+                if (!trCode) {
+                    alert("TRAN_CODE is required to remove after audit!");
+                    return;
+                }
+
+                let rowFound = false;
+                $('#table2 tbody tr').each(function () {
+                    const currentTrCode = $(this).find('td:first').text().trim();
+                    if (currentTrCode === trCode) {
+                        $(this).remove();
+
+                        //alert('✅ Removed the entire row from DOM');
+                        $("#table1 tbody").empty();
+                        //alert('✅ Removed rta table');
+                        rowFound = true;
+                        return false;
+                    }
+                });
+
+                if (rowFound) {
+                    // ✅ Update count
+                    const newCount = $('#table2 tbody tr').length;
+                    $('#trCount').text('Count: ' + newCount);
+                } else {
+                    alert(`TRAN_CODE '${trCode}' not found.`);
+                }
+
+            }
+
+            $('#btnAuditAR').on('click', function (e) {
+                e.preventDefault();
+
+                const trCode = $('#hdnTrCode').text().trim();
+
+                if (!trCode) {
+                    alert('⚠️ To Audit AR, Transaction is required!');
+                    return;
+                }
+
+                auditAR(trCode);
+            });
+
+
+            //#endregion
+
+            //#region Function to handle Unreconcile
+            function unReconcileAR(trCode, rtaCode) {
+                //alert('Unreconcile function call.');
+
+                $.ajax({
+                    type: "POST",
+                    url: "/Masters/maker_checker.aspx/UnreconcileAR",
+                    data: JSON.stringify({ tr: trCode, rta: rtaCode }),
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    success: function (response) {
+                        // If your WebMethod returns JSON (not a string), no need to parse
+                        const result = JSON.parse(response.d);
+
+                        if (result.success) {
+                            alert(`✅ ${result.message}`);
+                            removeRowByTrCode(trCode); 
+
+                        } else {
+                            alert(`⚠️ ${result.message}`);
+
+                        }
+
+
+                        $('#hdnTrCode').text('');
+                        $('#hdnRtaCode').text('');
+                    },
+                    error: function (xhr, status, error) {
+                        let errorMsg = "Unreconcile AR failed - server error";
+                        try {
+                            const errResponse = JSON.parse(xhr.responseText);
+                            errorMsg = errResponse.Message || errResponse.message || "Unreconcile AR could not be completed";
+                        } catch (e) {
+                            errorMsg = xhr.statusText || "Unknown Unreconcile AR error";
+                        }
+
+                        alert(`❌ Error: ${errorMsg}`);
+                    }
+                });
+            }
+
+            $('#btnUnreconcile').on('click', function (e) {
+                e.preventDefault();
+                const trCode = $('#hdnTrCode').text().trim();
+                const rtaCode = $('#hdnRtaCode').text().trim();
+                //alert('TR: ' + trCode + '\nRTA: ' + rtaCode);
+
+                if (!trCode || !rtaCode) {
+                    alert('⚠️ TR and RTA Transaction Code are required.');
+                    return;
+                }
+                unReconcileAR(trCode, rtaCode);
+            });
+
+            //#endregion 
+
+        });
+
+
+    </script>
+
+    <style>
+        .invalid-date {
+            border: 1px solid red !important;
+        }
+
+        .form-check-label {
+            margin-left: 2px !important;
+        }
+
+        td {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 150px;
+        }
+
+        #table2 tbody tr.row-selected > td, #table1 tbody tr.row-selected > td {
+            background-color: lightblue !important;
+        }
+
+        #table2 thead tr th, #table1 thead tr th {
+            position: sticky !important;
+            top: 0 !important;
+            background-color: #B78939 !important;
+            color: white !important;
+            z-index: 1;
+        }
+
+        .ctm_hidden {
+            display: none;
+        }
+
+        .ctm-table-container {
+            min-height: 100px;
+            max-height: 250px;
+            overflow-y: auto;
+        }
+
+        .ctm-input-box {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+            .ctm-input-box label {
+                width: 40% !important;
+            }
+
+            .ctm-input-box select {
+                margin: 0 !important;
+                padding: 5px !important;
+                padding-left: 10px !important;
+            }
+
+            .ctm-input-box input {
+                padding: 7px !important;
+            }
+
+        .form-select {
+        }
+
+        .ctm-hide {
+            display: none !important;
+        }
+    </style>
+
+    <div class="page-header">
+        <h3 class="page-title">Maker Checker 2
+        </h3>
+    </div>
+
+    <span class="ctm-hide" id="hdnTrCode"></span>
+    <span class="ctm-hide" id="hdnRtaCode"></span>
+
+    <div class="row">
+        <div class="grid-margin stretch-card">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title">WealthMaker Transactions</h4>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="row g-3">
+                                <!-- REGION -->
+                                <div class="col-md-6">
+                                    <div class="ctm-input-box">
+
+                                        <label for="ddlRegion" class="form-label">Region</label>
+                                        <select id="ddlRegion" class="form-select">
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- ZONE -->
+                                <div class="col-md-6">
+                                    <div class="ctm-input-box">
+
+                                        <label for="ddlZone" class="form-label">Zone</label>
+                                        <select id="ddlZone" class="form-select">
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- BRANCH -->
+                                <div class="col-md-6">
+                                    <div class="ctm-input-box">
+                                        <label for="ddlBranch" class="form-label">Branch</label>
+                                        <select id="ddlBranch" class="form-select">
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- RM -->
+                                <div class="col-md-6">
+                                    <div class="ctm-input-box">
+                                        <label for="ddlRM" class="form-label">RM</label>
+                                        <select id="ddlRM" class="form-select">
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- AMC -->
+                                <div class="col-md-6">
+                                    <div class="ctm-input-box">
+                                        <label for="ddlAMC" class="form-label">AMC</label>
+                                        <select id="ddlAMC" class="form-select">
+                                        </select>
+                                    </div>
+                                </div>
+                                <!-- Remarks & Buttons -->
+                                <div class="col-md-6">
+                                    <div class="ctm-input-box">
+                                        <label for="txtRemarks" class="form-label">Remarks</label>
+                                        <input class="form-control" id="txtRemarks" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-3">
+                            <div class="row g-3">
+
+                                <!-- DATE FROM -->
+                                <div class="col-md-12">
+                                    <div class="ctm-input-box">
+                                        <label for="txtDateFrom" class="form-label">Date From <span class="text-danger">*</span></label>
+                                        <input type="text" id="txtDateFrom" class="form-control" placeholder="dd/mm/yyyy" maxlength="10" />
+                                    </div>
+                                </div>
+
+
+                                <!-- DATE TO -->
+                                <div class="col-md-12">
+                                    <div class="ctm-input-box">
+                                        <label for="txtDateTo" class="form-label">Date To <span class="text-danger">*</span></label>
+                                        <input type="text" id="txtDateTo" class="form-control" placeholder="dd/mm/yyyy" maxlength="10" />
+                                    </div>
+                                </div>
+
+                                <!-- AUTO/MANUAL RECO -->
+                                <div class="col-md-12">
+                                    <div class="d-flex align-items-center justify-content-between gap-3 mt-2">
+                                        <div>
+                                            <label class="form-check-label" for="autoReconciled">
+                                                <input type="radio" id="autoReconciled" name="recoStatus" value="A" class="form-check-input" checked />
+                                                Auto Reconcile
+                                            </label>
+                                        </div>
+                                        <div>
+                                            <label class="form-check-label" for="manualReconciled">
+                                                <input type="radio" id="manualReconciled" name="recoStatus" value="M" class="form-check-input" />
+                                                Manual Reconcile
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+
+
+                            </div>
+                        </div>
+
+                        <div class="col-md-3">
+                            <div class="row g-3">
+                                <!-- AR -->
+                                <div class="col-md-12">
+                                    <div class="ctm-input-box">
+                                        <label for="txtARNo" class="form-label">AR</label>
+                                        <input type="text" id="txtARNo" class="form-control" />
+                                    </div>
+                                </div>
+
+                                <div class="col-md-12">
+                                    <div class="d-flex align-items-center justify-content-end gap-3 mt-1">
+                                        <button class="btn btn-sm btn-primary" id="btnGo">Go</button>
+                                        <button class="btn btn-sm btn-outline-primary" id="btnReset" onclick="location.reload();">Reset</button>
+
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <div class="d-flex align-items-center justify-content-end gap-3 mt-1">
+                                        <span id="trCount" style="color: red; font-weight: bold;">Count: 0</span>
+
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="row g-3 mt-3">
+                        <div id="loadingIndicator" style="display: none;">Loading...</div>
+                        <div id="errorDisplay" class="alert alert-danger" style="display: none;"></div>
+
+                        <div class="col-md-12 ctm-table-container" id="table2-container">
+                            <table id="table2" class="table table-bordered" style="width: 100%">
+                                <thead>
+                                    <tr>
+                                        <th>TRAN_CODE</th>
+                                        <th>TR_DATE</th>
+                                        <th>INVESTOR_NAME</th>
+                                        <th>ADDRESS</th>
+                                        <th>CITY_NAME</th>
+                                        <th>MUT_NAME</th>
+                                        <th>SCH_NAME</th>
+                                        <th>AMOUNT</th>
+                                        <th>FOLIO_NO</th>
+                                        <th>CHEQUE_NO</th>
+                                        <th>APP_NO</th>
+                                        <th>RM_NAME</th>
+                                        <th>BRANCH_NAME</th>
+                                        <th>REMARK</th>
+
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="col-md-12 ctm-table-container" id="table1-container">
+                            <table id="table1" class="table table-bordered" style="width: 100%">
+                                <thead>
+                                    <tr>
+                                        <th>UNIQUE_TRAN</th>
+                                        <th>TR_DATE</th>
+                                        <th>INVESTOR_NAME</th>
+                                        <th>ADDRESS</th>
+                                        <th>CITY_NAME</th>
+                                        <th>MUT_NAME</th>
+                                        <th>SCH_NAME</th>
+                                        <th>AMOUNT</th>
+                                        <th>FOLIO_NO</th>
+                                        <th>CHEQUE_NO</th>
+                                        <th>APP_NO</th>
+                                        <th>RM_NAME</th>
+                                        <th>BRANCH_NAME</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-md-12">
+                            <div class="d-flex align-items-center justify-content-center gap-3 mt-3">
+                                <button class="btn btn-sm btn-primary" id="btnAuditAR">Audit AR</button>
+                                <button class="btn btn-sm btn-outline-primary" id="btnUnreconcile">Unreconcile</button>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <asp:HiddenField ID="hdnLoginId" runat="server" />
+    <asp:HiddenField ID="hdnRoleId" runat="server" />
+
+</asp:Content>
+

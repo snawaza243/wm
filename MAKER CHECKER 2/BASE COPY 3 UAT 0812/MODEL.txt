@@ -1,0 +1,34 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+
+namespace WM.Models
+{
+    public class MFMakerChecker
+    {
+        
+        public string LOGIN_ID { get; set; }
+        public string ROLE_ID { get; set; }
+
+        public string BRANCH_CD { get; set; }
+
+        public string REGION_ID { get; set; }
+
+        public string AR_NO { get; set; }
+
+        public string ZONE_ID { get; set; }
+
+        public string RM_ID { get; set; }
+
+        public string AMC { get; set; }
+
+        public string MANUAL_REC { get; set; }
+
+        public string AUTO_REC { get; set; }
+
+        public string DATEFROM { get; set; }
+
+        public string DATETO { get; set; }
+    }
+}

@@ -1,0 +1,284 @@
+using System; 
+using System.Data; 
+using System.Web.UI.WebControls; 
+using Oracle.ManagedDataAccess.Client;
+using System.Web.Configuration; 
+using WM.Controllers;
+using System.Web.UI;
+using Newtonsoft.Json;
+using System.Collections.Generic;
+using System.Web.Services;
+
+namespace WM.Masters
+{
+    public partial class MakerChecker : System.Web.UI.Page
+    {
+        PsmController pc = new PsmController();
+        DataTable dtbr = new DataTable();
+        string rta_tran_code;
+
+        protected void Page_Load(object sender, EventArgs e)
+        {
+            //Session["LoginId"] = "112650";
+            //Session["roleId"] = "29";
+            if (!IsPostBack)
+            { 
+                hdnLoginId.Value = Session["LoginId"]?.ToString();
+                hdnRoleId.Value = Session["roleId"]?.ToString();
+
+                //dtFrom.Text = "01/01/2025"; // DateTime.Now.AddDays(-30).ToString("dd/MM/yyyy");
+                //dtTo.Text = "01/03/2025"; // DateTime.Now.ToString("dd/MM/yyyy");
+            }
+        }
+       
+        #region HELPING FUNCTIONS
+        private static string CreateJsonResponse(bool success, string message)
+        {
+            return JsonConvert.SerializeObject(new
+            {
+                success,
+                message
+            }, Formatting.None);
+        }
+
+        #endregion
+
+        #region ON LAOD AND ON CHANGE: DDL LIST AND BY DDL LIST
+
+        [WebMethod]
+        public static string GetRegionList()
+        {
+            PsmController pc = new PsmController();
+
+            List<dynamic> list = new List<dynamic>();
+            var data = pc.PSM_LoggedTableList("WEALTHMAKER.PSM_LOG_REGION_LIST", "MF_AR_MANUAL_RECO", null, null); // REGION_NAME, REGION_CODE
+            foreach (DataRow row in data.Rows)
+            {
+
+                list.Add(new { text = Convert.ToString(row["REGION_NAME"]), value = Convert.ToString(row["region_code"]) });
+            }
+            var outPut = new { data = list };
+
+            return JsonConvert.SerializeObject(outPut, Formatting.None);
+        }
+
+        [WebMethod]
+        public static string GetZoneList()
+        {
+            PsmController pc = new PsmController();
+
+            List<dynamic> list = new List<dynamic>();
+            var data = pc.PSM_LoggedTableList("WEALTHMAKER.PSM_LOG_ZONE_LIST", "MF_AR_MANUAL_RECO", null, null);
+
+
+            foreach (DataRow row in data.Rows)
+            {
+                list.Add(new { text = Convert.ToString(row["ZONE_NAME"]), value = Convert.ToString(row["ZONE_ID"]) });
+            }
+            var outPut = new { data = list };
+
+            return JsonConvert.SerializeObject(outPut, Formatting.None);
+        }
+
+        [WebMethod]
+        public static string GetBranchList()
+        {
+            PsmController pc = new PsmController();
+            List<dynamic> list = new List<dynamic>();
+            var data = pc.PSM_LoggedTableList("WEALTHMAKER.PSM_LOG_BRANCH_LIST", "MF_AR_MANUAL_RECO", null, null); // BRANCH_NAME, BRANCH_CODE
+            foreach (DataRow row in data.Rows)
+            {
+                list.Add(new { text = Convert.ToString(row["BRANCH_NAME"]), value = Convert.ToString(row["BRANCH_CODE"]) });
+            }
+            var outPut = new { data = list };
+
+            return JsonConvert.SerializeObject(outPut, Formatting.None);
+        }
+
+        [WebMethod]
+        public static string GetRmList()
+        {
+            PsmController pc = new PsmController();
+            List<dynamic> list = new List<dynamic>();
+            var data = pc.PSM_LoggedTableList("WEALTHMAKER.PSM_LOG_RM_LIST", "MF_AR_MANUAL_RECO", null, null);
+
+            foreach (DataRow row in data.Rows)
+            {
+                list.Add(new { text = Convert.ToString(row["RM_NAME"]), value = Convert.ToString(row["payroll_id"]) });
+            }
+            var outPut = new { data = list };
+
+            return JsonConvert.SerializeObject(outPut, Formatting.None);
+        }
+
+        [WebMethod]
+        public static string GetAMCList()
+        {
+            PsmController pc = new PsmController();
+            List<dynamic> list = new List<dynamic>();
+            var data = pc.PSM_LoggedTableList("WEALTHMAKER.PSM_LOG_AMC_LIST", "MF_AR_MANUAL_RECO", null, null); // MUT_NAME, MUT_CODE
+            foreach (DataRow row in data.Rows)
+            {
+                list.Add(new { text = Convert.ToString(row["mut_name"]), value = Convert.ToString(row["mut_code"]) });
+            }
+            var outPut = new { data = list };
+            return JsonConvert.SerializeObject(outPut, Formatting.None);
+        }
+
+
+        [WebMethod]
+        public static string GetZoneListByRegion(string region)
+        {
+            PsmController pc = new PsmController();
+            List<dynamic> list = new List<dynamic>();
+            var data = pc.PSM_LoggedTableList("WEALTHMAKER.PSM_LOG_ZONE_LIST", "MF_AR_MANUAL_RECO", "REGION", region);
+            foreach (DataRow row in data.Rows)
+            {
+                list.Add(new { text = Convert.ToString(row["ZONE_NAME"]), value = Convert.ToString(row["ZONE_ID"]) });
+            }
+            var outPut = new { data = list };
+            return JsonConvert.SerializeObject(outPut, Formatting.None);
+        }
+
+        [WebMethod]
+        public static string GetBranchListByZone(string zone)
+        {
+            PsmController pc = new PsmController();
+            List<dynamic> list = new List<dynamic>();
+            var data = pc.PSM_LoggedTableList("WEALTHMAKER.PSM_LOG_BRANCH_LIST", "MF_AR_MANUAL_RECO", "ZONE", zone);
+            foreach (DataRow row in data.Rows)
+            {
+                list.Add(new { text = Convert.ToString(row["Branch_name"]), value = Convert.ToString(row["Branch_code"]) });
+            }
+            var outPut = new { data = list };
+            return JsonConvert.SerializeObject(outPut, Formatting.None);
+        }
+
+        [WebMethod]
+        public static string GetRmListByBranch(string branchCode)
+        {
+            List<dynamic> list = new List<dynamic>();
+            PsmController pc = new PsmController();
+            var rmByBr = pc.PSM_LoggedTableList("WEALTHMAKER.PSM_LOG_RM_LIST", "MF_AR_MANUAL_RECO", "BRANCH", branchCode);
+            foreach (DataRow row in rmByBr.Rows)
+            {
+                list.Add(new { text = Convert.ToString(row["RM_NAME"]), value = Convert.ToString(row["payroll_id"]) });
+            }
+            var outPut = new { data = list };
+            return JsonConvert.SerializeObject(outPut, Formatting.None);
+        }
+
+        #endregion
+
+        #region ACTION FUNCTIONS: GET TR AND RTA LIST, AUTID AR AND UNRECONCILE AR
+        [WebMethod]
+        public static string GetMCTRList(string x, string region, string zone, string branch, string rm, string dateFrom, string dateTo, string amc, string ar, string recoStatus)
+        {
+            try
+            {
+                var controller = new MakerCheckerController();
+
+                DataTable trTransactions = controller.GetMakerCheckerTransactoinsController(
+                    x: x,
+                    region: region,
+                    zone: zone,
+                    branch: branch,
+                    rm: rm,
+                    dateFrom: dateFrom,
+                    dateTo: dateTo,
+                    amc: amc,
+                    ar: ar,
+                    recoStatus: recoStatus
+                );
+
+                // Convert to JSON
+                var jsonResult = new
+                {
+                    success = true,
+                    message = "Data retrieved successfully",
+                    data = trTransactions
+                };
+
+                return JsonConvert.SerializeObject(jsonResult, Formatting.None);
+            }
+            catch (Exception ex)
+            {
+                // Return error information
+                var errorResult = new
+                {
+                    success = false,
+                    message = ex.Message,
+                    data = new DataTable() // Return empty table on error
+                };
+
+                return JsonConvert.SerializeObject(errorResult, Formatting.None);
+            }
+        }
+
+
+        [WebMethod]
+        public static string AuditAR(string TRCode)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(TRCode))
+                {
+                    return CreateJsonResponse(false, "No transaction selected for audit");
+                }
+
+                var result = new WM.Controllers.MakerCheckerController().SetAuditARController(TRCode);
+
+                if (result.Success)
+                {
+                    /* // After success message research the rta data by tranCode (TR or AR) and set tabel1 (down one table) 
+
+                    DataTable dtRTA = new WM.Controllers.MakerCheckerController().GetRTADetails(TranCode);
+                    GridView2.DataSource = dtRTA;
+                    GridView2.DataBind();
+
+                     */
+                    return CreateJsonResponse(true, result.Message);
+                }
+                else
+                {
+                    return CreateJsonResponse(false, result.Message);
+                }
+            }
+
+            catch (Exception ex)
+            {
+                return CreateJsonResponse(false, $"ERROR: {ex.Message}");
+            }
+        }
+
+        [WebMethod]
+        public static string UnreconcileAR(string tr, string rta)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(tr))
+                {
+                    return CreateJsonResponse(false, "No transaction selected for audit");
+                }
+
+                var result = new WM.Controllers.MakerCheckerController().SetArUnreconcileController(tr, rta);
+                if (result.Success)
+                {
+                    return CreateJsonResponse(true, result.Message);
+                }
+                else
+                {
+                    return CreateJsonResponse(false, result.Message);
+                }
+            }
+
+            catch (Exception ex)
+            {
+                return CreateJsonResponse(false, $"ERROR: {ex.Message}");
+            }
+        }
+
+        #endregion
+
+    }
+}
