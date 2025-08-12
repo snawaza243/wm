@@ -5,3 +5,15 @@ git add WM/Controllers/MakerCheckerController.cs
 git add WM/Masters/MakerChecker.aspx
 git add WM/Masters/MakerChecker.aspx.cs
 git add WM/Masters/MakerChecker.aspx.designer.cs
+
+
+
+ 
+git add WM/Controllers/InvestorMergeController.cs
+git add WM/Masters/SearchInvestorMerge.aspx
+git add WM/Masters/SearchInvestorMerge.aspx.cs
+git add WM/Masters/SearchInvestorMerge.aspx.designer.cs
+git add WM/Masters/investormerge.aspx
+git add WM/Masters/investormerge.aspx.cs
+git add WM/Masters/investormerge.aspx.designer.cs
+ 

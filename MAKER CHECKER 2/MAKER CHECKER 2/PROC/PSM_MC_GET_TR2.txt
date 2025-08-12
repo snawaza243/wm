@@ -19,6 +19,8 @@ CREATE OR REPLACE PROCEDURE WEALTHMAKER.PSM_MC_GET_TR2 (
     V_SRM_CODE      VARCHAR2(30) := NULL;
     MyTranCode      VARCHAR2(50) := NULL;
     dummy           DATE; -- For date validation
+    
+    v_rta_by_tr     varchar(20);
 BEGIN
     -- Validate date parameters
     IF P_FROMDATE IS NOT NULL THEN
@@ -40,7 +42,12 @@ BEGIN
     END IF;
 
     IF P_X = '1' THEN 
-        MyTranCode := P_AR;
+        SELECT RTA_TRAN_CODE INTO V_RTA_BY_TR
+        FROM TRANSACTION_MF_TEMP1 WHERE TRAN_CODE = P_AR;
+        
+        IF V_RTA_BY_TR IS NOT NULL THEN
+            MYTRANCODE := V_RTA_BY_TR; 
+        END IF; 
         
         V_QUERY := 'SELECT FOLIO_NO, SCH_CODE, TR_DATE, TRAN_TYPE, ';
         V_QUERY := V_QUERY || 'MAX(inv_name) Inv_Name, MAX(ADDRESS) ADDRESS, ';
@@ -73,9 +80,32 @@ BEGIN
             V_QUERY := V_QUERY || 'AND E.RM_CODE = ''' || V_SRM_CODE || ''' ';
         END IF;
 
-        IF MyTranCode IS NOT NULL THEN
-            V_QUERY := V_QUERY || 'AND t.tran_code IN (''' || REPLACE(MyTranCode, ',', ''',''') || ''') ';
-        END IF;
+        /*
+            IF MyTranCode IS NOT NULL THEN
+                V_QUERY := V_QUERY || 'AND t.tran_code IN (''' || REPLACE(MyTranCode, ',', ''',''') || ''') ';
+            END IF;
+        */
+
+        DECLARE
+            v_code VARCHAR2(50);
+            v_in_clause VARCHAR2(4000) := '';
+            i NUMBER := 1;
+        BEGIN
+            IF MyTranCode IS NOT NULL THEN
+                LOOP
+                    v_code := REGEXP_SUBSTR(MyTranCode, '[^,]+', 1, i);
+                    EXIT WHEN v_code IS NULL;
+                    IF i > 1 THEN
+                        v_in_clause := v_in_clause || ',';
+                    END IF;
+                    v_in_clause := v_in_clause || '''' || v_code || '''';
+                    i := i + 1;
+                END LOOP;
+
+                V_QUERY := V_QUERY || ' AND t.tran_code IN (' || v_in_clause || ') ';
+            END IF;
+            --DBMS_OUTPUT.PUT_LINE(V_QUERY);
+        END;
 
         V_QUERY := V_QUERY || 'AND (t.asa <> ''C'' OR t.asa IS NULL) ';
         V_QUERY := V_QUERY || 'AND t.tran_type IN (''PURCHASE'', ''REINVESTMENT'', ''SWITCH IN'') ';
@@ -83,26 +113,23 @@ BEGIN
         V_QUERY := V_QUERY || ') ';
         V_QUERY := V_QUERY || 'GROUP BY FOLIO_NO, SCH_CODE, TR_DATE, TRAN_TYPE ';
         
-    V_QUERY := 'SELECT    T.FOLIO_NO,    T.SCH_CODE,    T.TR_DATE,    T.TRAN_TYPE,    IM.INVESTOR_NAME AS INV_NAME,    IM.ADDRESS1 || '', '' || IM.ADDRESS2 AS ADDRESS,
-    '''' AS BROKER_CODE,    CM.CITY_NAME,    SCH.SCH_NAME,    T.MUT_CODE,    M.MUT_NAME,    B.BRANCH_NAME,    T.APP_NO,    T.CHEQUE_NO,    T.AMOUNT,    T.BUSI_BRANCH_CODE,
-    T.BUSINESS_RMCODE,    T.TRAN_CODE AS UNIQUE_TRAN
-FROM TRANSACTION_MF_TEMP1 T
-LEFT JOIN INVESTOR_MASTER IM 
-       ON IM.INV_CODE = T.CLIENT_CODE
-LEFT JOIN CITY_MASTER CM
-       ON CM.CITY_ID = IM.CITY_ID
-LEFT JOIN SCHEME_INFO SCH
-       ON SCH.SCH_CODE = T.SCH_CODE
-LEFT JOIN MUT_FUND M
-       ON M.MUT_CODE = T.MUT_CODE
-LEFT JOIN BRANCH_MASTER B
-       ON B.BRANCH_CODE = T.BRANCH_CODE
-WHERE T.TRAN_CODE = ''' || MyTranCode || '''';
-
         
+        
+    ---#REGION NOT IN USE ---
+    -- IN CASE DB LINK VERY SLOW INSTEAD OF GETTIN DATA OF RTA FROM DB LINK MF, 
+    -- TAKING DATA FROM TMEP MF, BCZ WHILTE UNRECO, WE WILL UDPATE THE RTA DB LINK DATA MF
+    /*
+        V_QUERY := 'SELECT    T.FOLIO_NO,    T.SCH_CODE,    T.TR_DATE,    T.TRAN_TYPE,    IM.INVESTOR_NAME AS INV_NAME,    IM.ADDRESS1 || '', '' || IM.ADDRESS2 AS ADDRESS, '''' AS BROKER_CODE,    
+                    CM.CITY_NAME,    SCH.SCH_NAME,    T.MUT_CODE,    M.MUT_NAME,    B.BRANCH_NAME,    T.APP_NO,    T.CHEQUE_NO,    T.AMOUNT, T.BUSI_BRANCH_CODE, em.rm_name,  T.BUSINESS_RMCODE,    T.rta_tran_code AS UNIQUE_TRAN
+                    FROM TRANSACTION_MF_TEMP1 T LEFT JOIN INVESTOR_MASTER IM  ON IM.INV_CODE = T.CLIENT_CODE
+                    LEFT JOIN CITY_MASTER CM ON CM.CITY_ID = IM.CITY_ID  LEFT JOIN SCHEME_INFO SCH ON SCH.SCH_CODE = T.SCH_CODE
+                    LEFT JOIN MUT_FUND M ON M.MUT_CODE = T.MUT_CODE LEFT JOIN BRANCH_MASTER B ON B.BRANCH_CODE = T.BRANCH_CODE
+                    LEFT JOIN EMPLOYEE_MASTER EM ON EM.RM_CODE = T.RMCODE WHERE T.TRAN_CODE = ''' || P_AR || '''';
+    */
+    --#ENDREGION --- 
         
     ELSIF P_X = '2' THEN 
-        V_QUERY := 'SELECT inv.Investor_Name, inv.address1||'',''||inv.address2||'',''||inv.phone||'',''||inv.email address, ct.city_name ';
+        V_QUERY := 'SELECT inv.Investor_Name, inv.address1||'',''||inv.address2||'',''||inv.phone||'',''||inv.email address, ct.city_name, mf.REMARK_RECO ';
         V_QUERY := V_QUERY || ', mf.bank_name, mf.client_code, mf.sch_code sch_code, mf.mut_code, rm_name, branch_name, panno, ';
         V_QUERY := V_QUERY || 'amc.mut_name mut_Name, Sch_Name Sch_Name, tr_date, TRAN_TYPE, App_No, folio_no, payment_mode, ';
         V_QUERY := V_QUERY || 'cheque_no, CHEQUE_DATE, Amount, Sip_Type, lEAD_nO, LEAD_NAME, TRAN_code, b.branch_code, BUSINESS_RMCODE ';

@@ -5,7 +5,14 @@ CREATE OR REPLACE PROCEDURE WEALTHMAKER.PSM_MC_UNRECONCILE2 (
 )
 AS
     V_ERROR_MSG VARCHAR2(4000);
+    V_RTA_TRAN_CODE VARCHAR(4000);
+    V_COUNT1    NUMBER;
+    V_COUNT2    NUMBER;
+    V_COUNT3    NUMBER;
 BEGIN
+
+    V_RTA_TRAN_CODE := REPLACE(P_RTA_TRAN_CODE, '''', '');
+    
     SAVEPOINT START_TRANSACTION;
 
     IF P_TRAN_CODE IS NOT NULL AND P_RTA_TRAN_CODE IS NOT NULL THEN
@@ -20,6 +27,9 @@ BEGIN
             REC_USER    = NULL,
             RTA_TRAN_CODE = NULL
         WHERE TRAN_CODE = P_TRAN_CODE;
+        
+        V_COUNT1 := SQL%ROWCOUNT;
+                
 
         -- Second update: by BASE_TRAN_CODE
         UPDATE TRANSACTION_MF_TEMP1
@@ -31,17 +41,29 @@ BEGIN
             REC_USER    = NULL,
             RTA_TRAN_CODE = NULL
         WHERE BASE_TRAN_CODE = P_TRAN_CODE;
-
-        -- Third update: remote table
-        UPDATE transaction_st@MF.BAJAJCAPITAL
-        SET REC_FLAG = NULL,
+        V_COUNT2 := SQL%ROWCOUNT;
+        
+        
+        -- Third update: remote table 
+        V_COUNT3 :=0;       
+        FOR code IN (
+            SELECT REGEXP_SUBSTR(V_RTA_TRAN_CODE, '[^,]+', 1, LEVEL) AS TRAN_CODE
+            FROM dual
+            CONNECT BY REGEXP_SUBSTR(V_RTA_TRAN_CODE, '[^,]+', 1, LEVEL) IS NOT NULL
+        )
+        LOOP
+            UPDATE transaction_st@MF.BAJAJCAPITAL
+            SET REC_FLAG = NULL,
             HO_TRAN_CODE = NULL
-        WHERE TRAN_CODE = P_RTA_TRAN_CODE;
-
+            WHERE TRAN_CODE = code.TRAN_CODE;
+            V_COUNT3 := V_COUNT3 + 1;
+        END LOOP;        
+        --V_COUNT3 := SQL%ROWCOUNT;        
         COMMIT;
 
         OPEN P_CURSOR FOR
-        SELECT 'SUCCESS: Transaction unreco completed successfully' AS MESSAGE
+        --SELECT 'SUCCESS: Transaction unreconcile successfully with part 1: ' || V_COUNT1 || ', part2: '|| V_COUNT2 || ', part 3' || V_COUNT3 AS MESSAGE
+        SELECT 'SUCCESS: Transaction unreconcile successfully' AS MESSAGE        
         FROM DUAL;
 
     ELSE
