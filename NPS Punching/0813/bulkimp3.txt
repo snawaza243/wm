@@ -1,0 +1,191 @@
+CREATE OR REPLACE PROCEDURE WEALTHMAKER.PSM_NPS_ECS_BULK_IMP(
+    P_IMP_TYPE  IN VARCHAR2,
+    P_ZERO_COMM IN VARCHAR2,
+    P_LOG_ID    IN VARCHAR2,
+    P_ROLE_ID   IN VARCHAR2,
+    P_COMPANY   IN VARCHAR2,
+    P_STATUS    IN VARCHAR2,    
+    P_OUT       OUT SYS_REFCURSOR,
+    P_EXCEL     OUT SYS_REFCURSOR
+) AS
+    V_QUERY       VARCHAR2(4000);
+    V_RETURN_MSG  VARCHAR2(1000);
+    V_COUNT       NUMBER;
+    V_GEN_COUNT   NUMBER := 0;
+    V_TOTAL_RECS  NUMBER := 0;
+    V_TEMP_TABLE  VARCHAR2(5000);
+    v_count_tr    NUMBER;
+    V_TEMP_ST      VARCHAR2(4000);
+    
+    v_up_sql varchar2(4000);
+BEGIN
+    
+    V_TEMP_ST:='';
+    -- Disable parallel DML FIRST, before starting transaction
+    --EXECUTE IMMEDIATE 'ALTER SESSION DISABLE PARALLEL DML';
+    
+    -- Now start transaction explicitly
+    SET TRANSACTION NAME 'NPS_BULK_IMPORT';
+    
+    IF P_IMP_TYPE = 'NON_ECS' THEN  
+        -- Set temp table name with schema prefix
+        V_TEMP_TABLE := 'WEALTHMAKER.PSM_NPS_NES_TBL_TEMP1';
+        
+        -- Clean temporary tables
+        PSM_NPS_NES_TEMP_CLEAN;
+      
+        -- Backup existing data
+        INSERT INTO WEALTHMAKER.NPS_NONECS_TBL_IMP_BK 
+        SELECT * FROM WEALTHMAKER.NPS_NONECS_TBL_IMP;
+        COMMIT;
+        
+        -- Clear import table
+        EXECUTE IMMEDIATE 'TRUNCATE TABLE WEALTHMAKER.NPS_NONECS_TBL_IMP';
+        
+        -- Import new data
+        INSERT INTO WEALTHMAKER.NPS_NONECS_TBL_IMP (
+            REF_TRAN_CODE, TR_DATE, ECS_AMT, ECS_PERIOD, ECS_PAY_DT, 
+            ECS_TRAN_CODE, LOGGEDUSERID, TIMEST, MODIFY_USER, MODIFY_DATE, 
+            TPSL_TRANID, CONSUMER_CODE, IMPORT_DT
+        ) SELECT 
+            REF_TRAN_CODE, TO_DATE(TR_DATE, 'DD-MON-YYYY'), TO_NUMBER(ECS_AMT), ECS_PERIOD, 
+            TO_DATE(ECS_PAY_DT, 'DD-MON-YYYY'), ECS_TRAN_CODE, P_LOG_ID, 
+            TO_DATE(TIMEST, 'DD-MON-YYYY'), NULL, NULL, 
+            TPSL_TRANID, CONSUMER_CODE, TO_DATE(IMPORT_DT, 'DD-MON-YYYY') 
+          FROM WEALTHMAKER.PSM_NPS_NES_TBL_TEMP1;
+        
+        V_COUNT := SQL%ROWCOUNT;
+        V_TOTAL_RECS := V_COUNT;
+
+        UPDATE NPS_NONECS_TBL_IMP SET
+        REF_TRAN_CODE = CONSUMER_CODE
+        WHERE CONSUMER_CODE IS NOT NULL;
+
+        -- Process each record
+        FOR rec IN (
+            SELECT REF_TRAN_CODE, TR_DATE, ECS_AMT, CONSUMER_CODE
+            FROM WEALTHMAKER.NPS_NONECS_TBL_IMP
+            WHERE CONSUMER_CODE IS NOT NULL
+            --WHERE REF_TRAN_CODE IS NOT NULL
+        ) LOOP
+            BEGIN
+                -- Check if transaction exists
+                SELECT COUNT(*)
+                INTO v_count_tr
+                FROM WEALTHMAKER.TRANSACTION_ST
+                WHERE MANUAL_ARNO = rec.CONSUMER_CODE
+                AND to_date( TRUNC(TR_DATE), 'dd/mm/yyyy') = to_date( TRUNC(rec.TR_DATE), 'dd/mm/yyyy');
+
+                -- Generate transaction if not exists
+                IF v_count_tr = 0 THEN
+                    WEALTHMAKER.NPS_NONECSTRAN_GENERATE_IMP(
+                        CONSUMERCODE => rec.CONSUMER_CODE,
+                        PFLAG       => P_ZERO_COMM
+                    );
+                    V_GEN_COUNT := V_GEN_COUNT + 1;
+                ELSE
+                  -- Mark duplicate in temp table
+                    v_up_sql := 'UPDATE WEALTHMAKER.PSM_NPS_NES_TBL_TEMP1 ' ||
+                                'SET REMARK = ''Not Inserted'' ' ||
+                                'WHERE TRIM(CONSUMER_CODE) = ''' || TRIM(rec.CONSUMER_CODE) || '''';
+                    EXECUTE IMMEDIATE v_up_sql;
+
+                END IF;
+            EXCEPTION
+                WHEN OTHERS THEN
+                    V_RETURN_MSG := 'Error processing record ' || rec.REF_TRAN_CODE || ': ' || SUBSTR(SQLERRM, 1, 200);
+            END;
+        END LOOP;
+        
+        V_RETURN_MSG := 'SUCCESS NONECS Data Importing:  ' || V_GEN_COUNT || ' of ' || V_TOTAL_RECS || ' records processed. ' || (V_TOTAL_RECS - V_GEN_COUNT) || ' already exist.';
+
+        V_RETURN_MSG := V_RETURN_MSG || V_TEMP_ST;
+    ELSIF P_IMP_TYPE = 'ECS' THEN
+        -- Set temp table name with schema prefix
+        V_TEMP_TABLE := 'WEALTHMAKER.PSM_NPS_NES_TBL_TEMP2';
+        
+        -- Clean temporary tables
+        PSM_NPS_NES_TEMP_CLEAN;
+        
+        -- Backup existing data
+        INSERT INTO WEALTHMAKER.NPS_ECS_TBL_IMP_BK 
+        SELECT * FROM WEALTHMAKER.NPS_ECS_TBL_IMP;
+        COMMIT;
+        
+        -- Clear import table
+        EXECUTE IMMEDIATE 'TRUNCATE TABLE WEALTHMAKER.NPS_ECS_TBL_IMP';
+        
+        -- Import new data
+        INSERT INTO WEALTHMAKER.NPS_ECS_TBL_IMP (
+            REF_TRAN_CODE, TR_DATE, ECS_AMT, ECS_PERIOD, ECS_PAY_DT, 
+            ECS_TRAN_CODE, LOGGEDUSERID, TIMEST, MODIFY_USER, 
+            MODIFY_DATE, TPSL_TRANID, CONSUMER_CODE, IMPORT_DT
+        ) SELECT 
+            REF_TRAN_CODE, TO_DATE(TR_DATE, 'DD-MON-YYYY'), TO_NUMBER(ECS_AMT), ECS_PERIOD, 
+            TO_DATE(ECS_PAY_DT, 'DD-MON-YYYY'), ECS_TRAN_CODE, P_LOG_ID,  
+            TO_DATE(TIMEST, 'DD-MON-YYYY'), NULL, NULL, 
+            TPSL_TRANID, CONSUMER_CODE, TO_DATE(IMPORT_DT, 'DD-MON-YYYY') 
+          FROM WEALTHMAKER.PSM_NPS_NES_TBL_TEMP2  ;
+        
+        V_COUNT := SQL%ROWCOUNT;
+        V_TOTAL_RECS := V_COUNT;
+
+
+        UPDATE NPS_ECS_TBL_IMP SET
+        REF_TRAN_CODE = CONSUMER_CODE
+        WHERE CONSUMER_CODE IS NOT NULL;
+        
+        -- Process each record
+        FOR rec IN (
+            SELECT REF_TRAN_CODE, TR_DATE, ECS_AMT, CONSUMER_CODE
+            FROM WEALTHMAKER.NPS_ECS_TBL_IMP
+            WHERE REF_TRAN_CODE IS NOT NULL
+        ) LOOP
+            BEGIN
+                -- Check if transaction exists
+                SELECT COUNT(*)
+                INTO v_count_tr
+                FROM WEALTHMAKER.TRANSACTION_ST
+                WHERE MANUAL_ARNO = rec.CONSUMER_CODE
+                AND to_date( TRUNC(TR_DATE), 'dd/mm/yyyy') = to_date( TRUNC(rec.TR_DATE), 'dd/mm/yyyy');
+
+                -- Generate transaction if not exists
+                IF v_count_tr = 0 THEN
+                    WEALTHMAKER.NPS_ECSTRAN_GENERATE_IMP(rec.CONSUMER_CODE);
+                    V_GEN_COUNT := V_GEN_COUNT + 1;
+                    --V_TEMP_ST := V_TEMP_ST|| ' ' || V_GEN_COUNT;
+                ELSE 
+                    -- Mark duplicate in temp table
+                    v_up_sql := 'UPDATE WEALTHMAKER.PSM_NPS_NES_TBL_TEMP2 ' ||
+                                'SET REMARK = ''Not Inserted'' ' ||
+                                'WHERE TRIM(CONSUMER_CODE) = ''' || TRIM(rec.CONSUMER_CODE) || '''';
+                    EXECUTE IMMEDIATE v_up_sql;                    
+                END IF;
+            EXCEPTION
+                WHEN OTHERS THEN
+                    V_RETURN_MSG := 'Error processing record ' || rec.REF_TRAN_CODE || ': ' || SUBSTR(SQLERRM, 1, 200);
+            END;
+        END LOOP;
+        
+        V_RETURN_MSG := 'SUCCESS ECS INPORTING DATA ' || V_GEN_COUNT || ' of ' || V_TOTAL_RECS || ' records processed. ' || (V_TOTAL_RECS - V_GEN_COUNT) ||   ' already exist.';
+        --V_RETURN_MSG := V_RETURN_MSG || V_TEMP_ST;
+    END IF;
+
+-- Set output cursors NO NEED TO RETURN 
+    IF P_IMP_TYPE = 'NON_ECS' THEN
+        OPEN P_EXCEL FOR SELECT * FROM WEALTHMAKER.PSM_NPS_NES_TBL_TEMP1;
+    ELSE
+        OPEN P_EXCEL FOR SELECT * FROM WEALTHMAKER.PSM_NPS_NES_TBL_TEMP2;
+    END IF;
+    
+    OPEN P_OUT FOR SELECT V_RETURN_MSG AS MESSAGE FROM DUAL;
+    COMMIT;
+    
+EXCEPTION
+    WHEN OTHERS THEN
+        ROLLBACK;
+        V_RETURN_MSG := 'ERROR: ' || SUBSTR(SQLERRM, 1, 200);
+        OPEN P_OUT FOR SELECT V_RETURN_MSG AS MESSAGE FROM DUAL;
+        OPEN P_EXCEL FOR SELECT NULL AS EMPTY FROM DUAL WHERE 1=0;
+END;
+/
