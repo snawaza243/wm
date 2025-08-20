@@ -1,12 +1,7 @@
-using Newtonsoft.Json;
 using System;
 using System.Data;
 using System.Globalization;
 using System.Runtime.Remoting.Channels;
-using System.Text;
-using System.Threading;
-using System.Web;
-using System.Web.Services;
 using System.Web.UI;
 using System.Web.UI.WebControls;
 using WM.Controllers;
@@ -16,96 +11,33 @@ namespace WM.Masters
 {
     public partial class sip_master_reconciliation : System.Web.UI.Page
     {
-        // tr code
-        string rtaSearchTrCodeValue1 = string.Empty;
-        string rtaSearchTrSearchedRowValue1 = string.Empty;
-        string rtaSearchRtaSearchedRowValue1 = string.Empty;
-        string rtaSearchFromdtPrevValue1 = string.Empty;
-        string rtaSearchTodtPrevValue1 = string.Empty;
-        string rtaSearchBranchPrevValue1 = string.Empty;
-        string rtaSearchAMCPrevValue1 = string.Empty;
-        string rtaSearchRecoStatusPrevValue1 = string.Empty;
-        string rtaSearchUnrecoStatusPrevValue1 = string.Empty;
-
-        string rtaSearchChequeNoPrevValue1 = string.Empty;
-        string rtaSearchInvestorNamePrevValue1 = string.Empty;
-        string rtaSearchAmountPrevValue1 = string.Empty;
-        string rtaSearchRemarkPrevValue1 = string.Empty;
-        string rtaSearchTranTypePrevValue1 = string.Empty;
-
-        // after serach the rta, on rta searched row cliekd
-
-        string rtaRowDataRtaCode = string.Empty;
-        string rtaRowDataAmount = string.Empty;
-        string rtaRowDataIndexNumber = string.Empty;
-
-
         PsmController pc = new PsmController();
         protected void Page_Load(object sender, EventArgs e)
         {
-            //Session["LoginId"] = "112650";
-            //Session["roleId"] = "29";
-
             if (!IsPostBack)
             {
 
                 FillChannelList();
                 fillRegionList();
                 fillBranchList("");
-                //fillZoneList("");
+                 //fillZoneList("");
                 fillRMList();
                 FillAMCList();
                 // 
-
+                 
                 dateFrom.Text = DateTime.Now.ToString("dd/MM/yyyy");
                 dateTo.Text = DateTime.Now.ToString("dd/MM/yyyy");
 
             }
             else
             {
-                rtaSearchTrCodeValue1 = hftran1stcode.Value;
-                rtaSearchTrSearchedRowValue1 = hfSelectedRow.Value;
-                rtaSearchRtaSearchedRowValue1 = hfrtaselectedrow.Value;
-                rtaSearchFromdtPrevValue1 = dateFromRta.Text;
-                rtaSearchTodtPrevValue1 = dateToRta.Text;
-                rtaSearchBranchPrevValue1 = branchSelectrta.SelectedValue;
-                rtaSearchAMCPrevValue1 = amcSelectrta.SelectedValue;
+                HandlePostbackArSearchRowClick();
 
-                if (RadioButton1.Checked)
-                {
-                    rtaSearchRecoStatusPrevValue1 = "Y"; // Reconciled
-                    rtaSearchUnrecoStatusPrevValue1 = string.Empty; // Unreconciled
-                }
-                else if (RadioButton2.Checked)
-                {
-                    rtaSearchUnrecoStatusPrevValue1 = "Y"; // Reconciled
-                    rtaSearchRecoStatusPrevValue1 = "N"; // Unreconciled
-                }
-                else
-                {
-                    pc.ShowAlert(this, "Please select a reconciliation status.");
-                    return; // Exit if no radio button is selected
-                }
-                
-                rtaSearchChequeNoPrevValue1 = chequeNo.Text;
-                rtaSearchInvestorNamePrevValue1 = txtInvestorName.Text;
-                rtaSearchAmountPrevValue1 = txtAmount.Text;
-                rtaSearchRemarkPrevValue1 = remark.Text;
-                rtaSearchTranTypePrevValue1 = RadioButtonList1.SelectedValue;
-
-
-                rtaRowDataRtaCode = hfRtaRowRtaNumber.Value;
-                rtaRowDataAmount = hfRtaRowAmount.Value;
-                rtaRowDataIndexNumber = hfrtaselectedrow.Value;
-
-                FocusTrSearchedOnRowByIndex();
-                FocusRtaRowByIndex();
-                //HandlePostbackArSearchRowClick();
-                //HandlePostbackRTASearchRowClick();
+                HandlePostbackRTASearchRowClick();
             }
-            //ToggleReconcileButton();
+            ToggleReconcileButton();
 
-
+            
 
         }
 
@@ -180,7 +112,7 @@ namespace WM.Masters
             FillChannelList();
 
             zoneSelect.Items.Clear();
-
+        
             // Reset Text Fields
             arNumber.Text = string.Empty;
             TextBox3.Text = string.Empty;
@@ -190,7 +122,7 @@ namespace WM.Masters
             sipStartDate.Text = string.Empty;
             tarnCode.Text = string.Empty;
             lblRowCount.Text = string.Empty;
-            dateFrom.Text = string.Empty; dateTo.Text = string.Empty;
+            dateFrom.Text = string.Empty; dateTo.Text = string.Empty ; 
 
             // Reset Checkboxes
             pms.Checked = false;
@@ -230,8 +162,8 @@ namespace WM.Masters
         #region fillBranchList
         private void fillBranchList(string check = "")
         {
-            sip_master_reconciliationController controller = new sip_master_reconciliationController();
-            DataTable dt = controller.GetBranchList();
+                sip_master_reconciliationController controller = new sip_master_reconciliationController();
+                DataTable dt = controller.GetBranchList();
 
             if (check == "1")
             {
@@ -241,7 +173,7 @@ namespace WM.Masters
                 branchSelect.DataBind();
                 branchSelect.Items.Insert(0, new ListItem("", ""));
             }
-            else if (check == "2")
+            else if(check == "2")
             {
                 branchSelectrta.DataSource = dt;
                 branchSelectrta.DataTextField = "branch_name";
@@ -373,7 +305,7 @@ namespace WM.Masters
             rmSelect.Items.Insert(1, new ListItem("All", ""));
         }
 
-
+       
 
         #region fillRmList
         private void fillRMList()
@@ -439,7 +371,7 @@ namespace WM.Masters
             regionSelect.DataTextField = "REGION_NAME"; // Adjust according to your data field
             regionSelect.DataValueField = "REGION_ID";  // Adjust according to your data field
             regionSelect.DataBind();
-
+          
             regionSelect.Items.Insert(0, new ListItem("", ""));
             regionSelect.Items.Insert(1, new ListItem("All", ""));
 
@@ -449,7 +381,7 @@ namespace WM.Masters
             zoneSelect.DataTextField = "ZONE_NAME"; // Adjust according to your data field
             zoneSelect.DataValueField = "ZONE_ID";  // Adjust according to your data field
             zoneSelect.DataBind();
-
+          
             zoneSelect.Items.Insert(0, new ListItem("", ""));
             zoneSelect.Items.Insert(1, new ListItem("All", ""));
 
@@ -505,9 +437,14 @@ namespace WM.Masters
         {
             try
             {
+
+                // BIND NULL TO tableSearchResults
                 tableSearchResults.DataSource = null;
                 tableSearchResults.DataBind();
+
                 btnReset2_Click(this, null);
+
+
 
                 SipMasterModel searchModel = new SipMasterModel
                 {
@@ -521,8 +458,15 @@ namespace WM.Masters
                     ReconciliationStatus = rblReconciliationType.SelectedValue,
                     COB = cob.Checked ? "1" : null,
                     PMS = pms.Checked ? "1" : null,
-                    DateFrom = pc.ParseDateWithParamEW(dateFrom.Text, arNumber.Text),
-                    DateTo = pc.ParseDateWithParamEW(dateTo.Text, arNumber.Text),
+                    DateFrom = (string.IsNullOrEmpty(dateFrom.Text) || !string.IsNullOrEmpty(arNumber.Text)) ? (System.DateTime?)null :
+                (DateTime.TryParseExact(dateFrom.Text, "dd/MM/yyyy", null, System.Globalization.DateTimeStyles.None, out DateTime parsedDateFrom)
+                ? parsedDateFrom // Store as DateTime object
+                : (System.DateTime?)null),
+
+                    DateTo = (string.IsNullOrEmpty(dateTo.Text) || !string.IsNullOrEmpty(arNumber.Text)) ? (System.DateTime?)null :
+                DateTime.TryParseExact(dateTo.Text, "dd/MM/yyyy", null, System.Globalization.DateTimeStyles.None, out DateTime parsedDateTo)
+                ? parsedDateTo // Store as DateTime object
+                : (System.DateTime?)null,
                     AMC = amcSelect.SelectedValue
                 };
 
@@ -543,35 +487,19 @@ namespace WM.Masters
                 }
 
                 DataTable dt = new WM.Controllers.sip_master_reconciliationController().GetTransactions(searchModel);
+                tableSearchResults.Visible = true;
+                tableSearchResults.DataSource = dt;
+                tableSearchResults.DataBind();
+                tableSearchResults.Focus();
 
-                if (dt != null && dt.Rows.Count > 0)
-                {
-                    ViewState["TrSearchedData"] = dt;
-
-                    tableSearchResults.Visible = true;
-                    tableSearchResults.DataSource = dt;
-                    tableSearchResults.DataBind();
-                    tableSearchResults.Focus();
-                    lblRowCount.Text = dt.Rows.Count.ToString();
-                    btnExport.Enabled = true;
-                }
-                else
-                {
-                    ViewState["TrSearchedData"] = null;
-                    tableSearchResults.Visible = false;
-                    tableSearchResults.DataSource = null;
-                    tableSearchResults.DataBind();
-                    lblRowCount.Text = "0";
-                    btnExport.Enabled = false;
-                }
-
-
+                lblRowCount.Text = dt.Rows.Count.ToString();
             }
             catch (Exception ex)
             {
                 pc.ShowAlert(this, "Error: " + ex.Message);
                 return;
             }
+
         }
 
 
@@ -617,11 +545,11 @@ namespace WM.Masters
 
                 row.BackColor = chk.Checked ? System.Drawing.Color.LightBlue : System.Drawing.Color.White;
 
-                row.CssClass = chk.Checked ? "selected-row" : string.Empty;
+                row.CssClass = chk.Checked ? "selected-row" : string.Empty;  
 
 
-
-
+              
+               
 
 
 
@@ -634,7 +562,7 @@ namespace WM.Masters
                     hfSelectedRow.Value = rowIndex.ToString();
                 }
                 SelectedRowIndex = row.RowIndex;
-
+             
                 tableSearchResults.Focus();
 
                 // Get values from the selected row
@@ -652,7 +580,7 @@ namespace WM.Masters
                 string registrar = ((Label)row.FindControl("lblregis")).Text;
                 string cobfl = ((Label)row.FindControl("lblCOBFL")).Text;
 
-
+                
                 string remarkValue = ((Label)row.FindControl("lblRemark")).Text;
 
 
@@ -698,14 +626,14 @@ namespace WM.Masters
 
                 rblReconciliationType.SelectedValue = tranType.ToLower() == "reconciled" ? "reconciled-rta" : "unreconciled-rta";
                 amcSelectrta.SelectedValue = amcCode;
-                //  branchSelectrta.SelectedValue = branch;
+              //  branchSelectrta.SelectedValue = branch;
                 txtAmount.Text = amount;
                 txtInvestorName.Text = investorName;
                 chequeNoSelect.SelectedValue = "001";
                 chequeNo.Text = chqno;
                 remark.Text = remarkValue;
                 RadioButton2.Checked = true; // Set the "Unreconciled" radio button as checked
-                row.Focus();
+
                 UpdatePanelFirst.Update();
 
                 return;
@@ -789,28 +717,22 @@ namespace WM.Masters
         }
 
 
-        #endregion
-
-        #region rta SEARCH GRID
 
         protected void tableSearchResults_RowDataBound(object sender, GridViewRowEventArgs e)
         {
             if (e.Row.RowType == DataControlRowType.DataRow)
             {
-                e.Row.Attributes["onclick"] = "onGridRowClick(this);";
+                // Add double click event to each row
+                e.Row.Attributes["ondblclick"] = "onRowDoubleClick(this)";
                 e.Row.Style["cursor"] = "pointer";
 
-                // Add double click event to each row
-                //e.Row.Attributes["ondblclick"] = "onRowDoubleClick(this)";
-                //e.Row.Style["cursor"] = "pointer";
-
                 // Find the checkbox control
-                //CheckBox chkSelect = (CheckBox)e.Row.FindControl("chkSelect");
-                //if (chkSelect != null)
-                //{
-                //    // Add client-side click handler to prevent event bubbling
-                //    chkSelect.Attributes["onclick"] = "event.stopPropagation();";
-                //}
+                CheckBox chkSelect = (CheckBox)e.Row.FindControl("chkSelect");
+                if (chkSelect != null)
+                {
+                    // Add client-side click handler to prevent event bubbling
+                    chkSelect.Attributes["onclick"] = "event.stopPropagation();";
+                }
             }
         }
 
@@ -829,333 +751,31 @@ namespace WM.Masters
             }
         }
 
-        private void FocusRtaRowByIndex()
-        {
-            if (int.TryParse(hfrtaselectedrow.Value, out int selectedRowIndex))
-            {
-                if (selectedRowIndex >= 0 && selectedRowIndex < GridRta.Rows.Count)
-                {
-                    GridViewRow row = GridRta.Rows[selectedRowIndex];
+        #endregion
 
-                    CheckBox chk = (CheckBox)row.FindControl("chkSelect");
-                    if (chk != null)
-                    {
-                        // Highlight the row
-                        row.BackColor = System.Drawing.Color.LightBlue;
+        #region TRA SEARCH GRID
 
-                        // Focus on the checkbox
-                        chk.Focus();
-
-                        // Smooth scroll to checkbox
-                        ScriptManager.RegisterStartupScript(this, this.GetType(), "scrollToRtaRow",
-                            $"document.getElementById('{chk.ClientID}').scrollIntoView({{behavior: 'smooth'}});", true);
-
-                    }
-                }
-            }
-        }
-
-        private void FocusTrSearchedOnRowByIndex()
-        {
-            if (int.TryParse(hfSelectedRow.Value, out int selectedRowIndex))
-            {
-                if (selectedRowIndex >= 0 && selectedRowIndex < tableSearchResults.Rows.Count)
-                {
-                    GridViewRow row = tableSearchResults.Rows[selectedRowIndex];
-
-                    CheckBox chk = (CheckBox)row.FindControl("chkSelect");
-                    if (chk != null)
-                    {
-                        // Highlight the row
-                        row.BackColor = System.Drawing.Color.LightBlue;
-
-                        // Focus on the checkbox
-                        chk.Focus();
-
-                        // Smooth scroll to checkbox
-                        ScriptManager.RegisterStartupScript(this, this.GetType(), "scrollToRow",
-                            $"document.getElementById('{chk.ClientID}').scrollIntoView({{behavior: 'smooth'}});", true);
-
-                        // Optional: show debug info
-                        //pc.ShowAlert(this, $"Focused on row index: {selectedRowIndex}");
-                    }
-                }
-            }
-        }
-
-        public void setRtaSetRdb(string rdbValue, string rdbText)
-        {
-            // Clear all first to avoid multiple selections
-            rtaChequeNo.Checked = false;
-            rtaFolioNo.Checked = false;
-            rtaAppNo.Checked = false;
-            rtaPanno.Checked = false;
-            rtaBrokerId.Checked = false;
-
-            switch (rdbValue)
-            {
-                case "001":
-                    rtaChequeNo.Checked = true;
-                    break;
-                case "002":
-                    rtaFolioNo.Checked = true;
-                    break;
-                case "003":
-                    rtaAppNo.Checked = true;
-                    break;
-                case "004":
-                    rtaPanno.Checked = true;
-                    break;
-                case "005":
-                    rtaBrokerId.Checked = true;
-                    break;
-                default:
-                    // Optionally show an alert or handle unexpected value
-                    pc.ShowAlert(this, "Unknown search type: " + rdbText);
-                    break;
-            }
-        }
-
-        public static void SetRtaRecoUnreco(string reco, string unreco)
-        {
-            try
-            {
-               
-            }
-            catch { }
-        }
-
-        // BTN SEARCH RTA SERACH RTA FIND BTN RTA FIND BTN RTA SEARCH
         protected void btnSearchrta_Click(object sender, EventArgs e)
         {
-            try
-            {
-                FocusTrSearchedOnRowByIndex();
+            string reconciliationStatus = RadioButton1.Checked ? "Y" : (RadioButton2.Checked ? "N" : null);
 
-                string rtaSearchFromdtPrevValue = dateFromRta.Text;
-                string rtaSearchTodtPrevValue = dateToRta.Text;
-                string rtaSearchChequeNoPrevValue = chequeNo.Text;  
-                string rtaSearchInvestorNamePrevValue = txtInvestorName.Text;
-                string rtaSearchAmountPrevValue = txtAmount.Text;
-                string rtaSearchCrtTranCode = hftran1stcode.Value;
-                string rtaSearchRecoStatus = RadioButton1.Checked ? "Y" : (RadioButton2.Checked ? "N" : null);
-
-                string crtTranCode = hftran1stcode.Value;
-                string reconciliationStatus = RadioButton1.Checked ? "Y" : (RadioButton2.Checked ? "N" : null);
-
-                #region new hidden
-                // Read hidden field values from the page
-                string hdfSearchedCheque_value = hdfSearchedCheque.Value;
-                string hdfSearchedFilio_value = hdfSearchedFilio.Value;
-                string hdfSearchedApp_value = hdfSearchedApp.Value;
-                string hdfSearchedPan_value = hdfSearchedPan.Value;
-                string hdfSearchedBroker_value = hdfSearchedBroker.Value;
-                string crtRtaFindDdl = string.Empty;    
-                string crtRtaFindValue = string.Empty;
-
-            
-
-              
-                #region bew chekc definition
-                if (rtaChequeNo.Checked)
-                {
-                    crtRtaFindDdl = "001"; // CHEQUE_NO
-                    crtRtaFindValue = hdfSearchedCheque_value;
-                }
-                else if (rtaFolioNo.Checked)
-                {
-                    crtRtaFindDdl = "002"; // FOLIO_NO
-                    crtRtaFindValue = hdfSearchedFilio_value;
-                }
-                else if (rtaAppNo.Checked)
-                {
-                    crtRtaFindDdl = "003"; // APP_NO
-                    crtRtaFindValue = hdfSearchedApp_value;
-                }
-                else if (rtaPanno.Checked)
-                {
-                    crtRtaFindDdl = "004"; // PANNO
-                    crtRtaFindValue = hdfSearchedPan_value;
-                }
-                else if (rtaBrokerId.Checked)
-                {
-                    crtRtaFindDdl = "005"; // BROKER_ID
-                    crtRtaFindValue = hdfSearchedBroker_value;
-                }
-                else
-                {
-                    // No checkbox is checked, handle accordingly
-                    pc.ShowAlert(this, "Please select a search criterion.");
-                    return;
-                }
-
-                if (string.IsNullOrEmpty(crtRtaFindDdl) || string.IsNullOrEmpty(crtRtaFindValue) || string.IsNullOrEmpty(rtaSearchTrCodeValue1) )
-                {
-                    pc.ShowAlert(this, "Please select a valid search criterion.");
-                    return;
-                }
-
-                #endregion
-
-
-                #endregion
-
-                SipMasterModel searchModel = new SipMasterModel
-                {
-                    Branch = rtaSearchBranchPrevValue1,
-                    AMC = rtaSearchAMCPrevValue1,
-                    ReconciliationStatus = rtaSearchRecoStatusPrevValue1,
-                    DateFrom = PsmController.ParseNullableDateEW(rtaSearchFromdtPrevValue1),
-                    DateTo = PsmController.ParseNullableDateEW(rtaSearchTodtPrevValue),
-                    TranType = rtaSearchTranTypePrevValue1,
-                    ChequeNo = crtRtaFindDdl,
-                    InvestorName = rtaSearchInvestorNamePrevValue1,
-                    Amount = PsmController.ParseNullableDecimal(rtaSearchAmountPrevValue1),
-                    docNo = crtRtaFindValue
-                };
-
-                // Validate that at least one search criterion is provided
-                if (string.IsNullOrWhiteSpace(searchModel.Branch) &&
-                    string.IsNullOrWhiteSpace(searchModel.AMC) &&
-                    searchModel.DateFrom == null &&
-                    searchModel.DateTo == null &&
-                    string.IsNullOrWhiteSpace(searchModel.ChequeNo) &&
-                    string.IsNullOrWhiteSpace(searchModel.InvestorName) &&
-                    searchModel.Amount == null &&
-                    string.IsNullOrWhiteSpace(searchModel.docNo))
-                {
-                    // Display an alert if no criteria are provided
-                    ScriptManager.RegisterStartupScript(this, GetType(), "alertMessage",
-                        "alert('Please provide at least one search criterion.');", true);
-                    return;
-                }
-                
-                DataTable transactions = new WM.Controllers.sip_master_reconciliationController().GetTransactionsRta(searchModel);
-                // bind the dt with erro handling
-                // set agaitn the store field valeu to the same fiels
-                dateFromRta.Text = rtaSearchFromdtPrevValue1;
-                dateToRta.Text = rtaSearchTodtPrevValue1;
-                amcSelectrta.SelectedValue = rtaSearchAMCPrevValue1;
-                branchSelectrta.SelectedValue = rtaSearchBranchPrevValue1;
-                chequeNo.Text = crtRtaFindValue;
-                txtInvestorName.Text = rtaSearchInvestorNamePrevValue1;
-                txtAmount.Text = rtaSearchAmountPrevValue1;
-                remark.Text = rtaSearchRemarkPrevValue1;
-                RadioButton1.Checked = rtaSearchRecoStatusPrevValue1 == "Y";
-                RadioButton2.Checked = rtaSearchRecoStatusPrevValue1 == "N";
-                RadioButtonList1.SelectedValue = rtaSearchTranTypePrevValue1; // Assuming this is the correct field for transaction type
-                // trantype release
-
-
-
-                setRtaSetRdb(crtRtaFindDdl, crtRtaFindValue);
-
-                 
-
-                if (transactions.Rows.Count >0)
-                {
-                    GridRta.Visible = true;
-                    GridRta.DataSource = transactions;
-                    GridRta.DataBind();
-                }
-                else
-                {
-                    GridRta.Visible = false;
-                    GridRta.DataSource = null;
-                    GridRta.DataBind();
-                    pc.ShowAlert(this, "No records found for the given search criteria.");
-                }
-                FocusTrSearchedOnRowByIndex();
-
-
-
-
-
-
-            }
-            catch (Exception ex)
-            {
-                pc.ShowAlert(this, ex.Message);
-            }
-        }
-
-
-       public static DateTime? ParseDateIfValidAr(string dateStr, string arNumber)
-        {
-            if (string.IsNullOrEmpty(dateStr) || !string.IsNullOrEmpty(arNumber))
-            {
-                return null;
-            }
-
-            if (DateTime.TryParseExact(
-                dateStr,
-                "dd/MM/yyyy",
-                System.Globalization.CultureInfo.InvariantCulture,
-                System.Globalization.DateTimeStyles.None,
-                out DateTime parsedDate))
-            {
-                return parsedDate;
-            }
-
-            return null;
-        }
-
-        public static DateTime? ParseDateExactOrNull(string dateStr)
-        {
-            if (string.IsNullOrEmpty(dateStr))
-            {
-                return null;
-            }
-
-            return DateTime.ParseExact(
-                dateStr,
-                "dd/MM/yyyy",
-                System.Globalization.CultureInfo.InvariantCulture
-            );
-        }
-
-        [WebMethod]
-        protected static string  WebMeth1_TrSearch(string channelSelect, string arNumber, string branchSelect, string regionSelect, string rmSelect, string zoneSelect, string dateFrom, string dateTo, string amcSelect, string tranTyepRdb, string recoStatus, string cob, string pms )
-        { 
-                SipMasterModel searchModel = new SipMasterModel
-                {
-                    Channelid = decimal.TryParse(channelSelect, out decimal result) ? result : (decimal?)null,
-                    ARNumber = arNumber,
-                    Branch = branchSelect,
-                    Region = regionSelect,
-                    RM = rmSelect,
-                    Zone = zoneSelect,
-                    TranType = tranTyepRdb,
-                    ReconciliationStatus = recoStatus,
-                    COB = cob,
-                    PMS = pms,
-                    DateFrom = ParseDateIfValidAr(dateFrom, arNumber),
-                    DateTo = ParseDateIfValidAr(dateTo, arNumber),
-                    AMC = amcSelect
-                };
-                var searchResult = new WM.Controllers.sip_master_reconciliationController().GetTransactions(searchModel);
-                return JsonConvert.SerializeObject(new { data = searchResult }, Formatting.None);
-        }
-
-        [WebMethod]
-        public static string WebMeth2_RTASearch(string traBranchValue, string traAMCVlaue, string rtaRecoStatus, string rtaFromDt, string rtaToDt, string rtaTranTypeRdb, string rtaChkValue, string rtaChkText, string rtaInvName, string rtaAmount)
-        {
-            // btnSearchrta_Click
-            string returnValue = string.Empty;
             SipMasterModel searchModel = new SipMasterModel
             {
-                Branch = traBranchValue,
-                AMC = traAMCVlaue,
-                ReconciliationStatus = rtaRecoStatus,
-                DateFrom = ParseDateExactOrNull(rtaFromDt),
-                DateTo = ParseDateExactOrNull(rtaToDt),
-                TranType = rtaTranTypeRdb,
-                ChequeNo = rtaChkValue,
-                InvestorName = rtaInvName,
-                Amount = string.IsNullOrEmpty(rtaAmount) ? (decimal?)null : decimal.Parse(rtaAmount),
-                docNo = rtaChkText
+                Branch = branchSelectrta.SelectedValue,
+                AMC = amcSelectrta.SelectedValue,
+                ReconciliationStatus = reconciliationStatus,
+
+                DateFrom = string.IsNullOrEmpty(dateFromRta.Text) ? (System.DateTime?)null : System.DateTime.ParseExact(dateFromRta.Text, "dd/MM/yyyy", null),
+                DateTo = string.IsNullOrEmpty(dateToRta.Text) ? (System.DateTime?)null : System.DateTime.ParseExact(dateToRta.Text, "dd/MM/yyyy", null),
+                TranType = RadioButtonList1.SelectedValue,
+
+                ChequeNo = chequeNoSelect.SelectedValue,
+                InvestorName = txtInvestorName.Text,
+                Amount = string.IsNullOrEmpty(txtAmount.Text) ? (decimal?)null : decimal.Parse(txtAmount.Text),
+                docNo = chequeNo.Text,
             };
 
+            // Validate that at least one search criterion is provided
             if (string.IsNullOrWhiteSpace(searchModel.Branch) &&
                 string.IsNullOrWhiteSpace(searchModel.AMC) &&
                 searchModel.DateFrom == null &&
@@ -1165,11 +785,18 @@ namespace WM.Masters
                 searchModel.Amount == null &&
                 string.IsNullOrWhiteSpace(searchModel.docNo))
             {
-                returnValue = "Please provide at least one search criterion";
+                // Display an alert if no criteria are provided
+                ScriptManager.RegisterStartupScript(this, GetType(), "alertMessage",
+                    "alert('Please provide at least one search criterion.');", true);
+                return;
             }
 
-            var searchResult = new WM.Controllers.sip_master_reconciliationController().GetTransactionsRta(searchModel);
-            return (string.IsNullOrEmpty(returnValue) ? returnValue : JsonConvert.SerializeObject(new { data = searchResult }, Formatting.None));
+            DataTable transactions = new WM.Controllers.sip_master_reconciliationController().GetTransactionsRta(searchModel);
+
+            GridRta.Visible = true;
+            GridRta.DataSource = transactions;
+            GridRta.DataBind();
+            GridRta.Focus();
         }
 
 
@@ -1178,6 +805,7 @@ namespace WM.Masters
             // Find the row where the checkbox is checked
             CheckBox chk = (CheckBox)sender;
             GridViewRow row = (GridViewRow)chk.NamingContainer;
+            GridRta.Focus();
 
 
             // Uncheck others and reset their background
@@ -1190,11 +818,6 @@ namespace WM.Masters
                     {
                         otherChk.Checked = false;
                         r.BackColor = System.Drawing.Color.White; // reset
-                        chk.Focus();
-
-                        ScriptManager.RegisterStartupScript(this, this.GetType(), "scrollToRow2",
-                            $"document.getElementById('{chk.ClientID}').scrollIntoView({{behavior: 'smooth'}});", true);
-
                     }
                 }
             }
@@ -1224,8 +847,6 @@ namespace WM.Masters
             amrtaparsed = decimal.Parse(((Label)row.FindControl("lblmount")).Text);
 
             RadioButton2.Checked = true; // Set the "Unreconciled" radio button as checked
-
-            FocusTrSearchedOnRowByIndex();
         }
 
         private void HandlePostbackRTASearchRowClick()
@@ -1296,15 +917,10 @@ namespace WM.Masters
             }
         }
 
+
+
         protected void GridRta_RowDataBound(object sender, GridViewRowEventArgs e)
         {
-            if (e.Row.RowType == DataControlRowType.DataRow)
-            {
-                e.Row.Attributes["onclick"] = "onGridRowClickRta(this);";
-                e.Row.Style["cursor"] = "pointer";
-            }
-
-            /* old method
             if (e.Row.RowType == DataControlRowType.DataRow)
             {
                 // Add double click event to each row
@@ -1318,21 +934,21 @@ namespace WM.Masters
                     // Add client-side click handler to prevent event bubbling
                     chkSelect.Attributes["onclick"] = "event.stopPropagation();";
                 }
-            }*/
+            }
         }
 
         protected void GridRta_RowCommand(object sender, GridViewCommandEventArgs e)
         {
             if (e.CommandName == "RowDoubleClick")
             {
-                //string[] args = e.CommandArgument.ToString().Split(':');
-                //if (args.Length == 2 && args[0] == "RowDoubleClick")
-                //{
-                //    int rowIndex = Convert.ToInt32(args[1]);
-                //    hfSelectedRow.Value = rowIndex.ToString();
-                //    ProcessSelectedRow1(rowIndex);
-                //    UpdatePanelFirst.Update();
-                //}
+                string[] args = e.CommandArgument.ToString().Split(':');
+                if (args.Length == 2 && args[0] == "RowDoubleClick")
+                {
+                    int rowIndex = Convert.ToInt32(args[1]);
+                    hfSelectedRow.Value = rowIndex.ToString();
+                    ProcessSelectedRow1(rowIndex);
+                    UpdatePanelFirst.Update();
+                }
             }
         }
 
@@ -1340,160 +956,52 @@ namespace WM.Masters
      
         #region EXPORT
 
-        // rta serached list export
         protected void btnExport_Click(object sender, EventArgs e)
         {
-            
-        }
+            // Clear any previous content and headers
+            Response.Clear();
+            Response.Buffer = true;
 
-        public void ExportTrListToExcel1()
-        {
-            try
+            // Set the response type to Excel
+            Response.AddHeader("content-disposition", "attachment;filename=SipMasterData.xls");
+            Response.Charset = "";
+            Response.ContentType = "application/vnd.ms-excel";
+
+            // Hide the CheckBox column during export (optional, if needed)
+            GridRta.Columns[0].Visible = false; // Adjust column index based on CheckBox location
+
+            // Use a StringWriter and HtmlTextWriter to write the GridView data
+            using (System.IO.StringWriter sw = new System.IO.StringWriter())
             {
-                // Clear any previous content and headers
-                Response.Clear();
-                Response.Buffer = true;
-
-                // Set the response type to Excel
-                Response.AddHeader("content-disposition", "attachment;filename=SipMasterData.xls");
-                Response.Charset = "";
-                Response.ContentType = "application/vnd.ms-excel";
-
-                // Hide the CheckBox column during export (optional, if needed)
-                GridRta.Columns[0].Visible = false; // Adjust column index based on CheckBox location
-
-                // Use a StringWriter and HtmlTextWriter to write the GridView data
-                using (System.IO.StringWriter sw = new System.IO.StringWriter())
+                using (HtmlTextWriter hw = new HtmlTextWriter(sw))
                 {
-                    using (HtmlTextWriter hw = new HtmlTextWriter(sw))
-                    {
-                        // Remove paging to export all data
-                        GridRta.AllowPaging = false;
+                    // Remove paging to export all data
+                    GridRta.AllowPaging = false;
 
-                        // Optionally rebind data if needed
-                        // BindGridData();
+                    // Optionally rebind data if needed
+                    // BindGridData();
 
-                        // Render the GridTransaction content
-                        GridRta.RenderControl(hw);
+                    // Render the GridTransaction content
+                    GridRta.RenderControl(hw);
 
-                        // Output the rendered HTML as Excel-compatible content
-                        string excelData = sw.ToString();
-                        Response.Output.Write(excelData);
-                        Response.Flush();
-                        Response.End();
-                    }
+                    // Output the rendered HTML as Excel-compatible content
+                    string excelData = sw.ToString();
+                    Response.Output.Write(excelData);
+                    Response.Flush();
+                    Response.End();
                 }
-
-                // Re-show the CheckBox column after export (optional)
-                GridRta.Columns[0].Visible = true;
-
-                // Optionally re-enable paging if it was enabled before
-                GridRta.AllowPaging = true;
-                // Rebind data if needed to show paginated data again
-                // BindGridData();
             }
-            catch (Exception ex)
-            {
-                pc.ShowAlert(this, "Error exporting data: " + ex.Message);
-                return;
-            }
+
+            // Re-show the CheckBox column after export (optional)
+            GridRta.Columns[0].Visible = true;
+
+            // Optionally re-enable paging if it was enabled before
+            GridRta.AllowPaging = true;
+            // Rebind data if needed to show paginated data again
+            // BindGridData();
         }
-        
 
-        // tr search list export
         protected void btnExport1_Click(object sender, EventArgs e)
-        {
-            try
-            {
-                // in this view my exporitng dat aexist ViewState["TrSearchedData"] = dt;
-                DataTable dt = ViewState["TrSearchedData"] as DataTable;
-                if (dt == null || dt.Rows.Count == 0)
-                {
-                    pc.ShowAlert(this, "No data available to export.");
-                    return;
-                }
-                else
-                {
-                    pc.ShowAlert(this, "Before export.");
-
-                    pc.ExportToExcelByDT2(dt,"TR_Data_Exported");
-                    pc.ShowAlert(this, "after export.");
-
-                    // Register the script to stop the loader animation explicitly
-                    ScriptManager.RegisterStartupScript(this, this.GetType(), "stopLoader", "stopLoader();", true);
-
-                    return;
-                }
-            }
-            catch (ThreadAbortException te)
-            {
-                pc.ShowAlert(this, "Error exporting data: " + te.Message);
-                return;
-            }
-            
-        }
-
-        public void ExportToCsvExcel(System.Data.DataTable dt, string fileName = "exported_file.xls")
-        {
-            // Start building the XML for the Excel file
-            StringBuilder excelXml = new StringBuilder();
-
-            // XML headers and workbook declaration
-            excelXml.AppendLine("<?xml version=\"1.0\"?>");
-            excelXml.AppendLine("<Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\"");
-            excelXml.AppendLine(" xmlns:o=\"urn:schemas-microsoft-com:office:office\"");
-            excelXml.AppendLine(" xmlns:x=\"urn:schemas-microsoft-com:office:excel\"");
-            excelXml.AppendLine(" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\">");
-
-            // Start worksheet
-            excelXml.AppendLine("<Worksheet ss:Name=\"Sheet1\">");
-            excelXml.AppendLine("<Table>");
-
-            // Add the header row
-            excelXml.AppendLine("<Row>");
-            foreach (DataColumn column in dt.Columns)
-            {
-                excelXml.AppendLine($"<Cell><Data ss:Type=\"String\">{column.ColumnName}</Data></Cell>");
-            }
-            excelXml.AppendLine("</Row>");
-
-            // Add the data rows
-            foreach (DataRow row in dt.Rows)
-            {
-                excelXml.AppendLine("<Row>");
-                foreach (DataColumn column in dt.Columns)
-                {
-                    excelXml.AppendLine($"<Cell><Data ss:Type=\"String\">{row[column].ToString()}</Data></Cell>");
-                }
-                excelXml.AppendLine("</Row>");
-            }
-
-            // Close table and worksheet
-            excelXml.AppendLine("</Table>");
-            excelXml.AppendLine("</Worksheet>");
-
-            // Close workbook
-            excelXml.AppendLine("</Workbook>");
-
-            // Convert to bytes
-            byte[] excelBytes = Encoding.UTF8.GetBytes(excelXml.ToString());
-
-            // Send the file to the client
-            HttpContext.Current.Response.Clear();
-            HttpContext.Current.Response.Buffer = true;
-            // file name take form from a varibaer
-
-            HttpContext.Current.Response.AddHeader("content-disposition", $"attachment;filename={fileName}");
-            HttpContext.Current.Response.ContentType = "application/vnd.ms-excel"; // Excel 2003 XML format
-            HttpContext.Current.Response.OutputStream.Write(excelBytes, 0, excelBytes.Length);
-            HttpContext.Current.Response.Flush();
-            HttpContext.Current.Response.End();
-            //HttpContext.Current.ApplicationInstance.CompleteRequest();
-
-        }
-
-
-        public void ExportRtaListExcel1()
         {
             // Clear any previous content and headers
             Response.Clear();
@@ -1532,9 +1040,7 @@ namespace WM.Masters
             // Re-show the CheckBox column after export
             tableSearchResults.Columns[0].Visible = true;
         }
-        
-        
-        
+
         #endregion
 
         #region OTHERS
@@ -1637,40 +1143,13 @@ namespace WM.Masters
 
         protected void btnsiprerta_Click(object sender, EventArgs e)
         {
-            try
-            {
+            string loginId = Session["LoginId"]?.ToString();
 
-                string loginId = Session["LoginId"]?.ToString();
+            string result = new sip_master_reconciliationController().ReconcileTransactions(tranCodetra, amrtaparsed, tranCoderta , loginId);
 
-                string rtaSearchTrCodeValueNew = rtaSearchTrCodeValue1;
-                string rtaRowDataRtaCodeNew = rtaRowDataRtaCode;
-                string rtaRowDataAmountNew = rtaRowDataAmount;
-
-
-
-
-                if (string.IsNullOrEmpty(rtaSearchTrCodeValueNew) || string.IsNullOrEmpty(rtaRowDataRtaCodeNew) || amrtaparsed <= 0)
-                {
-                    pc.ShowAlert(this, "Please select a transaction to reconcile.");
-                    reconcileBtn.Focus();
-                    return;
-                }
-                //string result = new sip_master_reconciliationController().ReconcileTransactions(tranCodetra, amrtaparsed, tranCoderta , loginId);
-                string result = new sip_master_reconciliationController().ReconcileTransactions(rtaSearchTrCodeValueNew, PsmController.ParseNullableDecimalNE(rtaRowDataAmountNew), rtaRowDataRtaCodeNew, loginId);
-
-
-                pc.ShowAlert(this, result);
-
-                //ScriptManager.RegisterStartupScript(this, this.GetType(), "alert", $"alert('{"result"}');", true);
-                reconcileBtn.Focus();
-                return;
-            }
-            catch (Exception ex)
-            {
-                pc.ShowAlert(this, "Error: " + ex.Message);
-                reconcileBtn.Focus();
-                return;
-            }
+            // Show the result
+            ScriptManager.RegisterStartupScript(this, this.GetType(), "alert", $"alert('{result}');", true);
+            reconcileBtn.Focus();
         }
 
         #endregion
@@ -1678,51 +1157,35 @@ namespace WM.Masters
         #region BTN SET REMARK CLICK
         protected void CmdSaveRemark_Click(object sender, EventArgs e)
         {
+            // Store TRAN_CODE in ViewState
+            //string myTrCode = tranCoderta;
+
+
             try
             {
-                string selectedTrCode = rtaSearchTrCodeValue1;
-                string enteredRemark = rtaSearchRemarkPrevValue1?.Trim();
-                if (string.IsNullOrEmpty(selectedTrCode) || string.IsNullOrEmpty(enteredRemark))
+                string remarkText = remark.Text;
+
+                if (remarkText.Length > 0)
                 {
-                    pc.ShowAlert(this, "Please select a transaction and provide a remark before saving.");
-                    remark.Focus();
-                    return;
+                    sip_master_reconciliationController controller = new sip_master_reconciliationController();
+                    controller.UpdateRemarkReco(tranCodetra, remarkText);
+                    // txtRemarks.Focus();
                 }
-                var controller = new sip_master_reconciliationController();
-                controller.UpdateRemarkReco(selectedTrCode, enteredRemark);
-
-                // bind the dt with erro handling
-                // set agaitn the store field valeu to the same fiels
-                dateFromRta.Text = rtaSearchFromdtPrevValue1;
-                dateToRta.Text = rtaSearchTodtPrevValue1;
-                amcSelectrta.SelectedValue = rtaSearchAMCPrevValue1;
-                branchSelectrta.SelectedValue = rtaSearchBranchPrevValue1;
-                chequeNo.Text = rtaSearchChequeNoPrevValue1;
-                txtInvestorName.Text = rtaSearchInvestorNamePrevValue1;
-                txtAmount.Text = rtaSearchAmountPrevValue1;
-                remark.Text = rtaSearchRemarkPrevValue1;
-                RadioButton1.Checked = rtaSearchRecoStatusPrevValue1 == "Y";
-                RadioButtonList1.SelectedValue = rtaSearchTranTypePrevValue1; // Assuming this is the correct field for transaction type
-                // trantype release
-
-
-
-
-
-                pc.ShowAlert(this, "The record has been remarked successfully.");
+                else
+                {
+                    ScriptManager.RegisterStartupScript(this ,this.GetType(), "alert", "alert('First Give Any Remark Before Save It.');", true);
+                    remark.Focus();
+                }
+                ScriptManager.RegisterStartupScript(this, this.GetType(), "alert", "alert('The record has been remarked successfully.');", true);
+                remark.Focus();
             }
             catch (Exception ex)
             {
-                pc.ShowAlert(this, $"Error while saving remark: {ex.Message}");
-                return;
+                ScriptManager.RegisterStartupScript(this, this.GetType(), "alert", $"alert('Error: {ex.Message}');", true);
+                remark.Focus();
             }
-            //finally
-            //{
-            //    remark.Focus();
-            //}
         }
-
-
+    
         #endregion
     }
 }
