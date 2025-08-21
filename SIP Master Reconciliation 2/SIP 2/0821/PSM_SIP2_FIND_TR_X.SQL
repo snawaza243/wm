@@ -1,11 +1,11 @@
 CREATE OR REPLACE PROCEDURE WEALTHMAKER.PSM_SIP2_FIND_TR_X (
     P_X              IN VARCHAR2,                           -- 1,2,NULL         RTA/TR/TRAN
     P_BRANCH_CAT     IN NUMBER,                             -- BRANCH_CATEGORY  TR
-    P_REGION         IN BRANCH_MASTER.REGION_ID%TYPE,       -- REGION_CODE      TR
-    P_ZONE           IN BRANCH_MASTER.ZONE_ID%TYPE,         -- ZONE_CODE        TR
-    P_BRANCH         IN BRANCH_MASTER.BRANCH_CODE%TYPE,     -- BRANCH_CODE      TR
-    P_RM             IN TRANSACTION_MF_TEMP1.RMCODE%TYPE,   -- RM_CODE          TR
-    P_AMC            IN MUT_FUND.MUT_NAME%TYPE,             -- AMC_CODE         TR
+    P_REGION         IN VARCHAR2,                           -- REGION_CODE      TR
+    P_ZONE           IN VARCHAR2,                           -- ZONE_CODE        TR
+    P_BRANCH         IN VARCHAR2,                           -- BRANCH_CODE      TR
+    P_RM             IN VARCHAR2,                           -- RM_CODE          TR
+    P_AMC            IN VARCHAR2,                           -- AMC_CODE         TR
     P_TRAN_TYPE      IN VARCHAR2,                           -- SIP,RENEWAL      TR/RTA
     P_REGISTRAR      IN VARCHAR2,                           -- C,K,CCOB,KCOB    TR
     P_STATUS_TYPE    IN CHAR,                               -- Y,N (RECONCILE)  TR/RTA
@@ -49,14 +49,13 @@ BEGIN
         V_QUERY := V_QUERY || '         MAX (BUSI_BRANCH_CODE) BUSI_BRANCH_CODE, ';
         V_QUERY := V_QUERY || '         MAX (BUSINESS_RMCODE) BUSINESS_RMCODE,';
         
-        IF P_REGISTRAR IS NOT NULL THEN
-            IF UPPER(P_REGISTRAR) = 'C' THEN
-                V_QUERY := V_QUERY || ' GETTRANCODE_NEW(FOLIO_NO,SCH_CODE,TR_DATE,TRAN_TYPE,tran_id)UNIQUE_TRAN , ';
-            ELSE
-                V_QUERY := V_QUERY || ' GETTRANCODE(FOLIO_NO,SCH_CODE,TR_DATE,TRAN_TYPE)UNIQUE_TRAN , ';
-            END IF;
+       
+        IF UPPER(P_REGISTRAR) = 'C' THEN
+            V_QUERY := V_QUERY || ' GETTRANCODE_NEW(FOLIO_NO,SCH_CODE,TR_DATE,TRAN_TYPE,tran_id)UNIQUE_TRAN , ';
+        ELSE
+            V_QUERY := V_QUERY || ' GETTRANCODE(FOLIO_NO,SCH_CODE,TR_DATE,TRAN_TYPE)UNIQUE_TRAN , ';
         END IF;
-        
+      
         V_QUERY := V_QUERY || ' max(reg_trantype) reg_trantype,max(unq_key)unq_key ';
         V_QUERY := V_QUERY || '   FROM (  ';
         V_QUERY := V_QUERY || ' SELECT t.tran_id,tran_type, t.inv_name Investor_Name,(i.ADDRESS1||'',''||i.ADDRESS2||'',''||i.EMAIL) address,  ';
@@ -119,22 +118,21 @@ BEGIN
         IF P_DATE_TO IS NOT NULL THEN
             V_QUERY := V_QUERY || ' AND TR_DATE <= TO_DATE(''' || P_DATE_TO || ''', ''DD/MM/YYYY'')';
         END IF;
-
-
+   
         IF P_CHEQUE_TYPE IS NOT NULL AND P_CHEQUE_SEARCH IS NOT NULL THEN
-            V_QUERY := V_QUERY || ' AND (';
-            IF P_CHEQUE_TYPE = '0' THEN
+            V_QUERY := V_QUERY || ' AND ( ';
+            IF P_CHEQUE_TYPE = '001' THEN
                 V_QUERY := V_QUERY || ' t.CHEQUE_NO = ''' || P_CHEQUE_SEARCH || '''';
-            ELSIF P_CHEQUE_TYPE = '1' THEN
+            ELSIF P_CHEQUE_TYPE = '002' THEN
                 V_QUERY := V_QUERY || ' t.FOLIO_NO = ''' || P_CHEQUE_SEARCH || '''';
-            ELSIF P_CHEQUE_TYPE = '2' THEN
+            ELSIF P_CHEQUE_TYPE = '003' THEN
                 V_QUERY := V_QUERY || ' t.APP_NO = ''' || P_CHEQUE_SEARCH || '''';
-            ELSIF P_CHEQUE_TYPE = '3' THEN
+            ELSIF P_CHEQUE_TYPE = '004' THEN
             V_QUERY := V_QUERY || ' (UPPER(t.PAN1) = UPPER(''' || P_CHEQUE_SEARCH || ''') OR UPPER(t.PAN2) = UPPER(''' || P_CHEQUE_SEARCH || ''') OR UPPER(t.PAN3) = UPPER(''' || P_CHEQUE_SEARCH || ''')) ';
-            ELSIF P_CHEQUE_TYPE = '4' THEN
+            ELSIF P_CHEQUE_TYPE = '005' THEN
                 V_QUERY := V_QUERY || ' t.REG_SUBBROK = ''' || P_CHEQUE_SEARCH || '''';
             END IF;
-            V_QUERY := V_QUERY || ')';
+            V_QUERY := V_QUERY || ') ';
         END IF;
 
         IF P_INVESTOR_NAME IS NOT NULL THEN
@@ -165,12 +163,15 @@ BEGIN
             V_QUERY := V_QUERY || '          TRAN_TYPE';
         END IF;
 
-
-    ELSIF P_X = '2' THEN
+     
+    ELSIF P_X = '2' THEN 
         
-        V_QUERY := ' select ''mf.REMARK_RECO'' REMARK, inv.Investor_Name,inv.address1||'',''||inv.address2||'',''||inv.phone||'',''||inv.email address ,ct.city_name ';
-        V_QUERY := V_QUERY ||  ' ,mf.bank_name,mf.client_code,mf.sch_code sch_code,mf.mut_code,rm_name,branch_name,panno,amc.mut_name mut_Name,Sch_Name Sch_Name,tr_date,TRAN_TYPE,App_No,folio_no,payment_mode, cheque_no, CHEQUE_DATE,';
-        V_QUERY := V_QUERY ||  ' Amount,Sip_Amount,Sip_Type,lEAD_nO,LEAD_NAME,TRAN_code,b.branch_code,BUSINESS_RMCODE,mf.INSTALLMENTS_NO,RETURNSTATUS(MF.TRAN_CODE)STATUS, CASE WHEN  mf.loggeduserid=''MFONLINE'' THEN ''Online'' WHEN  mf.loggeduserid=''Valuefy'' THEN ''Online'' ELSE ''Offline'' end loggeduserid ';
+        V_QUERY := ' select  ''mf.REMARK_RECO'' REMARK, inv.Investor_Name,inv.address1||'',''||inv.address2||'',''||inv.phone||'',''||inv.email address ,ct.city_name ';
+        
+         V_QUERY := V_QUERY ||  ' ,MF.BROKER_ID, MF.SIP_AMOUNT, MF.remark_reco remark, MF.source_code, MF.DISPATCH, WEALTHMAKER.FN_IDENTIFY_REGISTRAR@MF.BAJAJCAPITAL(MF.mut_code) registrar, NVL(MF.COB_FLAG,0) AS COB_FLAG ';
+        
+        V_QUERY := V_QUERY ||  ' ,mf.bank_name,mf.client_code,mf.sch_code sch_code,mf.mut_code,rm_name,branch_name,panno,amc.mut_name AMC_NAME,Sch_Name Sch_Name,tr_date,TRAN_TYPE,App_No,folio_no,payment_mode, cheque_no, CHEQUE_DATE,';
+        V_QUERY := V_QUERY ||  ' Amount,Sip_Amount,Sip_Type,lEAD_nO,LEAD_NAME,TRAN_code,b.branch_code,BUSINESS_RMCODE,mf.INSTALLMENTS_NO TOTAL_SIP,RETURNSTATUS(MF.TRAN_CODE)STATUS, CASE WHEN  mf.loggeduserid=''MFONLINE'' THEN ''Online'' WHEN  mf.loggeduserid=''Valuefy'' THEN ''Online'' ELSE ''Offline'' end FLAG ';
         V_QUERY := V_QUERY ||  ' from city_master ct,employee_master e,investor_master inv,branch_master b,ALLCOMPANY amc,ALLSCHEME sch,TRANSACTION_MF_TEMP1  mf ';
         V_QUERY := V_QUERY ||  ' where  MF.SIP_TYPE=''SIP'' AND AMOUNT>0 AND (MF.ASA<>''C'' OR MF.ASA IS NULL) and move_flag1 is null and sip_id is null AND inv.city_id=ct.city_id(+) and mf.client_code=inv.inv_code and  to_char(mf.BUSINESS_RMCODE)=to_char(e.payroll_id) and mf.BUSI_BRANCH_CODE=b.branch_code  ';
 
@@ -249,6 +250,9 @@ BEGIN
         END IF;
 
         V_QUERY := V_QUERY || ' ORDER BY TR_DATE, rm_name';
+     
+         
+         
     ELSE
 
         V_QUERY := ' SELECT A.SEQ_NO,A.MUT_CODE,B.MUT_NAME,A.SCH_CODE,C.SCH_NAME,A.FOLIO_NO,IHNO_TRXNNO,START_DATE SIP_START_DATE,END_DATE SIP_END_DATE, ';
@@ -305,6 +309,7 @@ BEGIN
     
     END IF;
 
-    OPEN P_CURSOR FOR V_QUERY;
-    --OPEN P_CURSOR FOR select v_query from dual;
+    --OPEN P_CURSOR FOR V_QUERY;
+    OPEN P_CURSOR FOR select v_query from dual;
 END;
+/

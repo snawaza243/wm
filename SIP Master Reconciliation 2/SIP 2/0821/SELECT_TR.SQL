@@ -43,6 +43,7 @@
              WHEN mf.loggeduserid = 'Valuefy' THEN 'Online'
              ELSE 'Offline'
          END                            loggeduserid
+         ,SIP_FR
     FROM city_master         ct,
          employee_master     e,
          investor_master     inv,
@@ -50,7 +51,7 @@
          ALLCOMPANY          amc,
          ALLSCHEME           sch,
          TRANSACTION_MF_TEMP1 mf
-   WHERE     MF.SIP_TYPE = 'SIP'
+   WHERE     1=1--MF.SIP_TYPE = 'SIP'
          AND AMOUNT > 0
          AND (MF.ASA <> 'C' OR MF.ASA IS NULL)
          AND move_flag1 IS NULL
@@ -64,8 +65,9 @@
          AND b.branch_code IN (SELECT BRANCH_ID
                                  FROM USERDETAILS_JI
                                 WHERE LOGIN_ID = '112650' AND ROLE_ID = '29')
-         --AND (SIP_FR = 'R')
+         AND (SIP_FR = 'R')
          AND NVL (mf.rec_flag, 'N') = 'N'
          AND TR_DATE >= TO_DATE ('01/06/2025', 'DD/MM/YYYY')
-         AND TR_DATE <= TO_DATE ('20/08/2025', 'DD/MM/YYYY')
+         --AND TR_DATE <= TO_DATE ('20/08/2025', 'DD/MM/YYYY')
+        --AND TRAN_CODE = 'TR24142915'
 ORDER BY TR_DATE, rm_name

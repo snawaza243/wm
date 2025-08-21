@@ -1,0 +1,83 @@
+   begin
+           
+        
+            open P_CURSOR FOR   
+                SELECT FOLIO_NO,
+                     SCH_CODE,
+                     TR_DATE,
+                     TRAN_TYPE,
+                     MAX (INVESTOR_NAME)          INVESTOR_NAME,
+                     MAX (ADDRESS)                ADDRESS,
+                     MAX (BROKER_CODE)            BROKER_CODE,
+                     MAX (CITY_NAME)              CITY_NAME,
+                     MAX (SCH_NAME)               SCH_NAME,
+                     MAX (MUT_CODE)               MUT_CODE,
+                     MAX (MUT_NAME)               MUT_NAME,
+                     MAX (RM_NAME)                RM_NAME,
+                     MAX (BRANCH_NAME)            BRANCH_NAME,
+                     MAX (APP_NO)                 APP_NO,
+                     MAX (CHEQUE_NO)              CHEQUE_NO,
+                     SUM (AMOUNT)                 AMOUNT,
+                     MAX (BUSI_BRANCH_CODE)       BUSI_BRANCH_CODE,
+                     MAX (BUSINESS_RMCODE)        BUSINESS_RMCODE,
+                     GETTRANCODE_NEW (FOLIO_NO, SCH_CODE, TR_DATE, TRAN_TYPE, tran_id)    UNIQUE_TRAN,
+                     MAX (reg_trantype)           reg_trantype,
+                     MAX (unq_key)                unq_key
+                FROM (  SELECT t.tran_id, tran_type, t.inv_name Investor_Name, (i.ADDRESS1 || ',' || i.ADDRESS2 || ',' || i.EMAIL) address,
+                           REG_SUBBROK
+                               broker_code,
+                           c.city_name,
+                           t.sch_code,
+                           sch_name
+                               sch_name,
+                           t.mut_code,
+                           amc.mut_name
+                               mut_name,
+                           rm_name,
+                           branch_name,
+                           app_no,
+                           folio_no,
+                           cheque_no,
+                           amount,
+                           t.tran_code,
+                           reg_date
+                               AS tr_date,
+                           busi_branch_code,
+                           business_rmcode,
+                           t.reg_trantype,
+                           t.unq_key
+                      FROM employee_master             e,
+                           branch_master               b,
+                           mut_fund                    amc,
+                           scheme_info                 sch,
+                           TRANSACTION_ST@MF.BAJAJCAPITAL t,
+                           investor_master             i,
+                           CITY_MASTER                 C
+                     WHERE     I.CITY_ID = C.CITY_ID(+)
+                           AND t.client_code = i.inv_code
+                           AND TO_CHAR (t.rmcode) = e.rm_code
+                           AND t.BUSI_BRANCH_CODE = b.branch_code
+                           AND t.mut_code = amc.mut_code
+                           AND t.sch_code = sch.sch_code
+                           AND DUP_FLAG2 = 0
+                           AND BUSI_BRANCH_CODE IN ('10010018')
+                           AND TO_CHAR (t.mut_code) = 'MF040'
+                           AND (t.rec_flag = 'N' OR rec_flag IS NULL)
+                           AND ((   UPPER (t.REG_TRANTYPE) LIKE '%SYS%' OR UPPER (t.REG_TRANTYPE) LIKE '%SIP%'))
+                           AND TR_DATE >= TO_DATE ('01/06/2025', 'DD/MM/YYYY')
+                           AND TR_DATE <= TO_DATE ('10/06/2025', 'DD/MM/YYYY')
+                           --AND ((   UPPER (t.PAN1) = UPPER ('EQLPB5300K') OR UPPER (t.PAN2) = UPPER ('EQLPB5300K') OR UPPER (t.PAN3) = UPPER ('EQLPB5300K')))
+                           AND LPAD (t.mut_code, 2) = 'MF'
+                           AND (t.asa <> 'C' OR t.asa IS NULL)
+                           AND t.tran_type IN ('PURCHASE', 'REINVESTMENT', 'SWITCH IN')
+                  ORDER BY TR_Date, rm_name)
+        GROUP BY FOLIO_NO,
+                 SCH_CODE,
+                 TR_DATE,
+                 TRAN_TYPE,
+                 tran_id;
+                 
+                 
+        
+        end;
+        return;
