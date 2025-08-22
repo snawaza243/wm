@@ -1,0 +1,3 @@
+ var data = new TransactionInvestmentController().GetCrissChannelData(dtNUmber, loggedUserId, invCode);
+ GridCrossChannel.DataSource = data;
+ GridCrossChannel.DataBind();

@@ -32,22 +32,21 @@ CREATE OR REPLACE PROCEDURE WEALTHMAKER.PSM_MF_ADD_VALIDATION1 (
     P_CHKATMTRANSACTIONA IN VARCHAR2, -- ChkAtmTransactionA
     P_MYAMCCODE         IN VARCHAR2, -- MyAmcCode
     P_GLBUP_PREVIOUSDATE IN VARCHAR2,
-    P_GLBUP_NEXTDATE IN VARCHAR2,
-    P_PAYMENT_MODE IN VARCHAR2, 
-    P_ENTRYDATE IN VARCHAR2,
-    P_EXPENSES  IN VARCHAR2,
-    
+    P_GLBUP_NEXTDATE    IN VARCHAR2,
+    P_PAYMENT_MODE      IN VARCHAR2, 
+    P_ENTRYDATE         IN VARCHAR2,
+    P_EXPENSES          IN VARCHAR2,    
     P_LOG               IN  VARCHAR2,
     P_ROLE              IN  VARCHAR2,
     P_CURSOR    OUT SYS_REFCURSOR
 ) AS
-    V_RETURN CLOB := NULL;
-    MICROPANFLAG NUMBER;
-    MYCLOSESCHCODE VARCHAR2(100) := NULL;
-    MYSCHCODE VARCHAR2(100) := NULL;
-    MYBRANCHCODE VARCHAR2(100) := NULL;
+    V_RETURN        CLOB := NULL;
+    MICROPANFLAG    NUMBER;
+    MYSCHCODE       VARCHAR2(100) := NULL;      -- SCHEME CODE
+    MYCLOSESCHCODE  VARCHAR2(100) := NULL;      -- SECOND SCHEME
+    MYBRANCHCODE    VARCHAR2(100) := NULL;
     MYSWITCHSCHCODEA VARCHAR2(100) := NULL;
-    V_P_PANA VARCHAR(10):=NULL;
+    V_P_PANA        VARCHAR(10):=NULL;
 BEGIN
 
     V_P_PANA:=P_PANA;
@@ -62,18 +61,22 @@ BEGIN
         BEGIN
             SELECT WEALTHMAKER.FN_CHECK_FOR_APPROVAL_ALL(P_TXTDOCID) INTO V_FN_CHECK_FOR_APPROVAL_ALL FROM DUAL;
             IF V_FN_CHECK_FOR_APPROVAL_ALL = '2' THEN
-                V_RETURN := V_RETURN || ' Approval request for this transaction has already been raised ';
+                OPEN P_CURSOR FOR SELECT ' Approval request for this transaction has already been raised ' AS MESSAGE FROM DUAL;
+                RETURN;
             ELSIF V_FN_CHECK_FOR_APPROVAL_ALL = '4' THEN
-                V_RETURN := V_RETURN || ' Approval request for this transaction has been rejected by Management ';
+                OPEN P_CURSOR FOR SELECT ' Approval request for this transaction has been rejected by Management ' AS MESSAGE FROM DUAL;
+                RETURN;
             END IF;
         END;
     ELSE
-        V_RETURN := V_RETURN ||  ' DT IS REQUIRED ';
+        OPEN P_CURSOR FOR SELECT ' DT IS REQUIRED ' AS MESSAGE FROM DUAL;
+        RETURN;
     END IF;
 
     IF P_SIPSTP_A = 'SIP' THEN
         IF P_SIP_END_DT = '' OR P_SIP_START_DT = '' THEN
-            V_RETURN := V_RETURN || ' Please Enter SIP End Date ';
+            OPEN P_CURSOR FOR SELECT ' Please Enter SIP End Date ' AS MESSAGE FROM DUAL;
+            RETURN;
         END IF;
     END IF;
 
@@ -105,20 +108,18 @@ BEGIN
             AND A.SCH_CODE=B.SCH_CODE AND A.DOC_ID IS NOT NULL  
             AND CLIENT_CODE=P_LABEL32_CLIENT_CODE
             AND TR_DATE>SYSDATE-90
-             AND B.SCH_CODE= P_MYSCHCODE 
-             AND AMOUNT BETWEEN V_AMOUNT1 AND V_AMOUNT2;
+            AND B.SCH_CODE= P_MYSCHCODE 
+            AND AMOUNT BETWEEN V_AMOUNT1 AND V_AMOUNT2;
 
-             IF V_COUNT_DUP_TRAN_CODE > 0 THEN 
-
-             -- OPEN CURSOR AND RETURN THE ALL ALL VALID WITH # CONCATENATED 
-             OPEN P_CURSOR FOR
+            IF V_COUNT_DUP_TRAN_CODE > 0 THEN 
+                -- OPEN CURSOR AND RETURN THE ALL ALL VALID WITH # CONCATENATED 
+                OPEN P_CURSOR FOR
                 SELECT 'DUPLICATEFORM#'|| 'MF#'|| P_TXTAMOUNTA || '#' || P_LABEL32_CLIENT_CODE || '#' || P_MYSCHCODE || '#' || '0' FROM DUAL;
                 RETURN;
-             END IF;
+            END IF;
         END;
     ELSE
         -- save_method;
-       
         BEGIN
             IF P_TXTAMOUNTA <> '' THEN
                 MICROPANFLAG := 0;
@@ -150,9 +151,8 @@ BEGIN
 
                 IF V_COMBO_VAL = 0 THEN
                     OPEN P_CURSOR FOR
-                        SELECT 'ERROR: LI premium for combo plan can''t exceed 6.70 Lacs OR plan must be of combo' AS MESSAGE
-                        FROM DUAL;
-                    RETURN;
+                        OPEN P_CURSOR FOR SELECT 'ERROR: LI premium for combo plan can''t exceed 6.70 Lacs OR plan must be of combo' AS MESSAGE FROM DUAL;
+                        RETURN;
                 END IF;
             END;
         END IF;
@@ -230,7 +230,7 @@ BEGIN
         END;
 
         -- VALIDATE FP STATUS
-        /* NOT IN USE INTERN CODE IS COMMENTED
+        /* NOT IN USE INTERNAL CODE IS COMMENTED
         DECLARE
             v_fp_status NUMBER;
         BEGIN
@@ -416,7 +416,7 @@ BEGIN
         IF TRIM(P_TRAN_TYPE) <> '' THEN
             IF P_TRAN_TYPE = 'PURCHASE' AND P_PAYMENT_MODE NOT IN ('CHEQUE', 'DRAFT', 'ECS', 'RTGS', 'FT') THEN
                 OPEN P_CURSOR FOR
-                    SELECT 'Please Select Cheque/Draft/ECS/RTGS/Fund Transfer Payment Mode' AS MESSAGE
+                    SELECT 'Please Select Cheque/Draft/ECS/RTGS/Fund Transfer From Payment Mode' AS MESSAGE
                     FROM DUAL;
                 RETURN;
             END IF;
@@ -452,7 +452,7 @@ BEGIN
                 RETURN;
             END IF;
 
---IS_NUMERIC(P_TXTSIPAMOUNT)
+            --IS_NUMERIC(P_TXTSIPAMOUNT)
             IF TRIM(P_TXTSIPAMOUNT) IN ('', '0')  THEN
                 OPEN P_CURSOR FOR
                     SELECT 'Please Enter Valid SIP Amount' AS MESSAGE
@@ -634,7 +634,7 @@ BEGIN
         END;
             
         DECLARE
-        V_SWITCH_CODE VARCHAR2(100);
+            V_SWITCH_CODE VARCHAR2(100);
         BEGIN
             -- Check if input is not blank
             IF TRIM(P_TXTSWITCHSCHEMEA) IS NOT NULL THEN

@@ -1,0 +1,831 @@
+using System;
+using Oracle.ManagedDataAccess.Client;
+using System.Web.Configuration;
+using System.Data;
+using System.Configuration;
+using WM.Models;
+using Oracle.ManagedDataAccess.Types;
+
+
+namespace WM.Controllers
+{
+    public class sip_master_reconciliationController
+    {
+        private OracleConnection connection;
+
+        PsmController pc = new PsmController();
+
+        public sip_master_reconciliationController()
+        {
+            connection = new OracleConnection(WebConfigurationManager.ConnectionStrings["ConnectionStringVM"].ConnectionString);
+        }
+
+        #region SIP 2
+
+        public DataTable GetTrX(string x, string branchCat, string region, string zone, string branch,
+    string rm, string amc, string tranType, string registrar, string statusType, string pms,
+    string cob, string dateFrom, string dateTo, string arNum, string chequeType, string chequeSearch,
+    string investorName, string amount, string sipFolioNo, string sipAmount, string sipPan,
+    string sipClientCode, string sipDate)
+        {
+            DataTable dt = new DataTable();
+            using (OracleConnection conn = new OracleConnection(WebConfigurationManager.ConnectionStrings["ConnectionStringVM"].ConnectionString))
+            {
+                using (OracleCommand cmd = new OracleCommand("WEALTHMAKER.PSM_SIP2_FIND_TR_X", conn))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+
+                    // Add all parameters according to the stored procedure
+                    cmd.Parameters.Add("P_X", OracleDbType.Varchar2).Value = string.IsNullOrEmpty(x) ? (object)DBNull.Value : x;
+                    cmd.Parameters.Add("P_BRANCH_CAT", OracleDbType.Varchar2).Value = string.IsNullOrEmpty(branchCat) ? (object)DBNull.Value : Convert.ToDecimal(branchCat);
+                    cmd.Parameters.Add("P_REGION", OracleDbType.Varchar2).Value = string.IsNullOrEmpty(region) ? (object)DBNull.Value : region;
+                    cmd.Parameters.Add("P_ZONE", OracleDbType.Varchar2).Value = string.IsNullOrEmpty(zone) ? (object)DBNull.Value : zone;
+                    cmd.Parameters.Add("P_BRANCH", OracleDbType.Varchar2).Value = string.IsNullOrEmpty(branch) ? (object)DBNull.Value : branch;
+                    cmd.Parameters.Add("P_RM", OracleDbType.Varchar2).Value = string.IsNullOrEmpty(rm) ? (object)DBNull.Value : rm;
+                    cmd.Parameters.Add("P_AMC", OracleDbType.Varchar2).Value = string.IsNullOrEmpty(amc) ? (object)DBNull.Value : amc;
+                    cmd.Parameters.Add("P_TRAN_TYPE", OracleDbType.Varchar2).Value = string.IsNullOrEmpty(tranType) ? (object)DBNull.Value : tranType;
+                    cmd.Parameters.Add("P_REGISTRAR", OracleDbType.Varchar2).Value = string.IsNullOrEmpty(registrar) ? (object)DBNull.Value : registrar;
+                    cmd.Parameters.Add("P_STATUS_TYPE", OracleDbType.Char).Value = string.IsNullOrEmpty(statusType) ? (object)DBNull.Value : statusType;
+                    cmd.Parameters.Add("P_PMS", OracleDbType.Char).Value = string.IsNullOrEmpty(pms) ? (object)DBNull.Value : pms;
+                    cmd.Parameters.Add("P_COB", OracleDbType.Char).Value = string.IsNullOrEmpty(cob) ? (object)DBNull.Value : cob;
+                    cmd.Parameters.Add("P_DATE_FROM", OracleDbType.Varchar2).Value = string.IsNullOrEmpty(dateFrom) ? (object)DBNull.Value : dateFrom;
+                    cmd.Parameters.Add("P_DATE_TO", OracleDbType.Varchar2).Value = string.IsNullOrEmpty(dateTo) ? (object)DBNull.Value : dateTo;
+                    cmd.Parameters.Add("P_AR_NUM", OracleDbType.Varchar2).Value = string.IsNullOrEmpty(arNum) ? (object)DBNull.Value : arNum;
+                    cmd.Parameters.Add("P_CHEQUE_TYPE", OracleDbType.Varchar2).Value = string.IsNullOrEmpty(chequeType) ? (object)DBNull.Value : chequeType;
+                    cmd.Parameters.Add("P_CHEQUE_SEARCH", OracleDbType.Varchar2).Value = string.IsNullOrEmpty(chequeSearch) ? (object)DBNull.Value : chequeSearch;
+                    cmd.Parameters.Add("P_INVESTOR_NAME", OracleDbType.Varchar2).Value = string.IsNullOrEmpty(investorName) ? (object)DBNull.Value : investorName;
+                    cmd.Parameters.Add("P_AMOUNT", OracleDbType.Decimal).Value = string.IsNullOrEmpty(amount) ? (object)DBNull.Value : Convert.ToDecimal(amount);
+                    cmd.Parameters.Add("P_SIP_FOLIO_NO", OracleDbType.Varchar2).Value = string.IsNullOrEmpty(sipFolioNo) ? (object)DBNull.Value : sipFolioNo;
+                    cmd.Parameters.Add("P_SIP_AMOUNT", OracleDbType.Decimal).Value = string.IsNullOrEmpty(sipAmount) ? (object)DBNull.Value : Convert.ToDecimal(sipAmount);
+                    cmd.Parameters.Add("P_SIP_PAN", OracleDbType.Varchar2).Value = string.IsNullOrEmpty(sipPan) ? (object)DBNull.Value : sipPan;
+                    cmd.Parameters.Add("P_SIP_CLIENT_CODE", OracleDbType.Varchar2).Value = string.IsNullOrEmpty(sipClientCode) ? (object)DBNull.Value : sipClientCode;
+                    cmd.Parameters.Add("P_SIP_DATE", OracleDbType.Varchar2).Value = string.IsNullOrEmpty(sipDate) ? (object)DBNull.Value : sipDate;
+                    cmd.Parameters.Add("P_LOG_ID", OracleDbType.Varchar2).Value = pc.currentLoginID();
+                    cmd.Parameters.Add("P_ROLE_ID", OracleDbType.Varchar2).Value = pc.currentRoleID();
+                    cmd.Parameters.Add("P_CURSOR", OracleDbType.RefCursor).Direction = ParameterDirection.Output;
+
+                    conn.Open();
+                    using (OracleDataAdapter da = new OracleDataAdapter(cmd))
+                    {
+                        da.Fill(dt);
+                    }
+                }
+            }
+
+            return dt;
+        }
+
+
+        public (bool Success, string Message) SetSIPReco2(string trTranCode, string trTranType, string rtaTranCode, string rtaTranDate, string rtaFolio, decimal rtaAmount, string rtaDispatch)
+        {
+            string loginId = pc.currentLoginID();
+            string roleId = pc.currentRoleID();
+
+            using (OracleConnection conn = new OracleConnection(WebConfigurationManager.ConnectionStrings["ConnectionStringVM"].ConnectionString))
+            {
+                using (OracleCommand cmd = new OracleCommand("WEALTHMAKER.PSM_SIP2_SET_RECONSILE", conn))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+
+                    // Input parameters (matching the procedure signature)
+                    cmd.Parameters.Add("MYTRCODE", OracleDbType.Varchar2).Value = trTranCode ?? (object)DBNull.Value;
+                    cmd.Parameters.Add("MYRTAAMOUNT", OracleDbType.Decimal).Value = rtaAmount;
+                    cmd.Parameters.Add("MYRTATRDATE", OracleDbType.Varchar2).Value = rtaTranDate ?? (object)DBNull.Value;
+                    cmd.Parameters.Add("MYRTAFOLIO", OracleDbType.Varchar2).Value = rtaFolio ?? (object)DBNull.Value;
+                    cmd.Parameters.Add("MYRTATRCODE", OracleDbType.Varchar2).Value = rtaTranCode?.Replace("'", "") ?? (object)DBNull.Value;
+                    cmd.Parameters.Add("MYDISPATCH", OracleDbType.Varchar2).Value = rtaDispatch ?? (object)DBNull.Value;
+                    cmd.Parameters.Add("GLBLOGINID", OracleDbType.Varchar2).Value = loginId ?? (object)DBNull.Value;
+                    cmd.Parameters.Add("P_ROLE_ID", OracleDbType.Varchar2).Value = roleId ?? (object)DBNull.Value;
+
+                    // Output cursor parameter
+                    var outCursor = new OracleParameter("P_CURSOR", OracleDbType.RefCursor);
+                    outCursor.Direction = ParameterDirection.Output;
+                    cmd.Parameters.Add(outCursor);
+
+                    try
+                    {
+                        conn.Open();
+                        cmd.ExecuteNonQuery();
+
+                        // Process the output cursor
+                        using (var reader = ((OracleRefCursor)outCursor.Value).GetDataReader())
+                        {
+                            if (reader.Read())
+                            {
+                                string message = reader["MESSAGE"].ToString();
+                                bool isSuccess = !message.StartsWith("ERROR:");
+                                return (isSuccess, message);
+                            }
+                        }
+
+                        return (false, "No response received from procedure");
+                    }
+                    catch (OracleException ex)
+                    {
+                        string errorMessage = $"Database Error: {ex.Message}";
+                        if (ex.Number == 20001) errorMessage = "Validation Error: Missing mandatory parameters (TRAN_CODE, RTA_TRAN_CODE, LOGIN_ID)";
+                        if (ex.Number == 20002) errorMessage = "No matching records found for the given transaction code";
+                        if (ex.Number == 20003) errorMessage = "No matching records found in remote system";
+
+                        return (false, errorMessage);
+                    }
+                    catch (Exception ex)
+                    {
+                        return (false, $"System Error: {ex.Message}");
+                    }
+                    finally
+                    {
+                        if (conn.State == ConnectionState.Open)
+                        {
+                            conn.Close();
+                        }
+                    }
+                }
+            }
+        }
+
+
+        public (bool Success, string Message) SetSIPCnf(string trTranCode, string masterId, string dispatch)
+        {
+            using (OracleConnection conn = new OracleConnection(WebConfigurationManager.ConnectionStrings["ConnectionStringVM"].ConnectionString))
+            {
+                using (OracleCommand cmd = new OracleCommand("WEALTHMAKER.PSM_SIP2_SET_CNF", conn))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.Add("MyTrCode", OracleDbType.Varchar2).Value = trTranCode ?? (object)DBNull.Value;
+                    cmd.Parameters.Add("MasterId", OracleDbType.Varchar2).Value = masterId ?? (object)DBNull.Value;
+                    cmd.Parameters.Add("MyDispatch", OracleDbType.Varchar2).Value = dispatch ?? (object)DBNull.Value;
+                    cmd.Parameters.Add("Glbloginid", OracleDbType.Varchar2).Value = pc.currentLoginID() ?? (object)DBNull.Value;
+                    cmd.Parameters.Add("P_ROLE", OracleDbType.Varchar2).Value = pc.currentRoleID() ?? (object)DBNull.Value;
+                    var outCursor = new OracleParameter("P_CURSOR", OracleDbType.RefCursor);
+                    outCursor.Direction = ParameterDirection.Output;
+                    cmd.Parameters.Add(outCursor);
+
+                    try
+                    {
+                        conn.Open();
+                        cmd.ExecuteNonQuery();
+
+                        // Process the output cursor
+                        using (var reader = ((OracleRefCursor)outCursor.Value).GetDataReader())
+                        {
+                            if (reader.Read())
+                            {
+                                string message = reader["MESSAGE"].ToString();
+                                bool isSuccess = message.StartsWith("SUCCESS:");
+                                return (isSuccess, message);
+                            }
+                        }
+
+                        return (false, "No response received from procedure");
+                    }
+                    catch (OracleException ex)
+                    {
+                        string errorMessage = $"Database Error: {ex.Message}";
+                        if (ex.Number == 20001) errorMessage = "Validation Error: First Double Click The Record, You Want To Map";
+
+                        return (false, errorMessage);
+                    }
+                    catch (Exception ex)
+                    {
+                        return (false, $"System Error: {ex.Message}");
+                    }
+                    finally
+                    {
+                        if (conn.State == ConnectionState.Open)
+                        {
+                            conn.Close();
+                        }
+                    }
+                }
+            }
+        }
+
+        public (bool Success, string Message) SetSIPUnCnf(string trTranCode, string masterId, string dispatch)
+        {
+            using (OracleConnection conn = new OracleConnection(WebConfigurationManager.ConnectionStrings["ConnectionStringVM"].ConnectionString))
+            {
+                using (OracleCommand cmd = new OracleCommand("WEALTHMAKER.PSM_SIP2_SET_UNCNF", conn))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.Add("MyTrCode", OracleDbType.Varchar2).Value = trTranCode ?? (object)DBNull.Value;
+                    cmd.Parameters.Add("MasterId", OracleDbType.Varchar2).Value = masterId ?? (object)DBNull.Value;
+                    cmd.Parameters.Add("MyDispatch", OracleDbType.Varchar2).Value = dispatch ?? (object)DBNull.Value;
+                    cmd.Parameters.Add("Glbloginid", OracleDbType.Varchar2).Value = pc.currentLoginID() ?? (object)DBNull.Value;
+                    cmd.Parameters.Add("P_ROLE", OracleDbType.Varchar2).Value = pc.currentRoleID() ?? (object)DBNull.Value;
+                    var outCursor = new OracleParameter("P_CURSOR", OracleDbType.RefCursor);
+                    outCursor.Direction = ParameterDirection.Output;
+                    cmd.Parameters.Add(outCursor);
+
+                    try
+                    {
+                        conn.Open();
+                        cmd.ExecuteNonQuery();
+
+                        // Process the output cursor
+                        using (var reader = ((OracleRefCursor)outCursor.Value).GetDataReader())
+                        {
+                            if (reader.Read())
+                            {
+                                string message = reader["MESSAGE"].ToString();
+                                bool isSuccess = message.StartsWith("SUCCESS:");
+                                return (isSuccess, message);
+                            }
+                        }
+
+                        return (false, "No response received from procedure");
+                    }
+                    catch (OracleException ex)
+                    {
+                        string errorMessage = $"Database Error: {ex.Message}";
+                        if (ex.Number == 20001) errorMessage = "Validation Error: First Double Click The Record, You Want To Map";
+
+                        return (false, errorMessage);
+                    }
+                    catch (Exception ex)
+                    {
+                        return (false, $"System Error: {ex.Message}");
+                    }
+                    finally
+                    {
+                        if (conn.State == ConnectionState.Open)
+                        {
+                            conn.Close();
+                        }
+                    }
+                }
+            }
+        }
+
+
+        public DataTable GetTranDetails(string tranCode)
+        {
+            DataTable dt = new DataTable();
+
+            using (OracleConnection conn = new OracleConnection(WebConfigurationManager.ConnectionStrings["ConnectionStringVM"].ConnectionString))
+            {
+                using (OracleCommand cmd = new OracleCommand("PSM_MF_RECO_M_FIND_TRAN2", conn))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.Add("p_trancode", OracleDbType.Varchar2).Value = tranCode ?? (object)DBNull.Value;
+                    cmd.Parameters.Add("o_details", OracleDbType.RefCursor).Direction = ParameterDirection.Output;
+                    conn.Open();
+                    using (OracleDataReader dr = cmd.ExecuteReader())
+                    {
+                        dt.Load(dr);
+                    }
+                }
+            }
+
+            return dt;
+        }
+
+       
+        public (bool Success, string Message) SetTransactionRemark(string transactionCode, string remark)
+        {
+            string loginId = pc.currentLoginID();
+            string roleId = pc.currentRoleID();
+            using (OracleConnection conn = new OracleConnection(WebConfigurationManager.ConnectionStrings["ConnectionStringVM"].ConnectionString))
+            {
+                using (OracleCommand cmd = new OracleCommand("WEALTHMAKER.PSM_SIP2_SET_REMARK", conn))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.Add("P_TR_CODE", OracleDbType.Varchar2).Value = transactionCode ?? (object)DBNull.Value;
+                    cmd.Parameters.Add("P_REMARK", OracleDbType.Varchar2).Value = remark ?? (object)DBNull.Value;
+                    cmd.Parameters.Add("P_LOG_ID", OracleDbType.Varchar2).Value = loginId ?? (object)DBNull.Value;
+                    cmd.Parameters.Add("P_ROLE_ID", OracleDbType.Varchar2).Value = roleId ?? (object)DBNull.Value;
+                    var outCursor = new OracleParameter("P_CURSOR", OracleDbType.RefCursor);
+                    outCursor.Direction = ParameterDirection.Output;
+                    cmd.Parameters.Add(outCursor);
+
+                    try
+                    {
+                        conn.Open();
+                        cmd.ExecuteNonQuery();
+
+                        using (var reader = ((OracleRefCursor)outCursor.Value).GetDataReader())
+                        {
+                            if (reader.Read())
+                            {
+                                string message = reader["MESSAGE"].ToString();
+                                bool isSuccess = message.StartsWith("SUCCESS:");
+                                return (isSuccess, message);
+                            }
+                        }
+
+                        return (false, "No response received from procedure");
+                    }
+                    catch (OracleException ex)
+                    {
+                        string errorMessage = $"Database Error: {ex.Message}";
+                        if (ex.Number == 20001) errorMessage = "Validation Error: Transaction code and remark are required";
+                        return (false, errorMessage);
+                    }
+                    catch (Exception ex)
+                    {
+                        return (false, $"System Error: {ex.Message}");
+                    }
+                }
+            }
+        }
+
+
+
+        #endregion
+
+
+        #region GetChannelList
+        public DataTable GetChannelList()
+        {
+            DataTable dt = new DataTable();
+
+            try
+            {
+                using (OracleConnection conn = new OracleConnection(WebConfigurationManager.ConnectionStrings["ConnectionStringVM"].ConnectionString))
+                {
+                    using (OracleCommand cmd = new OracleCommand("GetChannelList", conn)) // The name of the stored procedure
+                    {
+                        cmd.CommandType = CommandType.StoredProcedure;
+
+                        // Define the output parameter as a cursor
+                        OracleParameter cursorParam = new OracleParameter
+                        {
+                            ParameterName = "p_cursor",
+                            OracleDbType = OracleDbType.RefCursor,
+                            Direction = ParameterDirection.Output
+                        };
+                        cmd.Parameters.Add(cursorParam);
+
+                        conn.Open(); // Open the database connection
+                        using (OracleDataAdapter da = new OracleDataAdapter(cmd))
+                        {
+                            da.Fill(dt); // Fill the DataTable with the result set
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // Handle the exception, such as logging
+                Console.WriteLine("Error: " + ex.Message);
+            }
+
+            return dt; // Return the filled DataTable
+        }
+        #endregion
+
+        #region GetAMCList
+        public DataTable GetAMCList()
+        {
+            DataTable dt = new DataTable();
+
+            try
+            {
+                using (OracleConnection conn = new OracleConnection(WebConfigurationManager.ConnectionStrings["ConnectionStringVM"].ConnectionString))
+                {
+                    using (OracleCommand command = new OracleCommand("GetAMCList", conn)) // The name of the stored procedure
+                    {
+                        command.CommandType = CommandType.StoredProcedure;
+
+                        // Define the output parameter as a cursor
+                        OracleParameter cursorParam = new OracleParameter
+                        {
+                            ParameterName = "p_cursor",
+                            OracleDbType = OracleDbType.RefCursor,
+                            Direction = ParameterDirection.Output
+                        };
+                        command.Parameters.Add(cursorParam);
+
+                        conn.Open(); // Open the database connection
+                        using (OracleDataAdapter adapter = new OracleDataAdapter(command))
+                        {
+                            adapter.Fill(dt); // Fill the DataTable with the result set
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // Handle the exception, such as logging
+                Console.WriteLine("Error: " + ex.Message);
+            }
+
+            return dt; // Return the filled DataTable
+        }
+        #endregion
+
+
+        // FIND SIP TR GRID 1
+        public DataTable GetTransactions(SipMasterModel model)
+        {
+            DataTable dt = new DataTable();
+
+            using (OracleConnection conn = new OracleConnection(WebConfigurationManager.ConnectionStrings["ConnectionStringVM"].ConnectionString))
+            {
+                using (OracleCommand cmd = new OracleCommand("PSM_SIP_FIND_TR", conn))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+
+                    // Input Parameters
+                    cmd.Parameters.Add("p_branch_cat", OracleDbType.Decimal).Value = (object)model.Channelid ?? DBNull.Value;
+
+                    cmd.Parameters.Add("p_ar_num", OracleDbType.Varchar2).Value = (object)model.ARNumber ?? DBNull.Value;
+                    cmd.Parameters.Add("p_branch", OracleDbType.Varchar2).Value = (object)model.Branch ?? DBNull.Value;
+                    cmd.Parameters.Add("p_region", OracleDbType.Varchar2).Value = (object)model.Region ?? DBNull.Value;
+                    cmd.Parameters.Add("p_rm", OracleDbType.Varchar2).Value = (object)model.RM ?? DBNull.Value;
+                    cmd.Parameters.Add("p_zone", OracleDbType.Varchar2).Value = (object)model.Zone ?? DBNull.Value;
+                    cmd.Parameters.Add("p_tran_type", OracleDbType.Varchar2).Value = (object)model.TranType ?? DBNull.Value;
+                    cmd.Parameters.Add("p_status_type", OracleDbType.Varchar2).Value = model.ReconciliationStatus ?? (object)DBNull.Value;
+                    cmd.Parameters.Add("p_cob", OracleDbType.Char).Value = model.COB ?? (object)DBNull.Value;
+                    cmd.Parameters.Add("p_pms", OracleDbType.Varchar2).Value = model.PMS ?? (object)DBNull.Value;
+
+                    cmd.Parameters.Add("p_date_from", OracleDbType.Date).Value = (object)model.DateFrom ?? DBNull.Value;
+                    cmd.Parameters.Add("p_date_to", OracleDbType.Date).Value = (object)model.DateTo ?? DBNull.Value;
+                    cmd.Parameters.Add("p_amc", OracleDbType.Varchar2).Value = (object)model.AMC ?? DBNull.Value;
+
+                    // Output Parameter
+                    cmd.Parameters.Add("o_transactions", OracleDbType.RefCursor).Direction = ParameterDirection.Output;
+
+                    conn.Open();
+
+                    using (OracleDataAdapter da = new OracleDataAdapter(cmd))
+                    {
+                        da.Fill(dt);  // Fill the DataTable with data
+                    }
+                }
+            }
+
+            return dt;
+        }
+
+        // rta search rta
+        public DataTable GetTransactionsRta(SipMasterModel model)
+        {
+            DataTable dt = new DataTable();
+
+            using (OracleConnection conn = new OracleConnection(WebConfigurationManager.ConnectionStrings["ConnectionStringVM"].ConnectionString))
+            {
+                using (OracleCommand cmd = new OracleCommand("PSM_SIP_FIND_RTA", conn))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+
+                    // Input Parameters
+
+                    cmd.Parameters.Add("p_branch", OracleDbType.Varchar2).Value = model.Branch ?? (object)DBNull.Value;
+                    cmd.Parameters.Add("p_status_type", OracleDbType.Varchar2).Value = model.ReconciliationStatus ?? (object)DBNull.Value;
+
+                    cmd.Parameters.Add("p_tran_type", OracleDbType.Varchar2).Value = model.TranType ?? (object)DBNull.Value;
+
+
+                    cmd.Parameters.Add("p_date_from", OracleDbType.Date).Value = model.DateFrom ?? (object)DBNull.Value;
+                    cmd.Parameters.Add("p_date_to", OracleDbType.Date).Value = model.DateTo ?? (object)DBNull.Value;
+                    cmd.Parameters.Add("p_amc", OracleDbType.Varchar2).Value = model.AMC ?? (object)DBNull.Value;
+
+                    cmd.Parameters.Add("P_CHEQUE_TYPE", OracleDbType.Varchar2).Value = model.ChequeNo ?? (object)DBNull.Value;
+                    cmd.Parameters.Add("P_CHEQUE_SEARCH", OracleDbType.Varchar2).Value = model.docNo ?? (object)DBNull.Value;
+                    cmd.Parameters.Add("p_inm", OracleDbType.Varchar2).Value = model.InvestorName ?? (object)DBNull.Value;
+                    cmd.Parameters.Add("p_amt", OracleDbType.Varchar2).Value = model.Amount ?? (object)DBNull.Value;
+                    //  cmd.Parameters.Add("p_status_type", OracleDbType.Varchar2).Value = model.ReconciliationStatus ?? (object)DBNull.Value;
+
+                    // Output
+                    cmd.Parameters.Add("o_transactions", OracleDbType.RefCursor).Direction = ParameterDirection.Output;
+
+                    conn.Open();
+                    using (OracleDataAdapter da = new OracleDataAdapter(cmd))
+                    {
+                        da.Fill(dt); // Fill the DataTable with data
+                    }
+                }
+            }
+
+            return dt;
+        }
+
+        public DataTable GetTransactionsSIP(SipMasterModel model)
+        {
+            DataTable dt = new DataTable();
+
+            using (OracleConnection conn = new OracleConnection(WebConfigurationManager.ConnectionStrings["ConnectionStringVM"].ConnectionString))
+            {
+                using (OracleCommand cmd = new OracleCommand("SP_GET_SIP_TRANSACTIONS", conn))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+
+                    // Input Parameters
+
+                    cmd.Parameters.Add("p_folcode", OracleDbType.Varchar2).Value = model.Branch ?? (object)DBNull.Value;
+                    cmd.Parameters.Add("p_amount", OracleDbType.Varchar2).Value = model.Region ?? (object)DBNull.Value;
+                    cmd.Parameters.Add("p_pan_no", OracleDbType.Varchar2).Value = model.RM ?? (object)DBNull.Value;
+                    cmd.Parameters.Add("p_clco", OracleDbType.Varchar2).Value = model.Zone ?? (object)DBNull.Value;
+                    cmd.Parameters.Add("p_stda", OracleDbType.Varchar2).Value = model.TranType ?? (object)DBNull.Value;
+
+                    // Output
+                    cmd.Parameters.Add("o_transactions", OracleDbType.RefCursor).Direction = ParameterDirection.Output;
+
+                    OracleDataAdapter da = new OracleDataAdapter(cmd);
+                    da.Fill(dt);
+                }
+            }
+
+            return dt;
+        }
+
+
+        #region GetBranchList
+        public DataTable GetBranchList()
+        {
+            string connString = ConfigurationManager.ConnectionStrings["ConnectionStringVM"].ConnectionString;
+            DataTable dt = new DataTable();
+
+            using (OracleConnection con = new OracleConnection(connString))
+            {
+                using (OracleCommand cmd = new OracleCommand("GetBranchListPRA", con))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+
+                    // Output parameter for cursor
+                    cmd.Parameters.Add("p_cursor", OracleDbType.RefCursor).Direction = ParameterDirection.Output;
+
+                    con.Open();
+
+                    using (OracleDataAdapter da = new OracleDataAdapter(cmd))
+                    {
+                        da.Fill(dt);
+                    }
+                }
+            }
+
+            return dt;
+        }
+        #endregion
+
+        #region GetBranchName
+        public DataTable GetBranchName(SipMasterModel schemeCode)
+        {
+            DataTable dt = new DataTable();
+
+            using (OracleConnection conn = new OracleConnection(WebConfigurationManager.ConnectionStrings["ConnectionStringVM"].ConnectionString))
+            {
+                using (OracleCommand cmd = new OracleCommand("SP_GET_TRAN_CODE_DETAILS", conn))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+
+                    // Input parameter
+
+                    cmd.Parameters.Add("p_trancode", OracleDbType.Varchar2).Value = schemeCode.TranCode ?? (object)DBNull.Value;
+                    // Output parameter (cursor)
+                    cmd.Parameters.Add("o_details", OracleDbType.RefCursor).Direction = ParameterDirection.Output;
+
+                    conn.Open();
+
+                    using (OracleDataReader dr = cmd.ExecuteReader())
+                    {
+                        dt.Load(dr);
+                    }
+                }
+            }
+
+            return dt;
+        }
+        #endregion
+
+        #region ReconcileTransactions
+        public string ReconcileTransactions(string tranCode, decimal rtaAmount, string rtaTranCode , string loginid)
+        {
+            using (OracleConnection conn = new OracleConnection(WebConfigurationManager.ConnectionStrings["ConnectionStringVM"].ConnectionString))
+            {
+                using (OracleCommand cmd = new OracleCommand("SP_RECONCILE_TRANSACTIONS_PRA", conn))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+
+                    // Adding parameters
+                    cmd.Parameters.Add("p_tran_code", OracleDbType.Varchar2).Value = tranCode;
+                    cmd.Parameters.Add("p_rta_amount", OracleDbType.Decimal).Value = rtaAmount;
+                    cmd.Parameters.Add("p_rta_tran_code", OracleDbType.Varchar2).Value = rtaTranCode;
+                    cmd.Parameters.Add("p_login_user", OracleDbType.Varchar2).Value = loginid;
+
+                    try
+                    {
+                        conn.Open();
+                        cmd.ExecuteNonQuery();
+                        return "RECONCILED SUCCESSFULLY";
+                    }
+                    catch (OracleException ex)
+                    {
+                        Console.WriteLine("Error: " + ex.Message);
+                        return "Error: " + ex.Message;
+                    }
+                    finally
+                    {
+                        if (conn.State == ConnectionState.Open)
+                        {
+                            conn.Close();
+                        }
+                    }
+                }
+            }
+        }
+        #endregion
+
+        public void UpdateRemarkReco(string trCode, string remark)
+        {
+            //string connString = ConfigurationManager.ConnectionStrings["OracleDbContext"].ConnectionString;
+
+            using (OracleConnection conn = new OracleConnection(WebConfigurationManager.ConnectionStrings["ConnectionStringVM"].ConnectionString))
+            {
+                using (OracleCommand cmd = new OracleCommand("SP_UPDATE_REMARK_RECO", conn))
+                {
+                    cmd.CommandType = System.Data.CommandType.StoredProcedure;
+
+                    // Add parameters
+                    cmd.Parameters.Add("p_tr_code", OracleDbType.Varchar2).Value = trCode;
+                    cmd.Parameters.Add("p_remark", OracleDbType.Varchar2).Value = remark;
+
+                    conn.Open();
+                    cmd.ExecuteNonQuery();
+                }
+            }
+
+        }
+
+        public DataTable GetBranchDetails(string itemSerialNumber)
+        {
+            DataTable dt = new DataTable();
+            using (OracleConnection conn = new OracleConnection(
+                WebConfigurationManager.ConnectionStrings["ConnectionStringVM"].ConnectionString))
+            {
+                using (OracleCommand cmd = new OracleCommand("PSM_GET_BRANCH_DETAILS_PRA", conn))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.Add("p_item_serial_number", OracleDbType.Varchar2).Value = itemSerialNumber;
+                    cmd.Parameters.Add("p_result", OracleDbType.RefCursor).Direction = ParameterDirection.Output;
+
+                    try
+                    {
+                        conn.Open();
+                        using (OracleDataAdapter da = new OracleDataAdapter(cmd))
+                        {
+                            da.Fill(dt);
+                        }
+                    }
+                    catch (OracleException ex)
+                    {
+                        Console.WriteLine("Error: " + ex.Message);
+                    }
+                    finally
+                    {
+                        if (conn.State == ConnectionState.Open)
+                            conn.Close();
+                    }
+                }
+            }
+            return dt;
+        }
+
+        public DataTable Getregionbychannel(string itemSerialNumber)
+        {
+            DataTable dt = new DataTable();
+            using (OracleConnection conn = new OracleConnection(
+                WebConfigurationManager.ConnectionStrings["ConnectionStringVM"].ConnectionString))
+            {
+                using (OracleCommand cmd = new OracleCommand("PSM_GET_REGBYCHA_PRA", conn))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.Add("p_item_serial_number", OracleDbType.Varchar2).Value = itemSerialNumber;
+                    cmd.Parameters.Add("p_result", OracleDbType.RefCursor).Direction = ParameterDirection.Output;
+
+                    try
+                    {
+                        conn.Open();
+                        using (OracleDataAdapter da = new OracleDataAdapter(cmd))
+                        {
+                            da.Fill(dt);
+                        }
+                    }
+                    catch (OracleException ex)
+                    {
+                        Console.WriteLine("Error: " + ex.Message);
+                    }
+                    finally
+                    {
+                        if (conn.State == ConnectionState.Open)
+                            conn.Close();
+                    }
+                }
+            }
+            return dt;
+        }
+
+        public DataTable Getzonebychannel(string itemSerialNumber)
+        {
+            DataTable dt = new DataTable();
+            using (OracleConnection conn = new OracleConnection(
+                WebConfigurationManager.ConnectionStrings["ConnectionStringVM"].ConnectionString))
+            {
+                using (OracleCommand cmd = new OracleCommand("PSM_GET_ZONEBYCHA_PRA", conn))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.Add("p_item_serial_number", OracleDbType.Varchar2).Value = itemSerialNumber;
+                    cmd.Parameters.Add("p_result", OracleDbType.RefCursor).Direction = ParameterDirection.Output;
+
+                    try
+                    {
+                        conn.Open();
+                        using (OracleDataAdapter da = new OracleDataAdapter(cmd))
+                        {
+                            da.Fill(dt);
+                        }
+                    }
+                    catch (OracleException ex)
+                    {
+                        Console.WriteLine("Error: " + ex.Message);
+                    }
+                    finally
+                    {
+                        if (conn.State == ConnectionState.Open)
+                            conn.Close();
+                    }
+                }
+            }
+            return dt;
+        }
+
+        #region GetZones
+        public DataTable GetZonesByRegion(string regionId)
+        {
+            DataTable dt = new DataTable();
+
+            using (OracleConnection conn = new OracleConnection(WebConfigurationManager.ConnectionStrings["ConnectionStringVM"].ConnectionString))
+            {
+                using (OracleCommand cmd = new OracleCommand("PSM_GET_ZONES_BY_REGION", conn))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+
+                    // Input parameters
+                    cmd.Parameters.Add("p_region_id", OracleDbType.Varchar2).Value = string.IsNullOrEmpty(regionId) ? (object)DBNull.Value : regionId;
+                    //cmd.Parameters.Add("p_branches", OracleDbType.Varchar2).Value = string.IsNullOrEmpty(branches) ? (object)DBNull.Value : branches;
+
+                    // Output parameter for the cursor
+                    cmd.Parameters.Add("p_result", OracleDbType.RefCursor).Direction = ParameterDirection.Output;
+
+                    try
+                    {
+                        conn.Open();
+                        OracleDataAdapter oda = new OracleDataAdapter(cmd);
+                        oda.Fill(dt);
+                    }
+                    catch (OracleException ex)
+                    {
+                        // Handle exception as needed
+                        Console.WriteLine("Error: " + ex.Message);
+                    }
+                    finally
+                    {
+                        if (conn.State == ConnectionState.Open)
+                        {
+                            conn.Close();
+                        }
+                    }
+                }
+            }
+
+            return dt;
+        }
+        #endregion
+
+        public DataTable GetBranchbyzoneDetails(string selectedbranchbyzoneId)
+        {
+            DataTable dt = new DataTable();
+            using (OracleConnection conn = new OracleConnection(
+                WebConfigurationManager.ConnectionStrings["ConnectionStringVM"].ConnectionString))
+            {
+                using (OracleCommand cmd = new OracleCommand("PSM_GET_BRANCHBYZONE_PRA", conn))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.Add("p_zone_id", OracleDbType.Varchar2).Value = selectedbranchbyzoneId;
+                    cmd.Parameters.Add("p_result", OracleDbType.RefCursor).Direction = ParameterDirection.Output;
+
+                    try
+                    {
+                        conn.Open();
+                        using (OracleDataAdapter da = new OracleDataAdapter(cmd))
+                        {
+                            da.Fill(dt);
+                        }
+                    }
+                    catch (OracleException ex)
+                    {
+                        Console.WriteLine("Error: " + ex.Message);
+                    }
+                    finally
+                    {
+                        if (conn.State == ConnectionState.Open)
+                            conn.Close();
+                    }
+                }
+            }
+            return dt;
+        }
+
+    }
+}
