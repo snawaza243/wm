@@ -1,0 +1,287 @@
+ <script>
+                            $(document).ready(function() {
+
+                                
+                                // Input validation patterns
+                                const validationPatterns = {
+                                    dtNumber: /^[A-Z0-9]{8,12}$/,
+                                    amount: /^\d+(\.\d{1,2})?$/,
+                                    chequeNo: /^[0-9]{6,10}$/,
+                                    pan: /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/,
+                                    folioNo: /^[A-Z0-9]{4,15}$/,
+                                    appNo: /^[A-Z0-9]{4,15}$/,
+                                    installmentsNo: /^[0-9]{1,4}$/
+                                };
+
+                                // Initialize form with default values
+                                function initializeForm() {
+                                    // Set current date for transaction date
+                                    const today = new Date();
+                                    $('#txtAddTrDate').val(today.toLocaleDateString());
+                                    
+                                    // Set default values for radio buttons
+                                    $('input[name="rdbAddRN"]').prop('checked', false);
+                                    $('#rdbAddRegular').prop('checked', true);
+                                    
+                                    $('input[name="rdbAddFreshRenewal"]').prop('checked', false);
+                                    $('#rdbAddFresh').prop('checked', true);
+                                    
+                                    // Set default payment mode
+                                    $('#txtAddPaymentMode').val('cheque');
+                                    
+                                    // Set default frequency
+                                    $('#ddlAddFrequency').val('301');
+                                    
+                                    // Set default SIP/STP
+                                    $('#ddlAddSipStp').val('');
+                                    
+                                    // Disable dependent fields
+                                    $('#ddlAddInstallmentType, #ddlAddSipType').prop('disabled', true);
+                                    
+                                    // Clear all fields
+                                    $('input:not([type="radio"]):not([type="checkbox"]):not([type="hidden"])').val('');
+                                    $('select').prop('selectedIndex', 0);
+                                    
+                                    // Set default account holder name
+                                    $('#txtAddAHName').val('INVESTOR NAME');
+                                }
+
+                                // Initialize form on page load
+                                initializeForm();
+
+                                // Validate input fields on blur
+                                $('input').on('blur', function() {
+                                    validateField($(this));
+                                });
+
+                                // Field validation function
+                                function validateField(field) {
+                                    const fieldId = field.attr('id');
+                                    const value = field.val().trim();
+                                    
+                                    // Remove any existing validation classes
+                                    field.removeClass('is-valid is-invalid');
+                                    
+                                    // Skip validation if field is empty or disabled
+                                    if (value === '' || field.prop('disabled')) {
+                                        return true;
+                                    }
+                                    
+                                    let isValid = true;
+                                    let errorMessage = '';
+                                    
+                                    // Apply validation based on field type
+                                    switch(fieldId) {
+                                        case 'txtAddDtNumber':
+                                            isValid = validationPatterns.dtNumber.test(value);
+                                            errorMessage = 'DT Number must be 8-12 alphanumeric characters';
+                                            break;
+                                        case 'txtAddAmount':
+                                            isValid = validationPatterns.amount.test(value);
+                                            errorMessage = 'Amount must be a valid number with up to 2 decimal places';
+                                            break;
+                                        case 'txtAddChequeNo':
+                                            isValid = validationPatterns.chequeNo.test(value);
+                                            errorMessage = 'Cheque No must be 6-10 digits';
+                                            break;
+                                        case 'txtAddPan2':
+                                            isValid = validationPatterns.pan.test(value);
+                                            errorMessage = 'PAN must be in valid format (e.g., ABCDE1234F)';
+                                            break;
+                                        case 'txtAddFolioNo':
+                                            isValid = validationPatterns.folioNo.test(value);
+                                            errorMessage = 'Folio No must be 4-15 alphanumeric characters';
+                                            break;
+                                        case 'txtAddAppNo':
+                                            isValid = validationPatterns.appNo.test(value);
+                                            errorMessage = 'Application No must be 4-15 alphanumeric characters';
+                                            break;
+                                        case 'txtAddInstallmentsNo':
+                                            isValid = validationPatterns.installmentsNo.test(value);
+                                            errorMessage = 'Installments must be 1-4 digits';
+                                            break;
+                                        case 'txtAddSipAmount':
+                                            isValid = validationPatterns.amount.test(value);
+                                            errorMessage = 'SIP Amount must be a valid number';
+                                            break;
+                                    }
+                                    
+                                    // Apply visual feedback
+                                    if (isValid) {
+                                        field.addClass('is-valid');
+                                    } else {
+                                        field.addClass('is-invalid');
+                                        // Show error tooltip
+                                        field.attr('title', errorMessage).tooltip('show');
+                                        setTimeout(() => field.tooltip('hide'), 3000);
+                                    }
+                                    
+                                    return isValid;
+                                }
+
+                                // Button click events
+                                $('#btnAddDtNumber').on('click', function() {
+                                    alert('Showing DT Number details for: ' + $('#txtAddDtNumber').val());
+                                    // In a real application, this would fetch and display data
+                                });
+
+                                $('#btnAddInvestorSearch1').on('click', function() {
+                                    alert('Opening Investor Search Modal');
+                                    // This would open the modal in a real application
+                                });
+
+                                $('#btnAddSchemeSearch1').on('click', function() {
+                                    alert('Opening Scheme Search Modal');
+                                    // This would open the modal in a real application
+                                });
+
+                                $('#btnAddFormSwitchScheme').on('click', function() {
+                                    alert('Opening Form Switch Scheme Search Modal');
+                                    // This would open the modal in a real application
+                                });
+
+                                $('#btnSearchFormSwitchScheme').on('click', function() {
+                                    alert('Searching for Form Switch Scheme');
+                                    // This would perform a search in a real application
+                                });
+
+                                $('#btnAddTransaction').on('click', function() {
+                                    // Validate all required fields before submission
+                                    let isValid = true;
+                                    
+                                    // Check required fields
+                                    const requiredFields = [
+                                        '#txtAddDtNumber', '#txtAddBssCode', '#txtAddAHName', 
+                                        '#ddlAddBranch', '#txtAddAMC', '#txtAddScheme1',
+                                        '#txtAddAmount', '#txtAddChequeNo', '#txtAddChequeDate'
+                                    ];
+                                    
+                                    requiredFields.forEach(field => {
+                                        const value = $(field).val().trim();
+                                        if (!value) {
+                                            $(field).addClass('is-invalid');
+                                            isValid = false;
+                                        } else {
+                                            $(field).removeClass('is-invalid').addClass('is-valid');
+                                        }
+                                    });
+                                    
+                                    if (isValid) {
+                                        alert('Transaction added successfully!');
+                                        // In a real application, this would submit the form data
+                                    } else {
+                                        alert('Please fill in all required fields correctly.');
+                                    }
+                                });
+
+                                $('#btnAddPrintAR').on('click', function() {
+                                    alert('Printing Acknowledgement Receipt');
+                                    // This would trigger print functionality in a real application
+                                });
+
+                                $('#btnAddReset').on('click', function() {
+                                    if (confirm('Are you sure you want to reset the form? All data will be lost.')) {
+                                        initializeForm();
+                                        alert('Form has been reset.');
+                                    }
+                                });
+
+                                $('#btnAddLeadSearch').on('click', function() {
+                                    alert('Opening Lead Search');
+                                    // This would open lead search in a real application
+                                });
+
+                                $('#btnAddChangeInvestorDetails').on('click', function() {
+                                    alert('Opening Investor Details Change Form');
+                                    // This would open a form to change investor details
+                                });
+
+                                $('#btnAddExit').on('click', function() {
+                                    if (confirm('Are you sure you want to exit? Any unsaved changes will be lost.')) {
+                                        alert('Exiting form...');
+                                        // In a real application, this would redirect or close the form
+                                    }
+                                });
+
+                                // Dropdown change events
+                                $('#ddlAddBranch').on('change', function() {
+                                    alert('Branch changed to: ' + $(this).val());
+                                    // In a real application, this might load branch-specific data
+                                });
+
+                                $('#txtAddAMC').on('change', function() {
+                                    alert('AMC changed to: ' + $(this).val());
+                                    // In a real application, this might load AMC-specific schemes
+                                });
+
+                                $('#ddlAddTransactionType').on('change', function() {
+                                    const transactionType = $(this).val();
+                                    alert('Transaction Type changed to: ' + transactionType);
+                                    
+                                    // Show/hide Switch/STP section based on transaction type
+                                    if (transactionType === 'SWITCH IN') {
+                                        $('fieldset legend:contains("Switch/STP")').closest('fieldset').show();
+                                    } else {
+                                        $('fieldset legend:contains("Switch/STP")').closest('fieldset').hide();
+                                    }
+                                });
+
+                                $('#txtAddPaymentMode').on('change', function() {
+                                    const paymentMode = $(this).val();
+                                    alert('Payment Mode changed to: ' + paymentMode);
+                                    
+                                    // Update label based on payment mode
+                                    if (paymentMode === 'cheque' || paymentMode === 'draft') {
+                                        $('#txtAddChequeNo').prev('label').text('Cheque/Draft No');
+                                        $('#txtAddChequeDate').prev('label').text('Cheque/Draft Date');
+                                    } else if (paymentMode === 'rtgs' || paymentMode === 'fund_transfer') {
+                                        $('#txtAddChequeNo').prev('label').text('Reference No');
+                                        $('#txtAddChequeDate').prev('label').text('Transaction Date');
+                                    } else {
+                                        $('#txtAddChequeNo').prev('label').text('Reference No');
+                                        $('#txtAddChequeDate').prev('label').text('Transaction Date');
+                                    }
+                                });
+
+                                $('#ddlAddSipStp').on('change', function() {
+                                    const sipStpValue = $(this).val();
+                                    alert('SIP/STP changed to: ' + sipStpValue);
+                                    
+                                    // Enable/disable dependent fields
+                                    if (sipStpValue === 'SIP' || sipStpValue === 'STP') {
+                                        $('#ddlAddInstallmentType, #ddlAddSipType').prop('disabled', false);
+                                    } else {
+                                        $('#ddlAddInstallmentType, #ddlAddSipType').prop('disabled', true);
+                                    }
+                                });
+
+                                $('#ddlAddFrequency').on('change', function() {
+                                    alert('Frequency changed to: ' + $(this).find('option:selected').text());
+                                    // In a real application, this might calculate end date based on frequency
+                                });
+
+                                // Radio button change events
+                                $('input[name="rdbAddRN"]').on('change', function() {
+                                    alert('Regular/NFO selection changed to: ' + $(this).val());
+                                });
+
+                                $('input[name="rdbAddFreshRenewal"]').on('change', function() {
+                                    alert('Fresh/Renewal selection changed to: ' + $(this).val());
+                                });
+
+                                // Checkbox change events
+                                $('#chkAddAutoSwitchOnMaturity').on('change', function() {
+                                    alert('Auto Switch On Maturity ' + ($(this).is(':checked') ? 'enabled' : 'disabled'));
+                                });
+
+                                $('input[name="chkAddCOB99Case"]').on('change', function() {
+                                    alert($(this).next('label').text() + ' ' + ($(this).is(':checked') ? 'checked' : 'unchecked'));
+                                });
+
+                                // Initialize tooltips
+                                $('[title]').tooltip();
+
+                                // Trigger transaction type change on load to set initial state
+                                $('#ddlAddTransactionType').trigger('change');
+                            });
+                            </script>
