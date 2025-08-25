@@ -1,1 +1,10 @@
 2025-08-25 - Monday
+
+git add WM/Controllers/MfPunchingController.cs
+git add WM/Masters/Mf_Punching.aspx
+git add WM/Masters/Mf_Punching.aspx.cs
+git add WM/Masters/Mf_Punching.aspx.designer.cs
+
+
+mf cross channel v1
+sip amc search fixed

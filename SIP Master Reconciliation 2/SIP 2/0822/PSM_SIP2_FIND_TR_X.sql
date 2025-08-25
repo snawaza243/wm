@@ -49,12 +49,13 @@ BEGIN
         V_QUERY := V_QUERY || '         MAX (BUSI_BRANCH_CODE) BUSI_BRANCH_CODE, ';
         V_QUERY := V_QUERY || '         MAX (BUSINESS_RMCODE) BUSINESS_RMCODE,';
         
+       
         IF UPPER(P_REGISTRAR) = 'C' THEN
             V_QUERY := V_QUERY || ' GETTRANCODE_NEW(FOLIO_NO,SCH_CODE,TR_DATE,TRAN_TYPE,tran_id)UNIQUE_TRAN , ';
         ELSE
             V_QUERY := V_QUERY || ' GETTRANCODE(FOLIO_NO,SCH_CODE,TR_DATE,TRAN_TYPE)UNIQUE_TRAN , ';
         END IF;
-
+      
         V_QUERY := V_QUERY || ' max(reg_trantype) reg_trantype,max(unq_key)unq_key ';
         V_QUERY := V_QUERY || '   FROM (  ';
         V_QUERY := V_QUERY || ' SELECT t.tran_id,tran_type, t.inv_name Investor_Name,(i.ADDRESS1||'',''||i.ADDRESS2||'',''||i.EMAIL) address,  ';
@@ -117,7 +118,7 @@ BEGIN
         IF P_DATE_TO IS NOT NULL THEN
             V_QUERY := V_QUERY || ' AND TR_DATE <= TO_DATE(''' || P_DATE_TO || ''', ''DD/MM/YYYY'')';
         END IF;
-
+   
         IF P_CHEQUE_TYPE IS NOT NULL AND P_CHEQUE_SEARCH IS NOT NULL THEN
             V_QUERY := V_QUERY || ' AND ( ';
             IF P_CHEQUE_TYPE = '001' THEN
@@ -217,7 +218,7 @@ BEGIN
         END IF;
 
         IF P_AMC IS NOT NULL THEN
-            V_QUERY := V_QUERY || ' and mf.mut_code =''''' || P_AMC || ''''' ';
+            V_QUERY := V_QUERY || ' and mf.mut_code = ''' || P_AMC || ''' ';
         END IF;
 
         IF P_STATUS_TYPE IS NOT NULL THEN
@@ -253,8 +254,9 @@ BEGIN
          
          
     ELSE
-        V_QUERY := ' SELECT A.SEQ_NO,A.MUT_CODE,B.MUT_NAME,A.SCH_CODE,C.SCH_NAME,A.FOLIO_NO,IHNO_TRXNNO,START_DATE SIP_START_DATE,END_DATE SIP_END_DATE, ';
-        V_QUERY := V_QUERY || ' SIPREGDATE,SIP_OPTION,AMOUNT_SIP,TOTAL_SIP,RM_NAME,PAYROLL_ID,BRANCH_CODE,BRANCH_NAME FROM  ';
+
+        V_QUERY := ' SELECT A.SEQ_NO,A.MUT_CODE,B.MUT_NAME,A.SCH_CODE,C.SCH_NAME,A.FOLIO_NO,IHNO_TRXNNO TRXN_NO,START_DATE SIP_START_DATE,END_DATE SIP_END_DATE, ';
+        V_QUERY := V_QUERY || ' SIPREGDATE SIP_REG_DATE,SIP_OPTION,AMOUNT_SIP,TOTAL_SIP,RM_NAME,PAYROLL_ID,BRANCH_CODE,BRANCH_NAME FROM  ';
         V_QUERY := V_QUERY || ' TRAN_SIP_FEED A, ';
         V_QUERY := V_QUERY || ' MUT_FUND B, ';
         V_QUERY := V_QUERY || ' SCHEME_INFO C, ';
@@ -274,7 +276,7 @@ BEGIN
 
 
         IF P_SIP_PAN IS NOT NULL THEN
-            V_QUERY := V_QUERY || '  AND (upper(A.pan)= ''' || SUBSTR(UPPER(P_SIP_PAN), 1,10) || '''';
+            V_QUERY := V_QUERY || '  AND (upper(A.pan)= ''' || SUBSTR(UPPER(P_SIP_PAN), 1,10) || ''')';
         END IF;
 
         IF P_SIP_DATE IS NOT NULL THEN
@@ -304,10 +306,47 @@ BEGIN
         IF P_AMC IS NOT NULL THEN
             V_QUERY := V_QUERY || ' and a.mut_code = ''' || P_AMC || '''';
         END IF;
+        
+        
+        /* 
+        BEGIN OPEN P_CURSOR FOR
+            SELECT A.SEQ_NO,
+            A.MUT_CODE,
+            B.MUT_NAME,
+            A.SCH_CODE,
+            C.SCH_NAME,
+            A.FOLIO_NO,
+            IHNO_TRXNNO TRXN_NO,
+            START_DATE     SIP_START_DATE,
+            END_DATE       SIP_END_DATE,
+            SIPREGDATE SIP_REG_DATE,
+            SIP_OPTION,
+            AMOUNT_SIP,
+            TOTAL_SIP,
+            RM_NAME,
+            PAYROLL_ID,
+            BRANCH_CODE,
+            BRANCH_NAME
+            FROM TRAN_SIP_FEED    A,
+            MUT_FUND         B,
+            SCHEME_INFO      C,
+            EMPLOYEE_MASTER  E,
+            BRANCH_MASTER    BR
+            WHERE     A.MUT_CODE = B.MUT_CODE
+            AND A.SCH_CODE = C.SCH_CODE
+            AND BASE_TRAN_CODE IS NULL
+            AND A.CLIENT_RM_CODE = E.RM_CODE
+            AND A.CLIENT_BRANCH_CODE = BR.BRANCH_CODE
+            AND ok_flag = 'OK'
+            --AND A.AMOUNT_SIP = '2000'
+            --AND ( UPPER (A.pan) = 'HVOPK6703G') 
+            AND START_DATE BETWEEN ADD_MONTHS ( TO_DATE ('01/07/2025', 'DD/MM/RRRR'), -2) AND ADD_MONTHS ( TO_DATE ('01/07/2025', 'DD/MM/RRRR'), 2);
+        END;
     
+        return;*/
     END IF;
 
-    --OPEN P_CURSOR FOR V_QUERY;
-    OPEN P_CURSOR FOR select v_query from dual;
+    OPEN P_CURSOR FOR V_QUERY;
+    --OPEN P_CURSOR FOR select v_query from dual;
 END;
 /

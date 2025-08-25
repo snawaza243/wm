@@ -1,0 +1,182 @@
+CREATE OR REPLACE PROCEDURE WEALTHMAKER.PRC_VALIDATE_CROSS_CHANNEL(
+    PCOMMON_ID VARCHAR2,
+    PSUB_CLIENT_CD  VARCHAR2,
+    RESULT OUT NUMBER,
+    MESSAGE OUT VARCHAR2
+) AS
+VPAN            WEALTHMAKER.INVESTOR_MASTER.PAN%TYPE; 
+VMOBILE     WEALTHMAKER.INVESTOR_MASTER.MOBILE%TYPE; 
+VEMAIL       WEALTHMAKER.INVESTOR_MASTER.EMAIL%TYPE;
+VCNT           NUMBER(5):=0;
+VCNTGROUPID   NUMBER(5):=0;
+VLASTCLIENT    WEALTHMAKER.INVESTOR_MASTER.INV_CODE%TYPE;
+VCNTUNALOCATED  NUMBER(2):=0;
+VGROUPID WEALTHMAKER.SUBBROKER_GRP_MAPPING.GROUP_ID%TYPE;
+ISVALIDPAN               VARCHAR2(10);
+ISVALIDMOBILE        NUMBER(1);
+ISVALIDEMAIL          NUMBER(1); 
+VCNTMAININFO       NUMBER(2):=0;
+ISSAMEGROUP         NUMBER(1):=0;
+VDIFFERENTGROUP VARCHAR2(10):=0;
+VSUB_BROK_INV       WEALTHMAKER.INVESTOR_MASTER.INV_CODE%TYPE;
+VSUB_GROUP_ID       WEALTHMAKER.SUBBROKER_GRP_MAPPING.GROUP_ID%TYPE;
+BEGIN
+          IF PSUB_CLIENT_CD LIKE '4%' THEN   /* no validation for client */
+                RESULT:=1;
+                RETURN;
+          END IF; 
+          
+          DELETE FROM WEALTHMAKER.ALL_CROSS_CHANNEL_INFO_ALL WHERE COMMON_ID=PCOMMON_ID;
+          
+          DELETE FROM WEALTHMAKER.ALL_CROSS_CHANNEL_INFO   WHERE COMMON_ID=PCOMMON_ID;
+          
+          
+          SELECT UPPER(TRIM(SUBSTR(PAN,1,10))),MOBILE,UPPER(EMAIL),VALIDATEPAN(UPPER(TRIM(SUBSTR(PAN,1,10)))),VALIDATE_MOBILE(MOBILE),VALIDATE_EMAIL(UPPER(EMAIL)),
+          (SELECT GROUP_ID FROM SUBBROKER_GRP_MAPPING WHERE AGENT_CODE=SUBSTR(PSUB_CLIENT_CD,1,8))
+          INTO VPAN,VMOBILE,VEMAIL,ISVALIDPAN,ISVALIDMOBILE,ISVALIDEMAIL,VGROUPID FROM WEALTHMAKER.INVESTOR_MASTER 
+          WHERE INV_CODE=PSUB_CLIENT_CD;
+          
+          IF ISVALIDPAN= 'InValid' AND ISVALIDMOBILE=0 AND ISVALIDEMAIL=0 THEN
+                    RESULT:=1;/* Allowed If Pan And Mobile And Email Are Invalid*/
+                    RETURN; 
+          END IF;
+          
+          ----------------------------------------------------------------------------------INSERT ALL INFO ------------------------------------------------------------------------------------------
+          IF ISVALIDPAN='Valid' THEN
+                    INSERT INTO WEALTHMAKER.ALL_CROSS_CHANNEL_INFO_ALL(COMMON_ID, SEARCH_KEY, PAN, MOBILE, EMAIL, 
+                    CLIENTS,SUB_BROKERS,LAST_CLIENT, LAST_SUBBROKER, CNTCL, CNTSUB, CNTUNALLOCATED, GROUP_ID)
+                    SELECT PCOMMON_ID,'PAN',VPAN,NULL,NULL, 
+                    LISTAGG(CASE WHEN SUBSTR(INV_CODE,1,1)='4' THEN INV_CODE ELSE NULL END ,',') WITHIN GROUP (ORDER BY TIMEST DESC) CLIENTS,
+                    LISTAGG(CASE WHEN SUBSTR(INV_CODE,1,1)='3' THEN INV_CODE||'#'||WEALTHMAKER.FN_GET_GROUP_ID(INV_CODE) ELSE NULL END ,',') WITHIN GROUP (ORDER BY TIMEST DESC) SUBBROKERS,
+                    MAX(LAST_CLIENT)LAST_CLIENT,MAX(LAST_SUBBROKER) LAST_SUBBROKER,SUM(CNTCL) CNTCL,SUM(CNTSUB) CNTSUB,
+                    SUM(CNTUNALLOCATE) CNTUNALLOCATED,
+                    LISTAGG(WEALTHMAKER.FN_GET_GROUP_ID(INV_CODE) ,',') WITHIN GROUP(ORDER BY TIMEST DESC)  GROUP_ID FROM (
+                    SELECT INV_CODE,TIMEST,CASE WHEN SUBSTR(INV_CODE,1,1)=4 AND CNT=1 THEN INV_CODE ELSE NULL END LAST_CLIENT,
+                    CASE WHEN SUBSTR(INV_CODE,1,1)=3 AND CNT=1 THEN INV_CODE ELSE NULL END LAST_SUBBROKER,
+                    CASE WHEN SUBSTR(INV_CODE,1,1)='4' AND WEALTHMAKER.FN_CHK_UNALLOCATED_INVESTOR(INV_CODE)=0THEN 1 ELSE 0 END CNTCL,
+                    CASE WHEN SUBSTR(INV_CODE,1,1)='3' THEN 1 ELSE 0 END CNTSUB,
+                    CASE WHEN WEALTHMAKER.FN_CHK_UNALLOCATED_INVESTOR(INV_CODE)=1 THEN 1 ELSE 0 END CNTUNALLOCATE FROM(
+                    SELECT INV_CODE,TIMEST,COUNT(*) OVER(PARTITION BY SUBSTR(INV_CODE_PURE,1,1) ORDER BY TIMEST DESC) CNT,
+                    (SELECT NVL(GROUP_ID,0) FROM SUBBROKER_GRP_MAPPING WHERE AGENT_CODE=SUBSTR(INV_CODE,1,8)) GROUP_ID FROM(
+                    SELECT CASE WHEN WEALTHMAKER.FN_CHK_UNALLOCATED_INVESTOR(INV_CODE)=1 THEN NULL ELSE INV_CODE END INV_CODE_PURE, INV_CODE,TIMEST 
+                    FROM  WEALTHMAKER.INVESTOR_MASTER T WHERE PAN=VPAN AND ROWNUM<300 AND INV_CODE<>PSUB_CLIENT_CD
+                    )));
+          END IF;
+          
+          DELETE FROM WEALTHMAKER.ALL_CROSS_CHANNEL_INFO_ALL WHERE COMMON_ID=PCOMMON_ID AND CNTCL IS NULL AND CNTSUB IS NULL AND CNTUNALLOCATED IS NULL;
+          VCNTMAININFO:=0;
+          SELECT COUNT(*) INTO VCNTMAININFO FROM WEALTHMAKER.ALL_CROSS_CHANNEL_INFO_ALL WHERE COMMON_ID=PCOMMON_ID;
+          
+          IF ISVALIDMOBILE=1 AND ISVALIDEMAIL=1 AND VCNTMAININFO=0  THEN
+                    INSERT INTO WEALTHMAKER.ALL_CROSS_CHANNEL_INFO_ALL(COMMON_ID, SEARCH_KEY, PAN, MOBILE, EMAIL, 
+                    CLIENTS,SUB_BROKERS,LAST_CLIENT, LAST_SUBBROKER, CNTCL, CNTSUB, CNTUNALLOCATED, GROUP_ID)
+                    SELECT PCOMMON_ID,'MOBILE AND EMAIL',NULL,VMOBILE,VEMAIL, 
+                    LISTAGG(CASE WHEN SUBSTR(INV_CODE,1,1)='4' THEN INV_CODE ELSE NULL END ,',') WITHIN GROUP (ORDER BY TIMEST DESC) CLIENTS,
+                    LISTAGG(CASE WHEN SUBSTR(INV_CODE,1,1)='3' THEN INV_CODE||'#'||WEALTHMAKER.FN_GET_GROUP_ID(INV_CODE) ELSE NULL END ,',') WITHIN GROUP (ORDER BY TIMEST DESC) SUBBROKERS,
+                    MAX(LAST_CLIENT)LAST_CLIENT,MAX(LAST_SUBBROKER) LAST_SUBBROKER,SUM(CNTCL) CNTCL,SUM(CNTSUB) CNTSUB,
+                    SUM(CNTUNALLOCATE) CNTUNALLOCATED,
+                    LISTAGG(WEALTHMAKER.FN_GET_GROUP_ID(INV_CODE),',') WITHIN GROUP(ORDER BY TIMEST DESC)  GROUP_ID FROM (
+                    SELECT INV_CODE,TIMEST,CASE WHEN SUBSTR(INV_CODE,1,1)=4 AND CNT=1 THEN INV_CODE ELSE NULL END LAST_CLIENT,
+                    CASE WHEN SUBSTR(INV_CODE,1,1)=3 AND CNT=1 THEN INV_CODE ELSE NULL END LAST_SUBBROKER,
+                    CASE WHEN SUBSTR(INV_CODE,1,1)='4' AND  WEALTHMAKER.FN_CHK_UNALLOCATED_INVESTOR(INV_CODE)=0 THEN 1 ELSE 0 END CNTCL,
+                    CASE WHEN SUBSTR(INV_CODE,1,1)='3' THEN 1 ELSE 0 END CNTSUB,
+                    CASE WHEN WEALTHMAKER.FN_CHK_UNALLOCATED_INVESTOR(INV_CODE)=1 THEN 1 ELSE 0 END CNTUNALLOCATE FROM(
+                    SELECT INV_CODE,TIMEST,COUNT(*) OVER(PARTITION BY SUBSTR(INV_CODE_PURE,1,1) ORDER BY TIMEST DESC) CNT,
+                    (SELECT NVL(GROUP_ID,0) FROM SUBBROKER_GRP_MAPPING WHERE AGENT_CODE=SUBSTR(INV_CODE,1,8)) GROUP_ID FROM(
+                    SELECT CASE WHEN WEALTHMAKER.FN_CHK_UNALLOCATED_INVESTOR(INV_CODE)=1 THEN NULL ELSE INV_CODE END INV_CODE_PURE, INV_CODE,TIMEST 
+                    FROM  WEALTHMAKER.INVESTOR_MASTER T WHERE (MOBILE= VMOBILE AND EMAIL =VEMAIL) AND ROWNUM<300 
+                    AND INV_CODE<>PSUB_CLIENT_CD
+                    )));
+          END IF;
+          
+          DELETE FROM WEALTHMAKER.ALL_CROSS_CHANNEL_INFO_ALL WHERE COMMON_ID=PCOMMON_ID AND CNTCL IS NULL AND CNTSUB IS NULL AND CNTUNALLOCATED IS NULL;
+          VCNTMAININFO:=0;
+          SELECT COUNT(*) INTO VCNTMAININFO FROM WEALTHMAKER.ALL_CROSS_CHANNEL_INFO_ALL WHERE COMMON_ID=PCOMMON_ID;
+          
+          IF ISVALIDMOBILE=1 AND VCNTMAININFO=0  THEN
+                    INSERT INTO WEALTHMAKER.ALL_CROSS_CHANNEL_INFO_ALL(COMMON_ID, SEARCH_KEY, PAN, MOBILE, EMAIL, 
+                    CLIENTS,SUB_BROKERS,LAST_CLIENT, LAST_SUBBROKER, CNTCL, CNTSUB, CNTUNALLOCATED, GROUP_ID)
+                    SELECT PCOMMON_ID,'MOBILE',NULL,VMOBILE,NULL, 
+                    LISTAGG(CASE WHEN SUBSTR(INV_CODE,1,1)='4' THEN INV_CODE ELSE NULL END ,',') WITHIN GROUP (ORDER BY TIMEST DESC) CLIENTS,
+                    LISTAGG(CASE WHEN SUBSTR(INV_CODE,1,1)='3' THEN INV_CODE||'#'||WEALTHMAKER.FN_GET_GROUP_ID(INV_CODE) ELSE NULL END ,',') WITHIN GROUP (ORDER BY TIMEST DESC) SUBBROKERS,
+                    MAX(LAST_CLIENT)LAST_CLIENT,MAX(LAST_SUBBROKER) LAST_SUBBROKER,SUM(CNTCL) CNTCL,SUM(CNTSUB) CNTSUB,
+                    SUM(CNTUNALLOCATE) CNTUNALLOCATED,
+                    LISTAGG(WEALTHMAKER.FN_GET_GROUP_ID(INV_CODE) ,',') WITHIN GROUP(ORDER BY TIMEST DESC)  GROUP_ID FROM (
+                    SELECT INV_CODE,TIMEST,CASE WHEN SUBSTR(INV_CODE,1,1)=4 AND CNT=1 THEN INV_CODE ELSE NULL END LAST_CLIENT,
+                    CASE WHEN SUBSTR(INV_CODE,1,1)=3 AND CNT=1 THEN INV_CODE ELSE NULL END LAST_SUBBROKER,
+                    CASE WHEN SUBSTR(INV_CODE,1,1)='4' AND  WEALTHMAKER.FN_CHK_UNALLOCATED_INVESTOR(INV_CODE)=0 THEN 1 ELSE 0 END CNTCL,
+                    CASE WHEN SUBSTR(INV_CODE,1,1)='3' THEN 1 ELSE 0 END CNTSUB,
+                    CASE WHEN WEALTHMAKER.FN_CHK_UNALLOCATED_INVESTOR(INV_CODE)=1 THEN 1 ELSE 0 END CNTUNALLOCATE FROM(
+                    SELECT INV_CODE,TIMEST,COUNT(*) OVER(PARTITION BY SUBSTR(INV_CODE_PURE,1,1) ORDER BY TIMEST DESC) CNT,
+                    (SELECT NVL(GROUP_ID,0) FROM SUBBROKER_GRP_MAPPING WHERE AGENT_CODE=SUBSTR(INV_CODE,1,8)) GROUP_ID FROM(
+                    SELECT CASE WHEN WEALTHMAKER.FN_CHK_UNALLOCATED_INVESTOR(INV_CODE)=1 THEN NULL ELSE INV_CODE END INV_CODE_PURE, INV_CODE,TIMEST 
+                    FROM  WEALTHMAKER.INVESTOR_MASTER T WHERE MOBILE= VMOBILE AND  ROWNUM<300 
+                    AND INV_CODE<>PSUB_CLIENT_CD
+                    )));
+          END IF;
+          
+          ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+          DELETE FROM WEALTHMAKER.ALL_CROSS_CHANNEL_INFO_ALL WHERE COMMON_ID=PCOMMON_ID AND CNTCL IS NULL AND CNTSUB IS NULL AND CNTUNALLOCATED IS NULL;
+          VCNTMAININFO:=0;
+          SELECT COUNT(*) INTO VCNTMAININFO FROM WEALTHMAKER.ALL_CROSS_CHANNEL_INFO_ALL WHERE COMMON_ID=PCOMMON_ID;
+          
+          IF VCNTMAININFO=0 THEN
+                    RESULT:=1;  /* Allowed If only dt subbroker found on the basis of search key */
+                    RETURN;  
+          END IF;
+          
+          FOR I IN(SELECT * FROM WEALTHMAKER.ALL_CROSS_CHANNEL_INFO_ALL WHERE COMMON_ID=PCOMMON_ID)
+          LOOP
+                     IF I.CNTCL>=1 THEN /*Not Allowed if Pan Found in Direct Client*/
+                                INSERT INTO WEALTHMAKER.ALL_CROSS_CHANNEL_INFO(COMMON_ID, PAST_INV_CODE, SUB_INV_CODE, REMARKS)
+                                VALUES(PCOMMON_ID,I.LAST_CLIENT,PSUB_CLIENT_CD,I.SEARCH_KEY||' found in direct client');
+                                MESSAGE:=I.SEARCH_KEY||' found in direct client';
+                                RESULT:=0;
+                                RETURN;
+                     END IF;
+                     
+                     ISSAMEGROUP:=1;
+                     VDIFFERENTGROUP:=NULL;
+                     IF I.CNTCL=0 AND I.CNTSUB>=1 THEN /* Check  if Pan Found in Another Sub Broker of Same Group or Not */
+                                FOR J IN(SELECT * FROM TABLE(WEALTHMAKER.ANKIT_SPLIT(I.GROUP_ID,',')))
+                                LOOP
+                                            IF J.COLUMN_VALUE=VGROUPID THEN
+                                                    NULL;
+                                            ELSE
+                                                    ISSAMEGROUP:=0;
+                                                    VDIFFERENTGROUP:=J.COLUMN_VALUE;
+                                                    EXIT;
+                                            END IF;        
+                                END LOOP;
+                                
+                                VSUB_BROK_INV:=NULL;
+                                VSUB_GROUP_ID:=NULL;
+                                
+                                IF ISSAMEGROUP=1 THEN  /* Allowed if Pan Found in Another Sub Broker of Same Group */
+                                         RESULT:=1;
+                                         RETURN;
+                                ELSIF ISSAMEGROUP=0 THEN /* Not Allowed if Pan Found in Another Sub Broker of Different Group */  
+                                        FOR K IN(SELECT * FROM TABLE(WEALTHMAKER.ANKIT_SPLIT(I.SUB_BROKERS,',')))
+                                        LOOP    
+                                                 SELECT REGEXP_SUBSTR (K.COLUMN_VALUE, '[^#]+', 1, 1),
+                                                 REGEXP_SUBSTR (K.COLUMN_VALUE, '[^#]+', 1, 2) INTO VSUB_BROK_INV,VSUB_GROUP_ID FROM DUAL;   
+                                                 IF VSUB_GROUP_ID=VDIFFERENTGROUP THEN
+                                                            IF VDIFFERENTGROUP=0 AND VSUB_GROUP_ID=0 THEN
+                                                                    INSERT INTO WEALTHMAKER.ALL_CROSS_CHANNEL_INFO(COMMON_ID, PAST_INV_CODE, SUB_INV_CODE, REMARKS)
+                                                                    VALUES(PCOMMON_ID,VSUB_BROK_INV,PSUB_CLIENT_CD,I.SEARCH_KEY||' found in sub broker and no grouping found');
+                                                                    MESSAGE:=I.SEARCH_KEY||' found in sub broker and no grouping found';
+                                                            ELSE
+                                                                    INSERT INTO WEALTHMAKER.ALL_CROSS_CHANNEL_INFO(COMMON_ID, PAST_INV_CODE, SUB_INV_CODE, REMARKS)
+                                                                    VALUES(PCOMMON_ID,VSUB_BROK_INV,PSUB_CLIENT_CD,I.SEARCH_KEY||' found in sub broker of different group');
+                                                                    MESSAGE:=I.SEARCH_KEY||' found in sub broker of different group';
+                                                            END IF;      
+                                                            RESULT:=0;  
+                                                            RETURN;
+                                                 END IF;
+                                        END LOOP;
+                                END IF;        
+                     END IF;
+          END LOOP;
+          COMMIT;
+END;
+/

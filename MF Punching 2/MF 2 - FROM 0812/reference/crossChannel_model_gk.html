@@ -1,0 +1,31 @@
+  <div class="modal fade" id="CrossChannelModal" tabindex="-1" aria-labelledby="CrossChannelModalLabel" data-bs-backdrop="static" data-bs-keyboard="false">
+      <div class="modal-dialog modal-lg">
+          <div class="modal-content bg-white">
+              <div class="modal-header">
+                  <h1 class="modal-title fs-5" id="CrossChannelModalLabel">Cross Channel Alert</h1>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body">
+                  <div class="row">
+                      <div class="col-12">
+                          <asp:Label runat="server" ID="Label3" CssClass="mb-2 text-primary d-block"></asp:Label>
+                      </div>
+                      <div class="col-12">
+                          <div class="table-responsive">
+                              <asp:GridView runat="server" ID="GridCrossChannel" ClientIDMode="Static" EmptyDataText="No data found" CssClass="table"></asp:GridView>
+                          </div>
+                      </div>
+                  </div>
+              </div>
+              <div class="modal-footer justify-content-center">
+                  <asp:Button runat="server" ID="BtnContinueCross" CausesValidation="false" Text="Continue" CssClass="btn btn-primary btn-sm me-2" OnClick="BtnContinueCross_Click" />
+                  <asp:Button runat="server" ID="BtnCrossChannelApproval" CausesValidation="false" Text="Send Approval" CssClass="btn btn-primary btn-sm" OnClick="BtnCrossChannelApproval_Click" />
+                  <asp:HiddenField runat="server" ID="HiddenField1" ClientIDMode="Static" />
+                  <asp:HiddenField runat="server" ID="HdnIsCrossContinue" ClientIDMode="Static" />
+                  <asp:HiddenField runat="server" ID="hdnVehSCE" ClientIDMode="Static" />
+                  <asp:HiddenField runat="server" ID="hdnModelId" ClientIDMode="Static" />
+                  <asp:HiddenField runat="server" ID="hdnVariantId" ClientIDMode="Static" />
+              </div>
+          </div>
+      </div>
+  </div>

@@ -1,0 +1,432 @@
+using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Globalization;
+using System.Runtime.Remoting.Channels;
+using System.Text;
+using System.Threading;
+using System.Web;
+using System.Web.Services;
+using System.Web.UI;
+using System.Web.UI.WebControls;
+using WM.Controllers;
+using WM.Models;
+
+namespace WM.Masters
+{
+    //sip_master_reconciliation : System.Web.UI.Page
+    public partial class sip_master_reconciliation : System.Web.UI.Page
+    {
+        protected void Page_Load(object sender, EventArgs e)
+        {
+            PsmController pc = new PsmController();
+
+            #region LOGIN SESSION HANDLING
+
+            Session["LoginId"] = "112650";
+            Session["roleId"] = "29";
+
+            hdnLoginId.Value = Session["LoginId"]?.ToString();
+            hdnRoleId.Value = Session["roleId"]?.ToString();
+
+            #endregion
+
+            #region DDL LIST DYNAMIC NEW
+
+            //var channelList = pc.PSM_LoggedTableList("WEALTHMAKER.PSM_LOG_CHANNEL_LIST", "MF_AR_MANUAL_RECO", null, null); // CHANNEL_NAME, CHANNEL_CODE
+            //var regionList = pc.PSM_LoggedTableList("WEALTHMAKER.PSM_LOG_REGION_LIST", "MF_AR_MANUAL_RECO", null, null); // REGION_NAME, REGION_CODE
+            //var zoneList = pc.PSM_LoggedTableList("WEALTHMAKER.PSM_LOG_ZONE_LIST", "MF_AR_MANUAL_RECO", null, null); // ZONE_NAME, ZONE_ID
+            //var branchList = pc.PSM_LoggedTableList("WEALTHMAKER.PSM_LOG_BRANCH_LIST", "MF_AR_MANUAL_RECO", null, null); // BRANCH_NAME, BRANCH_CODE
+            //var rmList = pc.PSM_LoggedTableList("WEALTHMAKER.PSM_LOG_RM_LIST", "MF_AR_MANUAL_RECO", null, null); // RM_NAME, PAYROLL_ID, RM_CODE
+            //var amcList = pc.PSM_LoggedTableList("WEALTHMAKER.PSM_LOG_AMC_LIST", "MF_AR_MANUAL_RECO", null, null); // MUT_NAME, MUT_CODE
+            //var regionByChannel = pc.PSM_LoggedTableList("WEALTHMAKER.PSM_LOG_REGION_LIST", "MF_AR_MANUAL_RECO", "CHANNEL", "184"); // 184
+            //var zoneByChannel = pc.PSM_LoggedTableList("WEALTHMAKER.PSM_LOG_ZONE_LIST", "MF_AR_MANUAL_RECO", "CHANNEL", "184"); // 184
+            //var branchByChannel = pc.PSM_LoggedTableList("WEALTHMAKER.PSM_LOG_BRANCH_LIST", "MF_AR_MANUAL_RECO", "CHANNEL", "184"); // 184
+            //var zoneByRegion = pc.PSM_LoggedTableList("WEALTHMAKER.PSM_LOG_ZONE_LIST", "MF_AR_MANUAL_RECO", "REGION", "R01");  // R01
+            //var branchByZone = pc.PSM_LoggedTableList("WEALTHMAKER.PSM_LOG_BRANCH_LIST", "MF_AR_MANUAL_RECO", "ZONE", "Z03");  // Z03
+            //var rmByBranch = pc.PSM_LoggedTableList("WEALTHMAKER.PSM_LOG_RM_LIST", "MF_AR_MANUAL_RECO", "BRANCH", "10010020"); // 10010020
+            #endregion
+
+        }
+
+        #region HELPING FUNCTIONS
+        private static string CreateJsonResponse(bool success, string message)
+        {
+            return JsonConvert.SerializeObject(new
+            {
+                success,
+                message
+            }, Formatting.None);
+        }
+
+        #endregion
+
+        #region ON LAOD AND ON CHANGE: DDL LIST AND BY DDL LIST
+
+        [WebMethod]
+        public static string GetChannelList()
+        {
+            PsmController pc = new PsmController();
+
+            List<dynamic> list = new List<dynamic>();
+            var data = pc.PSM_LoggedTableList("WEALTHMAKER.PSM_LOG_CHANNEL_LIST", "MF_AR_MANUAL_RECO", null, null); // CHANNEL_NAME, CHANNEL_CODE
+            foreach (DataRow row in data.Rows)
+            {
+                list.Add(new { text = Convert.ToString(row["channel_name"]), value = Convert.ToString(row["channel_code"]) });
+            }
+            var outPut = new { data = list };
+            return JsonConvert.SerializeObject(outPut, Formatting.None);
+        }
+
+        [WebMethod]
+        public static string GetBranchList()
+        {
+            PsmController pc = new PsmController();
+            List<dynamic> list = new List<dynamic>();
+            var data = pc.PSM_LoggedTableList("WEALTHMAKER.PSM_LOG_BRANCH_LIST", "MF_AR_MANUAL_RECO", null, null); // BRANCH_NAME, BRANCH_CODE
+            foreach (DataRow row in data.Rows)
+            {
+                list.Add(new { text = Convert.ToString(row["BRANCH_NAME"]), value = Convert.ToString(row["BRANCH_CODE"]) });
+            }
+            var outPut = new { data = list };
+
+            return JsonConvert.SerializeObject(outPut, Formatting.None);
+        }
+
+        [WebMethod]
+        public static string GetZoneList()
+        {
+            PsmController pc = new PsmController();
+
+            List<dynamic> list = new List<dynamic>();
+            var data = pc.PSM_LoggedTableList("WEALTHMAKER.PSM_LOG_ZONE_LIST", "MF_AR_MANUAL_RECO", null, null);
+
+
+            foreach (DataRow row in data.Rows)
+            {
+                list.Add(new { text = Convert.ToString(row["ZONE_NAME"]), value = Convert.ToString(row["ZONE_ID"]) });
+            }
+            var outPut = new { data = list };
+
+            return JsonConvert.SerializeObject(outPut, Formatting.None);
+        }
+
+        [WebMethod]
+        public static string GetRegionList()
+        {
+            PsmController pc = new PsmController();
+
+            List<dynamic> list = new List<dynamic>();
+            var data = pc.PSM_LoggedTableList("WEALTHMAKER.PSM_LOG_REGION_LIST", "MF_AR_MANUAL_RECO", null, null); // REGION_NAME, REGION_CODE
+            foreach (DataRow row in data.Rows)
+            {
+
+                list.Add(new { text = Convert.ToString(row["REGION_NAME"]), value = Convert.ToString(row["region_code"]) });
+            }
+            var outPut = new { data = list };
+
+            return JsonConvert.SerializeObject(outPut, Formatting.None);
+        }
+
+
+        [WebMethod]
+        public static string GetRmList()
+        {
+            PsmController pc = new PsmController();
+            List<dynamic> list = new List<dynamic>();
+            var data = pc.PSM_LoggedTableList("WEALTHMAKER.PSM_LOG_RM_LIST", "MF_AR_MANUAL_RECO", null, null);
+
+            foreach (DataRow row in data.Rows)
+            {
+                list.Add(new { text = Convert.ToString(row["RM_NAME"]), value = Convert.ToString(row["payroll_id"]) });
+            }
+            var outPut = new { data = list };
+
+            return JsonConvert.SerializeObject(outPut, Formatting.None);
+        }
+
+        [WebMethod]
+        public static string GetAMCList()
+        {
+            PsmController pc = new PsmController();
+            List<dynamic> list = new List<dynamic>();
+            var data = pc.PSM_LoggedTableList("WEALTHMAKER.PSM_LOG_AMC_LIST", "MF_AR_MANUAL_RECO", null, null); // MUT_NAME, MUT_CODE
+            foreach (DataRow row in data.Rows)
+            {
+                list.Add(new { text = Convert.ToString(row["mut_name"]), value = Convert.ToString(row["mut_code"]) });
+            }
+            var outPut = new { data = list };
+            return JsonConvert.SerializeObject(outPut, Formatting.None);
+        }
+
+        [WebMethod]
+        public static string GetBranchListByChannel(string channel)
+        {
+            PsmController pc = new PsmController();
+            List<dynamic> list = new List<dynamic>();
+            var data = pc.PSM_LoggedTableList("WEALTHMAKER.PSM_LOG_BRANCH_LIST", "MF_AR_MANUAL_RECO", "CHANNEL", channel);
+
+            foreach (DataRow row in data.Rows)
+            {
+                list.Add(new { text = Convert.ToString(row["Branch_name"]), value = Convert.ToString(row["Branch_code"]) });
+            }
+            var outPut = new { data = list };
+            return JsonConvert.SerializeObject(outPut, Formatting.None);
+        }
+
+        [WebMethod]
+        public static string GetBranchListByZone(string zone)
+        {
+            PsmController pc = new PsmController();
+            List<dynamic> list = new List<dynamic>();
+            var data = pc.PSM_LoggedTableList("WEALTHMAKER.PSM_LOG_BRANCH_LIST", "MF_AR_MANUAL_RECO", "ZONE", zone);
+            foreach (DataRow row in data.Rows)
+            {
+                list.Add(new { text = Convert.ToString(row["Branch_name"]), value = Convert.ToString(row["Branch_code"]) });
+            }
+            var outPut = new { data = list };
+            return JsonConvert.SerializeObject(outPut, Formatting.None);
+        }
+
+        [WebMethod]
+        public static string GetRegionListByChannel(string channel)
+        {
+            PsmController pc = new PsmController();
+            List<dynamic> list = new List<dynamic>();
+            var data = pc.PSM_LoggedTableList("WEALTHMAKER.PSM_LOG_REGION_LIST", "MF_AR_MANUAL_RECO", "CHANNEL", channel);
+            foreach (DataRow row in data.Rows)
+            {
+                list.Add(new { text = Convert.ToString(row["REGION_NAME"]), value = Convert.ToString(row["REGION_CODE"]) });
+            }
+            var outPut = new { data = list };
+            return JsonConvert.SerializeObject(outPut, Formatting.None);
+        }
+
+        [WebMethod]
+        public static string GetZoneListByChannel(string channel)
+        {
+            PsmController pc = new PsmController();
+            List<dynamic> list = new List<dynamic>();
+            var data = pc.PSM_LoggedTableList("WEALTHMAKER.PSM_LOG_ZONE_LIST", "MF_AR_MANUAL_RECO", "CHANNEL", channel);
+            foreach (DataRow row in data.Rows)
+            {
+                list.Add(new { text = Convert.ToString(row["ZONE_NAME"]), value = Convert.ToString(row["ZONE_ID"]) });
+            }
+            var outPut = new { data = list };
+            return JsonConvert.SerializeObject(outPut, Formatting.None);
+        }
+
+        [WebMethod]
+        public static string GetZoneListByRegion(string region)
+        {
+            PsmController pc = new PsmController();
+            List<dynamic> list = new List<dynamic>();
+            var data = pc.PSM_LoggedTableList("WEALTHMAKER.PSM_LOG_ZONE_LIST", "MF_AR_MANUAL_RECO", "REGION", region);
+            foreach (DataRow row in data.Rows)
+            {
+                list.Add(new { text = Convert.ToString(row["ZONE_NAME"]), value = Convert.ToString(row["ZONE_ID"]) });
+            }
+            var outPut = new { data = list };
+            return JsonConvert.SerializeObject(outPut, Formatting.None);
+        }
+
+        [WebMethod]
+        public static string GetRmListByBranch(string branchCode)
+        {
+            List<dynamic> list = new List<dynamic>();
+            PsmController pc = new PsmController();
+            var rmByBr = pc.PSM_LoggedTableList("WEALTHMAKER.PSM_LOG_RM_LIST", "MF_AR_MANUAL_RECO", "BRANCH", branchCode);
+            foreach (DataRow row in rmByBr.Rows)
+            {
+                list.Add(new { text = Convert.ToString(row["RM_NAME"]), value = Convert.ToString(row["payroll_id"]) });
+            }
+            var outPut = new { data = list };
+            return JsonConvert.SerializeObject(outPut, Formatting.None);
+        }
+
+
+        #endregion
+
+        #region GET LIST: RT, RTA AND TRAN LIST
+
+        [WebMethod]
+        public static string GetTRListX(string x, string region, string zone, string branch, string rm, string dateFrom, string dateTo, string amc, string arNo, string reconciliationStatus, string cobFlag, string tranType, string registrar, string isPms, string isOp, string branchCat = null, string chequeType = null, string chequeSearch = null, string investorName = null, string amount = null, string sipFolioNo = null, string sipAmount = null, string sipPan = null, string sipClientCode = null, string sipDate = null)
+        {
+
+            if (x == "2")
+            {
+                dateFrom = "01/07/2025";
+                dateTo = "10/07/2025";
+            }
+
+            var trTransactions = new sip_master_reconciliationController().GetTrX(
+                x,          // P_X
+                branchCat,        // P_BRANCH_CAT
+                region,           // P_REGION
+                zone,             // P_ZONE
+                branch,           // P_BRANCH
+                rm,               // P_RM
+                amc,              // P_AMC
+                tranType,         // P_TRAN_TYPE
+                registrar,        // P_REGISTRAR
+                reconciliationStatus, // P_STATUS_TYPE
+                isPms,            // P_PMS
+                cobFlag,          // P_COB
+                dateFrom,         // P_DATE_FROM
+                dateTo,           // P_DATE_TO
+                arNo,             // P_AR_NUM
+                chequeType,       // P_CHEQUE_TYPE
+                chequeSearch,     // P_CHEQUE_SEARCH
+                investorName,     // P_INVESTOR_NAME
+                amount,           // P_AMOUNT
+                sipFolioNo,       // P_SIP_FOLIO_NO
+                sipAmount,        // P_SIP_AMOUNT
+                sipPan,           // P_SIP_PAN
+                sipClientCode,    // P_SIP_CLIENT_CODE
+                sipDate           // P_SIP_DATE
+            );
+            return JsonConvert.SerializeObject(new { data = trTransactions }, Formatting.None);
+        }
+
+
+
+        [System.Web.Services.WebMethod] // 
+        public static string GetTranList(string tranCode)
+        {
+            var rtaTransactions = new sip_master_reconciliationController().GetTranDetails(tranCode);
+            return JsonConvert.SerializeObject(new { data = rtaTransactions }, Formatting.None);
+        }
+
+        #endregion
+
+
+        #region RTA ACTION: REMARK SAVE, RECONCILE
+
+        [WebMethod]
+        public static string SaveRemark(string trCode, string txtRemark)
+        {
+            try
+            {
+                #region VALIDATIONS
+                if (string.IsNullOrWhiteSpace(trCode))
+                {
+                    return CreateJsonResponse(false, "Transaction Code is required.");
+                }
+
+                if (string.IsNullOrWhiteSpace(txtRemark))
+                {
+                    return CreateJsonResponse(false, "Remark cannot be empty.");
+                }
+                #endregion
+
+                var controller = new sip_master_reconciliationController();
+                var result = controller.SetTransactionRemark(
+                    transactionCode: trCode,
+                    remark: txtRemark
+                );
+
+                return CreateJsonResponse(result.Success, result.Message);
+            }
+            catch (Exception ex)
+            {
+                return CreateJsonResponse(false, $"System Error: {ex.Message}");
+            }
+        }
+
+
+
+
+        [WebMethod]
+        public static string ReconsileSIP2(string trTranCodeValue, string trTranTypeValue, string rtaTranCodeValue, string rtaTranDateValue, string rtaFolioValue, string rtaAmountValue, string rtaDispatchValue)
+        {
+            try
+            {
+                #region VALIDATIONS
+                if (string.IsNullOrWhiteSpace(trTranCodeValue))
+                {
+                    return CreateJsonResponse(false, "Transaction Code is required.");
+                }
+
+                if (string.IsNullOrWhiteSpace(rtaTranCodeValue))
+                {
+                    return CreateJsonResponse(false, "RTA Transaction Code is required.");
+                }
+
+                if (!decimal.TryParse(rtaAmountValue, out decimal rtaAmountValue_))
+                {
+                    return CreateJsonResponse(false, "RTA Amount must be a valid number.");
+                }
+
+                if (rtaAmountValue_ <= 0)
+                {
+                    return CreateJsonResponse(false, "RTA Amount must be greater than zero.");
+                }
+                #endregion
+
+                sip_master_reconciliationController controller = new sip_master_reconciliationController();
+                var result = controller.SetSIPReco2(
+                    trTranCode: trTranCodeValue,
+                    trTranType: trTranTypeValue,
+                    rtaTranCode: rtaTranCodeValue,
+                    rtaTranDate: rtaTranDateValue,
+                    rtaFolio: rtaFolioValue,
+                    rtaAmount: rtaAmountValue_,
+                    rtaDispatch: rtaDispatchValue?.ToUpper()
+                );
+
+                return CreateJsonResponse(result.Success, result.Message);
+            }
+            catch (Exception ex)
+            {
+                return CreateJsonResponse(false, $"System Error: {ex.Message}");
+            }
+        }
+
+
+        public static string ConfirmSIP2(string trTranCodeValue, string masterIdValue, string dispatchValue)
+        {
+            try
+            {
+                sip_master_reconciliationController controller = new sip_master_reconciliationController();
+                var result = controller.SetSIPCnf(
+                    trTranCode: trTranCodeValue,
+                    masterId: masterIdValue,
+                    dispatch: dispatchValue?.ToUpper()
+                );
+                return CreateJsonResponse(result.Success, result.Message);
+            }
+            catch (Exception ex)
+            {
+                return CreateJsonResponse(false, $"System Error: {ex.Message}");
+            }
+        }
+
+        public static string UnConfirmSIP2(string trTranCodeValue, string masterIdValue, string dispatchValue)
+        {
+            try
+            {
+                sip_master_reconciliationController controller = new sip_master_reconciliationController();
+                var result = controller.SetSIPUnCnf(
+                    trTranCode: trTranCodeValue,
+                    masterId: masterIdValue,
+                    dispatch: dispatchValue?.ToUpper()
+                );
+                return CreateJsonResponse(result.Success, result.Message);
+            }
+            catch (Exception ex)
+            {
+                return CreateJsonResponse(false, $"System Error: {ex.Message}");
+            }
+        }
+
+        #endregion
+
+    }
+
+
+}
+
+
+
+

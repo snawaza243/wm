@@ -1,0 +1,18 @@
+SELECT COMMON_ID, TRAN_TYPE, SCH_CODE, FRESH_RENEW,
+       CASE
+           WHEN NVL(GI_REQUEST, 0) = 0 THEN 1
+           WHEN NVL(GI_REQUEST, 0) = 1 AND NVL(GI_REQUEST_STATUS, 0) = 0 THEN 2
+           WHEN NVL(GI_REQUEST, 0) = 1 AND NVL(GI_REQUEST_STATUS, 0) = 1 THEN 0
+           WHEN NVL(GI_REQUEST, 0) = 1 AND NVL(GI_REQUEST_STATUS, 0) = 2 THEN 4
+       END AS VFLAG
+FROM WEALTHMAKER.TB_DOC_UPLOAD A
+WHERE 1=1
+--AND TRAN_TYPE IN ('LI','MF','FI','GI') 
+AND TRAN_TYPE IN ('MF') 
+AND SYSDATE> '01-JAN-2025'
+AND NVL(GI_REQUEST, 0) = 1 AND NVL(GI_REQUEST_STATUS, 0) = 0
+       AND a.tran_type = 'MF'
+       AND a.verification_flag = '1'
+       AND a.rejection_status = '0'
+       AND a.punching_flag = '0'
+       ;
