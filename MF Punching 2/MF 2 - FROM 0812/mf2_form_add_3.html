@@ -260,13 +260,64 @@
                 });
             }
 
-
-
             handleTabsPersistence("#wmTabs", "mf2_activeTab");
-
             makeBootstrapModalsDraggable();
             managePersistentModalSession();
 
+            function handlePaymentChange(ddlChe, lblCheNo, lblCheDt, txtChecValue, txtCheDt) {
+                    $(ddlChe).on("change", function () {
+                        var selected = $(this).val();
+
+                        if (selected === "CHEQUE") {
+                            $(lblCheNo).text("Cheque No");
+                            $(lblCheDt).text("Cheque Dated");
+                            $(txtChecValue).prop("disabled", false).val("");
+                            $(txtCheDt).prop("disabled", false).val("");
+                        } 
+
+                        else if (selected === "DRAFT") {
+                            $(lblCheNo).text("Draft No");
+                            $(lblCheDt).text("Draft Date");
+                            $(txtChecValue).prop("disabled", false).val("");
+                            $(txtCheDt).prop("disabled", false).val("");
+                        } 
+                        else if (selected === "ECS") {
+                            $(lblCheNo).text("ECS Reference No");
+                            $(lblCheDt).text("ECS Date");
+                            $(txtChecValue).prop("disabled", false).val("");
+                            $(txtCheDt).prop("disabled", false).val("");
+                        } 
+                        else if (selected === "CASH") {
+                            $(lblCheNo).text("Cash Amount");
+                            $(lblCheDt).text("Cash Payment Date");
+                            $(txtChecValue).prop("disabled", false).val("");
+                            $(txtCheDt).prop("disabled", false).val("");
+                        }  
+                        else if (selected === "RTGS") {
+                            $(lblCheNo).text("RTGS Transaction No");
+                            $(lblCheDt).text("RTGS Date");
+                            $(txtChecValue).prop("disabled", false).val("");
+                            $(txtCheDt).prop("disabled", false).val("");
+                        } 
+                        else if (selected === "FUND_TRANSFER") {
+                            $(lblCheNo).text("Fund Transfer No");
+                            $(lblCheDt).text("Fund Transfer Date");
+                            $(txtChecValue).prop("disabled", false).val("");
+                            $(txtCheDt).prop("disabled", false).val("");
+                        } 
+                        else {
+                            // Others
+                            $(lblCheNo).text("Others Ref. No");
+                            $(lblCheDt).text("Payment Date");
+                            $(txtChecValue).prop("disabled", false).val("");
+                            $(txtCheDt).prop("disabled", false).val("");
+                        }
+                    });
+                }
+
+            handlePaymentChange( "#ddlAddPaymentMode", "#lblAddChequeNo", "#lblAddChequeDate", "#txtAddChequeNo", "#txtAddChequeDate" );
+
+            handlePaymentChange( "#ddlViewPaymentMode", "#lblViewChequeNo", "#lblViewChequeDate", "#txtViewChequeNo", "#txtViewChequeDate" );
 
             $("#btnAddTransaction").on("click", function () {
                 // Investor/Scheme Details
@@ -382,7 +433,6 @@
                 console.log(msg);
             });
 
-            // or reset manually on button click
             $('#psmModalSchemeSearch_btnReset').on('click', function () {
                 var $openModal = $('.modal.show');
                 if ($openModal.length) {
@@ -428,11 +478,11 @@
                             <!-- TAB 1: ADD -->
                             <div class="tab-pane fade show active" id="add_item" role="tabpanel"
                                 aria-labelledby="add_tab">
+
                                 <div class="row g-3">
                                     <!-- Investor/Scheme Details -->
                                     <div class="col-md-8">
                                         <fieldset class="border p-2">
-                                            <!-- <h4 class="card-title">Investor/Scheme Details</h4> -->
                                             <legend class="card-title">Investor/Scheme Details</legend>
                                             <div class="row g-3">
                                                 <div class="d-none">
@@ -464,8 +514,7 @@
 
                                                 <!-- Transaction Date -->
                                                 <div class="col-md-3">
-                                                    <label class="form-label" for="txtAddTrDate">Transaction
-                                                        Date</label>
+                                                    <label class="form-label" for="txtAddTrDate">Transaction Date</label>
                                                     <input type="text" id="txtAddTrDate" class="form-control"
                                                         readonly />
                                                 </div>
@@ -523,7 +572,7 @@
                                                 <div class="col-md-3">
                                                     <label for="ddlAddBranch" class="form-label">Branch</label>
                                                     <select id="ddlAddBranch" class="form-select">
-                                                        <option value="">--Select Branch--</option>
+                                                        <option value=""></option>
                                                     </select>
                                                 </div>
 
@@ -531,7 +580,7 @@
                                                 <div class="col-md-3">
                                                     <label for="txtAddAMC" class="form-label">AMC</label>
                                                     <select id="txtAddAMC" class="form-select">
-                                                        <option value="">--Select AMC--</option>
+                                                        <option value=""></option>
                                                         <option value="amc1">AMC 1</option>
                                                         <option value="amc2">AMC 2</option>
                                                     </select>
@@ -540,8 +589,9 @@
                                                 <!-- Transaction Type -->
                                                 <div class="col-md-3">
                                                     <label for="ddlAddTransactionType" class="form-label">Transaction
-                                                        Type</label>
+                                                        Type <span class="text-danger">*</span></label>
                                                     <select id="ddlAddTransactionType" class="form-select" required>
+                                                        <option value=""></option>
                                                         <option value="PURCHASE">PURCHASE</option>
                                                         <option value="SWITCH IN">SWITCH IN</option>
                                                     </select>
@@ -553,7 +603,7 @@
                                                     <div class="d-flex align-items-center gap-3">
                                                         <div class="form-check">
                                                             <input type="radio" id="rdbAddRegular" name="rdbAddRN"
-                                                                class="form-check-input" value="REGULAR" />
+                                                                class="form-check-input" value="REGULAR" checked />
                                                             <label for="rdbAddRegular"
                                                                 class="form-check-label">Regular</label>
                                                         </div>
@@ -576,7 +626,7 @@
                                                             data-bs-toggle="modal"
                                                             data-bs-target="#psmModalSchemeSearch">Search</button>
                                                     </div>
-                                                    <input type="hidden" id="hdnSchemeSearchState" value="0" />
+                                                    <input type="hidden" id="hdnAddSchemeSearchState" value="0" />
                                                 </div>
 
 
@@ -592,14 +642,12 @@
                                                                     class="form-control" />
                                                             </div>
                                                             <div class="col-md-6">
-                                                                <label for="txtAddformSwitchScheme"
+                                                                <label for="txtAddScheme2_fromSwitch"
                                                                     class="form-label">From Switch/STP Scheme</label>
                                                                 <div class="input-group">
-                                                                    <input type="text" id="txtAddScheme2_fromSwitch"
-                                                                        class="form-control" />
-                                                                    <input type="hidden" id="hdnAddScheme2_fromSwitch"
-                                                                        class="form-control" />
-                                                                    <button type="button" id="btnAddScheme2_fromSwitch"
+                                                                    <input type="text" id="txtAddScheme2_fromSwitch" class="form-control" />
+                                                                    <input type="hidden" id="hdnAddScheme2_fromSwitch" class="form-control" />
+                                                                    <button type="button" id="btnAddScheme2_fromSwitch" 
                                                                         class="btn btn-outline-primary btn-sm"
                                                                         data-bs-toggle="modal"
                                                                         data-bs-target="#psmModalSchemeSearch">Search</button>
@@ -638,9 +686,9 @@
 
                                                 <!-- Payment Method -->
                                                 <div class="col-md-4">
-                                                    <label for="txtAddPaymentMode" class="form-label">Payment
+                                                    <label for="ddlAddPaymentMode" class="form-label">Payment
                                                         Method</label>
-                                                    <select id="txtAddPaymentMode" class="form-select">
+                                                    <select id="ddlAddPaymentMode" class="form-select">
                                                         <option value="CHEQUE" selected>Cheque</option>
                                                         <option value="DRAFT">Draft</option>
                                                         <option value="ECS">ECS</option>
@@ -654,7 +702,7 @@
 
                                                 <!-- Payment Details  -->
                                                 <div class="col-md-4">
-                                                    <label for="txtAddChequeNo" class="form-label">Cheque No</label>
+                                                    <label for="txtAddChequeNo" id="lblAddChequeNo" class="form-label">Cheque No</label>
                                                     <span class="text-danger">*</span>
                                                     <input type="text" id="txtAddChequeNo" class="form-control" />
 
@@ -663,7 +711,7 @@
 
                                                 <!-- Payment Details  -->
                                                 <div class="col-md-4">
-                                                    <label for="txtAddChequeDate" class="form-label">Cheque
+                                                    <label for="txtAddChequeDate" id="lblAddChequeDate" class="form-label">Cheque
                                                         Dated</label>
                                                     <span class="text-danger">*</span>
                                                     <div class="date">
@@ -675,7 +723,7 @@
                                                 <div class="col-md-12">
                                                     <label for="ddlAddBankName" class="form-label">Bank Name</label>
                                                     <select id="ddlAddBankName" class="form-select">
-                                                        <option value="">--Select Bank--</option>
+                                                        <option value=""></option>
                                                         <option value="bank1">Bank 1</option>
                                                         <option value="bank2">Bank 2</option>
                                                     </select>
@@ -705,9 +753,9 @@
                                                 </div>
 
 
-                                                <!-- From Switch / STP Scheme -->
+                                                <!-- Auto Switch Scheme -->
                                                 <div class="col-md-12 mt-4">
-                                                    <label for="txtAddSchemeSearch2_Close" class="form-label"></label>
+                                                    <label for="txtAddScheme3_Close" class="form-label"></label>
                                                     <div class="input-group">
                                                         <input type="text" id="txtAddScheme3_Close"
                                                             class="form-control" />
@@ -727,16 +775,14 @@
                                     <!-- SIP Details -->
                                     <div class="col-md-12">
                                         <fieldset class="border p-2">
-                                            <!-- <h4 class="card-title">SIP Details</h4> -->
-                                            <legend>SIP Details</legend>
-
+                                            <legend class="card-title">SIP Details</legend>
                                             <div class="row g-3">
+
                                                 <!-- SIP/STP or Regular -->
                                                 <div class="col-md-2">
                                                     <label for="ddlAddSipStp" class="form-label">SIP/STP</label>
                                                     <select id="ddlAddSipStp" class="form-select">
                                                         <option value=""></option>
-
                                                         <option value="REGULAR">REGULAR</option>
                                                         <option value="SIP">SIP</option>
                                                         <option value="STP">STP</option>
@@ -747,10 +793,10 @@
                                                 <div class="col-md-2">
                                                     <label for="ddlAddInstallmentType" class="form-label">Installment
                                                         Type</label>
-                                                    <select id="ddlAddInstallmentType" class="form-select" disabled>
+                                                    <select id="ddlAddInstallmentType" class="form-select">
                                                         <option value=""></option>
-                                                        <option value="NORMAL">Normal</option>
-                                                        <option value="MICRO">Micro</option>
+                                                        <option value="NORMAL">NORMAL</option>
+                                                        <option value="MICRO">MICRO</option>
                                                     </select>
                                                 </div>
 
@@ -758,7 +804,7 @@
                                                 <div class="col-md-2">
                                                     <label for="ddlAddSipType" class="form-label">SIP TYPE (Sub
                                                         SIP)</label>
-                                                    <select id="ddlAddSipType" class="form-select" disabled>
+                                                    <select id="ddlAddSipType" class="form-select">
                                                         <option value=""></option>
                                                         <option value="N">NORMAL</option>
                                                         <option value="Y">MICROSIP</option>
@@ -767,7 +813,7 @@
 
                                                 <!-- SIP Amount -->
                                                 <div class="col-md-2">
-                                                    <label for="txtAddSipAmount" class="form-label">Sip Amount</label>
+                                                    <label for="txtAddSipAmount" class="form-label">SIP Amount</label>
                                                     <input type="text" id="txtAddSipAmount" class="form-control" />
                                                 </div>
 
@@ -775,7 +821,7 @@
                                                 <div class="col-md-2">
                                                     <label for="ddlAddFrequency" class="form-label">Frequency</label>
                                                     <select id="ddlAddFrequency" class="form-select">
-                                                        <option value="">Select Frequency</option>
+                                                        <option value=""></option>
                                                         <option value="208">Daily</option>
                                                         <option value="173">Weekly</option>
                                                         <option value="174">Fortnightly</option>
@@ -795,18 +841,15 @@
 
                                                 <!-- SIP Start Date -->
                                                 <div class="col-md-2">
-                                                    <label for="txtAddSIPStartDate" class="form-label">SIP Start
-                                                        Date</label>
+                                                    <label for="txtAddSIPStartDate" class="form-label">SIP Start Date</label>
                                                     <div class="date">
-                                                        <input type="text" id="txtAddSIPStartDate"
-                                                            class="form-control" />
+                                                        <input type="text" id="txtAddSIPStartDate" class="form-control" />
                                                     </div>
                                                 </div>
 
                                                 <!-- SIP End Date -->
                                                 <div class="col-md-2">
-                                                    <label for="txtAddSIPEndDate" class="form-label">SIP End
-                                                        Date</label>
+                                                    <label for="txtAddSIPEndDate" class="form-label">SIP End Date</label>
                                                     <div class="date">
                                                         <input type="text" id="txtAddSIPEndDate" class="form-control" />
                                                     </div>
@@ -893,7 +936,7 @@
                                         <fieldset class="border p-2">
                                             <legend>Action </legend>
                                             <!-- Action Buttons -->
-                                            <div class="col-md-8">
+                                            <div class="col-md-12">
                                                 <div class="d-flex align-items-md-center flex-wrap gap-3">
                                                     <button id="btnAddTransaction"
                                                         class="btn btn-outline-primary">Add</button>
@@ -911,14 +954,17 @@
                                             </div>
                                         </fieldset>
                                     </div>
+
                                 </div>
+
+
                             </div>
 
                             <!-- TAB 2: VIEW/MODIFY -->
                             <div class="tab-pane fade" id="view_modify" role="tabpanel"
                                 aria-labelledby="view_modify_tab">
                                 <div class="row g-3">
-                                    <div class="col-md-12 d-none">
+                                    <div class="col-md-12">
                                         <fieldset class="border p-2">
                                             <legend class="card-title">Transaction Log</legend>
                                             <div class="col-md-12">
@@ -927,7 +973,7 @@
                                                     <div class="row g-3 mb-3">
 
                                                         <!-- From Date -->
-                                                        <div class="col-md-1">
+                                                        <div class="col-md-2">
                                                             <label for="fromDate" class="form-label">From Date</label>
                                                             <div class="date">
                                                                 <input type="text" id="fromDate"
@@ -936,7 +982,7 @@
                                                         </div>
 
                                                         <!-- To Date -->
-                                                        <div class="col-md-1">
+                                                        <div class="col-md-2">
                                                             <label for="toDate" class="form-label">To Date</label>
                                                             <div class="date">
                                                                 <input type="text" id="toDate" class="form-control " />
@@ -1021,14 +1067,14 @@
 
 
                                                         <!-- Search Button -->
-                                                        <div class="col-md-3 mt-5">
+                                                        <div class="col-md-2 mt-5">
                                                             <button id="btnSearchAR" style="width: 100px;"
                                                                 class="btn btn-primary">View</button>
                                                         </div>
 
                                                         <div class="col-md-4">
                                                             <label for="uniqueClientCode" class="form-label font-bold">
-                                                                <b>Searching By Investor Name/PAN/AR Date</b> </label>
+                                                                <b>Searching By Investor </b> </label>
                                                             <div class="input-group">
                                                                 <input type="text" id="txtViewSearAr2_uniqueClientCode"
                                                                     class="form-control" placeholder="Contact" />
@@ -1037,7 +1083,7 @@
                                                             </div>
                                                         </div>
 
-                                                        <div class="col-md-4">
+                                                        <div class="col-md-2">
                                                             <p><span class="text-danger">*</span> To Search any data
                                                                 click on the column to be searched and press Find</p>
                                                         </div>
@@ -1104,375 +1150,507 @@
 
                                                 </fieldset>
                                             </div>
-
-
                                         </fieldset>
                                     </div>
-
                                     <div class="col-md-12 mt-2">
                                         <fieldset class="border p-2">
-                                            <!-- <h4 class="card-title">Investor/Scheme Details</h4> -->
                                             <legend class="card-title">Transaction Details</legend>
-                                            
                                             <div class="col-md-12">
                                                 <div class="row g-3">
+                                                    <!-- Investor/Scheme Details -->
+                                                    <div class="col-md-8">
+                                                        <fieldset class="border p-2">
+                                                            <legend class="card-title">Investor/Scheme Details</legend>
+                                                            <div class="row g-3">
+                                                                <div class="d-none">
+                                                                    <div class="col-md-3">
+                                                                        <button type="button" id="btnViewCrossChannelSearch"
+                                                                            data-bs-target="#psmModalCrossChannel"
+                                                                            class="btn btn-outline-primary btn-sm"
+                                                                            data-bs-toggle="modal">
+                                                                            Cross Search </button>
+                                                                    </div>
+                                                                    <div class="col-md-3">
+                                                                        <button type="button" id="btnViewCrossInvestorAddUpdate"
+                                                                            data-bs-target="#psmModalInvestorAddUpdate"
+                                                                            class="btn btn-outline-primary btn-sm"
+                                                                            data-bs-toggle="modal">
+                                                                            Investor Add/Update </button>
+                                                                    </div>
+                                                                </div>
 
-                                                    <!-- Transaction Date -->
-                                                    <div class="col-md-2">
-                                                        <label class="form-label" for="txtViewTrDate">Transaction
-                                                            Date</label>
-                                                        <input type="text" id="txtViewTrDate" class="form-control"
-                                                            readonly />
+                                                                <!-- DT Number Box & Button -->
+                                                                <div class="col-md-3">
+                                                                    <label for="txtViewDtNumber" class="form-label">DT Number</label>
+                                                                    <div class="input-group">
+                                                                        <input type="text" id="txtViewDtNumber" class="form-control" />
+                                                                        <button id="btnViewDtNumber"
+                                                                            class="btn btn-outline-primary">Show</button>
+                                                                    </div>
+                                                                </div>
+
+                                                                <!-- Transaction Date -->
+                                                                <div class="col-md-3">
+                                                                    <label class="form-label" for="txtViewTrDate">Transaction Date</label>
+                                                                    <input type="text" id="txtViewTrDate" class="form-control"
+                                                                        readonly />
+                                                                </div>
+
+                                                                <!-- Business Code -->
+                                                                <div class="col-md-3">
+                                                                    <label for="txtViewBssCode" class="form-label">Business Code</label>
+                                                                    <input type="text" id="txtViewBssCode" class="form-control" />
+                                                                </div>
+
+                                                                <!-- RM -->
+                                                                <div class="col-md-3">
+                                                                    <label for="txtViewRM" class="form-label">RM</label>
+                                                                    <input type="text" id="txtViewRM" class="form-control bg-light"
+                                                                        disabled />
+                                                                </div>
+
+                                                                <!-- Inv Code -->
+                                                                <div class="col-md-3">
+                                                                    <label for="txtViewInvCode" class="form-label">Inv Code</label>
+                                                                    <input type="text" id="txtViewInvCode" class="form-control bg-light"
+                                                                        disabled />
+                                                                </div>
+
+                                                                <!-- Ana Code -->
+                                                                <div class="col-md-3">
+                                                                    <label class="form-label" for="txtViewAnaCode">Ana Code</label>
+                                                                    <input type="text" id="txtViewAnaCode" class="form-control bg-light"
+                                                                        disabled />
+                                                                </div>
+
+                                                                <!-- Account Holder -->
+                                                                <div class="col-md-6">
+                                                                    <label for="txtViewAHName" class="form-label">Account Holder</label>
+                                                                    <div class="input-group">
+                                                                        <input type="text" id="txtViewAHName"
+                                                                            class="form-control font-weight-bold"
+                                                                            value="INVESTOR NAME" />
+                                                                        <button type="button" id="btnViewInvestorSearch1"
+                                                                            class="btn btn-outline-primary btn-sm"
+                                                                            data-bs-toggle="modal"
+                                                                            data-bs-target="#psmModelInvestorSearch">Search
+                                                                            Investor</button>
+                                                                    </div>
+                                                                </div>
+
+                                                                <!-- Account Holder Code -->
+                                                                <div class="col-md-3">
+                                                                    <label for="txtViewAHCode" class="form-label">A/C Holder Code</label>
+                                                                    <input type="text" id="txtViewAHCode" class="form-control"
+                                                                        disabled />
+                                                                </div>
+
+                                                                <!-- Branch Dropdown -->
+                                                                <div class="col-md-3">
+                                                                    <label for="ddlViewBranch" class="form-label">Branch</label>
+                                                                    <select id="ddlViewBranch" class="form-select">
+                                                                        <option value=""></option>
+                                                                    </select>
+                                                                </div>
+
+                                                                <!-- AMC Dropdown -->
+                                                                <div class="col-md-3">
+                                                                    <label for="txtViewAMC" class="form-label">AMC</label>
+                                                                    <select id="txtViewAMC" class="form-select">
+                                                                        <option value=""></option>
+                                                                        <option value="amc1">AMC 1</option>
+                                                                        <option value="amc2">AMC 2</option>
+                                                                    </select>
+                                                                </div>
+
+                                                                <!-- Transaction Type -->
+                                                                <div class="col-md-3">
+                                                                    <label for="ddlViewTransactionType" class="form-label">Transaction
+                                                                        Type</label>
+                                                                    <select id="ddlViewTransactionType" class="form-select" required>
+                                                                        <option value=""></option>
+                                                                        <option value="PURCHASE">PURCHASE</option>
+                                                                        <option value="SWITCH IN">SWITCH IN</option>
+                                                                    </select>
+                                                                </div>
+
+                                                                <!-- Regular/NFO Radio Buttons -->
+                                                                <div class="col-md-3">
+                                                                    <label class="form-label">Regular/NFO</label>
+                                                                    <div class="d-flex align-items-center gap-3">
+                                                                        <div class="form-check">
+                                                                            <input type="radio" id="rdbViewRegular" name="rdbViewRN"
+                                                                                class="form-check-input" value="REGULAR" checked/>
+                                                                            <label for="rdbViewRegular"
+                                                                                class="form-check-label">Regular</label>
+                                                                        </div>
+                                                                        <div class="form-check">
+                                                                            <input type="radio" id="rdbViewNFO" name="rdbViewRN"
+                                                                                class="form-check-input" value="NFO" />
+                                                                            <label for="rdbViewNFO" class="form-check-label">NFO</label>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+
+                                                                <!-- Scheme Search -->
+                                                                <div class="col-md-9">
+                                                                    <label for="txtViewScheme1" class="form-label">Scheme</label>
+                                                                    <div class="input-group">
+                                                                        <input type="text" id="txtViewScheme1" class="form-control" />
+                                                                        <input type="hidden" id="hdnViewScheme1" class="form-control" />
+                                                                        <button type="button" id="btnViewScheme1"
+                                                                            class="btn btn-outline-primary btn-sm"
+                                                                            data-bs-toggle="modal"
+                                                                            data-bs-target="#psmModalSchemeSearch" disabled>Search</button>
+                                                                    </div>
+                                                                    <input type="hidden" id="hdnViewSchemeSearchState" value="0" />
+                                                                </div>
+
+
+                                                                <!-- From Switch/STP Folio -->
+                                                                <div class="col-md-12">
+                                                                    <fieldset class="border p-2">
+                                                                        <legend class="card-title">Switch/STP</legend>
+                                                                        <div class="row">
+                                                                            <div class="col-md-6">
+                                                                                <label for="txtViewformSwitchFolio"
+                                                                                    class="form-label">From Switch/STP Folio</label>
+                                                                                <input type="text" id="txtViewformSwitchFolio"
+                                                                                    class="form-control" />
+                                                                            </div>
+                                                                            <div class="col-md-6">
+                                                                                <label for="txtViewScheme2_fromSwitch"
+                                                                                    class="form-label">From Switch/STP Scheme</label>
+                                                                                <div class="input-group">
+                                                                                    <input type="text" id="txtViewScheme2_fromSwitch" class="form-control" />
+                                                                                    <input type="hidden" id="hdnViewScheme2_fromSwitch" class="form-control" />
+                                                                                    <button type="button" id="btnViewScheme2_fromSwitch" 
+                                                                                        class="btn btn-outline-primary btn-sm"
+                                                                                        data-bs-toggle="modal"
+                                                                                        data-bs-target="#psmModalSchemeSearch">Search</button>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    </fieldset>
+                                                                </div>
+                                                            </div>
+                                                        </fieldset>
                                                     </div>
 
-                                                    <!-- Business Code -->
-                                                    <div class="col-md-2">
-                                                        <label for="txtViewBssCode" class="form-label">Business Code</label>
-                                                        <input type="text" id="txtViewBssCode" class="form-control" />
-                                                    </div>
-
-
-                                                    <!-- Inv Code -->
-                                                    <div class="col-md-2">
-                                                        <label for="txtViewInvCode" class="form-label">Inv Code</label>
-                                                        <input type="text" id="txtViewInvCode" class="form-control bg-light"
-                                                            disabled />
-                                                    </div>
-
-                                                    <!-- Ana Code -->
-                                                    <div class="col-md-2">
-                                                        <label class="form-label" for="txtViewAnaCode">Ana Code</label>
-                                                        <input type="text" id="txtViewAnaCode" class="form-control bg-light"
-                                                            disabled />
-                                                    </div>
-
-                                                    <!-- Account Holder -->
+                                                    <!-- Application And Payment Details Details -->
                                                     <div class="col-md-4">
-                                                        <label for="txtViewAHName" class="form-label">Account Holder</label>
-                                                        <div class="input-group">
-                                                            <input type="text" id="txtViewAHName"
-                                                                class="form-control font-weight-bold"
-                                                                value="INVESTOR NAME" />
-                                                            <button type="button" id="btnAddInvestorSearch1"
-                                                                class="btn btn-outline-primary btn-sm"
-                                                                data-bs-toggle="modal"
-                                                                data-bs-target="#psmModelInvestorSearch">Search
-                                                                Investor</button>
-                                                        </div>
-                                                    </div>
+                                                        <fieldset class="border p-2">
+                                                            <legend>Application And Payment Details</legend>
+                                                            <!-- <h4 class="card-title">Application And Payment Details</h4> -->
+                                                            <div class="row g-3">
+                                                                <!-- Application No -->
+                                                                <div class="col-md-4">
+                                                                    <label for="txtViewAppNo" class="form-label">Application No</label>
+                                                                    <input type="text" id="txtViewAppNo" class="form-control" />
+                                                                </div>
 
-                                                    <!-- Account Holder Code -->
-                                                    <div class="col-md-2">
-                                                        <label for="txtViewAHCode" class="form-label">A/C Holder
-                                                            Code</label>
-                                                        <input type="text" id="txtViewAHCode" class="form-control"
-                                                            disabled />
-                                                    </div>
+                                                                <!-- Folio No -->
+                                                                <div class="col-md-4">
+                                                                    <label for="txtViewFolioNo" class="form-label">Folio No</label>
+                                                                    <input type="text" id="txtViewFolioNo" class="form-control" />
+                                                                </div>
 
-                                                    <!-- Branch Dropdown -->
-                                                    <div class="col-md-2">
-                                                        <label for="ddlViewBranch" class="form-label">Branch</label>
-                                                        <select id="ddlViewBranch" class="form-select">
-                                                            <option value="">--Select Branch--</option>
-                                                        </select>
-                                                    </div>
+                                                                <!-- Amount -->
+                                                                <div class="col-md-4">
+                                                                    <label for="txtViewAmount" class="form-label">Amount</label>
+                                                                    <input type="text" id="txtViewAmount" class="form-control" />
+                                                                </div>
 
-                                                    <!-- AMC Dropdown -->
-                                                    <div class="col-md-2">
-                                                        <label for="txtViewAMC" class="form-label">AMC</label>
-                                                        <select id="txtViewAMC" class="form-select">
-                                                            <option value="">--Select AMC--</option>
-                                                            <option value="amc1">AMC 1</option>
-                                                            <option value="amc2">AMC 2</option>
-                                                        </select>
-                                                    </div>
-
-                                                    <!-- Transaction Type -->
-                                                    <div class="col-md-2">
-                                                        <label for="ddlViewTransactionType" class="form-label">Transaction
-                                                            Type</label>
-                                                        <select id="ddlViewTransactionType" class="form-select" required>
-                                                            <option value="PURCHASE">PURCHASE</option>
-                                                            <option value="SWITCH IN">SWITCH IN</option>
-                                                        </select>
-                                                    </div>
-
-                                                    <!-- Regular/NFO Radio Buttons -->
-                                                    <div class="col-md-2">
-                                                        <label class="form-label">Regular/NFO</label>
-                                                        <div class="d-flex align-items-center gap-3">
-                                                            <div class="form-check">
-                                                                <input type="radio" id="rdbAddRegular" name="rdbAddRN"
-                                                                    class="form-check-input" value="REGULAR" />
-                                                                <label for="rdbAddRegular"
-                                                                    class="form-check-label">Regular</label>
-                                                            </div>
-                                                            <div class="form-check">
-                                                                <input type="radio" id="rdbAddNFO" name="rdbAddRN"
-                                                                    class="form-check-input" value="NFO" />
-                                                                <label for="rdbAddNFO" class="form-check-label">NFO</label>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-
-                                                <!-- Application No -->
-                                                <div class="col-md-2">
-                                                    <label for="txtViewAppNo" class="form-label">Application No</label>
-                                                    <input type="text" id="txtViewAppNo" class="form-control" />
-                                                </div>
-
-                                                <!-- Folio No -->
-                                                <div class="col-md-2">
-                                                    <label for="txtViewFolioNo" class="form-label">Folio No</label>
-                                                    <input type="text" id="txtViewFolioNo" class="form-control" />
-                                                </div>
-
-                                                <!-- Amount -->
-                                                <div class="col-md-2">
-                                                    <label for="txtViewAmount" class="form-label">Amount</label>
-                                                    <input type="text" id="txtViewAmount" class="form-control" />
-                                                </div>
-
-                                                <!-- Payment Method -->
-                                                <div class="col-md-2">
-                                                    <label for="txtViewPaymentMode" class="form-label">Payment
-                                                        Method</label>
-                                                    <select id="txtViewPaymentMode" class="form-select">
-                                                        <option value="CHEQUE" selected>Cheque</option>
-                                                        <option value="DRAFT">Draft</option>
-                                                        <option value="ECS">ECS</option>
-                                                        <option value="CASH">Cash</option>
-                                                        <option value="OTHERS">Others</option>
-                                                        <option value="RTGS">RTGS</option>
-                                                        <option value="FUND_TRANSFER">Fund Transfer</option>
-                                                    </select>
-                                                </div>
+                                                                <!-- Payment Method -->
+                                                                <div class="col-md-4">
+                                                                    <label for="ddlViewPaymentMode" class="form-label">Payment
+                                                                        Method</label>
+                                                                    <select id="ddlViewPaymentMode" class="form-select">
+                                                                        <option value="CHEQUE" selected>Cheque</option>
+                                                                        <option value="DRAFT">Draft</option>
+                                                                        <option value="ECS">ECS</option>
+                                                                        <option value="CASH">Cash</option>
+                                                                        <option value="OTHERS">Others</option>
+                                                                        <option value="RTGS">RTGS</option>
+                                                                        <option value="FUND_TRANSFER">Fund Transfer</option>
+                                                                    </select>
+                                                                </div>
 
 
-                                                <!-- Payment Details  -->
-                                                <div class="col-md-2">
-                                                    <label for="txtViewChequeNo" class="form-label">Cheque No</label>
-                                                    <span class="text-danger">*</span>
-                                                    <input type="text" id="txtViewChequeNo" class="form-control" />
+                                                                <!-- Payment Details  -->
+                                                                <div class="col-md-4">
+                                                                    <label for="txtViewChequeNo" id="lblViewChequeNo" class="form-label">Cheque No</label>
+                                                                    <span class="text-danger">*</span>
+                                                                    <input type="text" id="txtViewChequeNo" class="form-control" />
 
 
-                                                </div>
+                                                                </div>
 
-                                                <!-- Payment Details  -->
-                                                <div class="col-md-2">
-                                                    <label for="txtViewChequeDate" class="form-label">Cheque
-                                                        Dated</label>
-                                                    <span class="text-danger">*</span>
-                                                    <div class="date">
-                                                        <input type="text" id="txtViewChequeDate" class="form-control" />
-                                                    </div>
-                                                </div>
+                                                                <!-- Payment Details  -->
+                                                                <div class="col-md-4">
+                                                                    <label for="txtViewChequeDate" id="lblViewChequeDate" class="form-label">Cheque
+                                                                        Dated</label>
+                                                                    <span class="text-danger">*</span>
+                                                                    <div class="date">
+                                                                        <input type="text" id="txtViewChequeDate" class="form-control" />
+                                                                    </div>
+                                                                </div>
 
-                                                <!-- Bank Name -->
-                                                <div class="col-md-2">
-                                                    <label for="ddlViewBankName" class="form-label">Bank Name</label>
-                                                    <select id="ddlViewBankName" class="form-select">
-                                                        <option value="">--Select Bank--</option>
-                                                        <option value="bank1">Bank 1</option>
-                                                        <option value="bank2">Bank 2</option>
-                                                    </select>
-                                                </div>
+                                                                <!-- Bank Name -->
+                                                                <div class="col-md-6">
+                                                                    <label for="ddlViewBankName" class="form-label">Bank Name</label>
+                                                                    <select id="ddlViewBankName" class="form-select">
+                                                                        <option value=""></option>
+                                                                        <option value="bank1">Bank 1</option>
+                                                                        <option value="bank2">Bank 2</option>
+                                                                    </select>
+                                                                </div>
 
-                                                <!-- Expenses Percentage -->
-                                                <div class="col-md-2">
-                                                    <label for="txtViewExpPer" class="form-label">Expenses%</label>
-                                                    <input type="text" id="txtViewExpPer" class="form-control"
-                                                        disabled />
-                                                </div>
+                                                                <!-- Remark -->
+                                                                <div class="col-md-6">
+                                                                    <label for="txtViewRemarks" class="form-label">Remarks</label>
+                                                                    <textarea id="txtViewRemarks" class="form-control" rows="1"></textarea>
+                                                                </div>
 
-                                                <!-- Expenses (Rs.) -->
-                                                <div class="col-md-2">
-                                                    <label for="txtViewExpRs" class="form-label">Expenses (Rs.)</label>
-                                                    <input type="text" id="txtViewExpRs" class="form-control" disabled />
-                                                </div>
+                                                                <!-- Expenses Percentage -->
+                                                                <div class="col-md-6">
+                                                                    <label for="txtViewExpPer" class="form-label">Expenses%</label>
+                                                                    <input type="text" id="txtViewExpPer" class="form-control"
+                                                                        disabled />
+                                                                </div>
 
-                                                <!-- Auto Switch On Maturity -->
-                                                <div class="col-md-2">
-                                                    <div class="form-check mt-3">
-                                                        <input type="checkbox" id="chkViewAutoSwitchOnMaturity"
-                                                            class="form-check-input" />
-                                                        <label for="chkViewAutoSwitchOnMaturity"
-                                                            class="form-check-label">Auto Switch On Maturity</label>
-                                                    </div>
-                                                </div>
+                                                                <!-- Expenses (Rs.) -->
+                                                                <div class="col-md-6">
+                                                                    <label for="txtViewExpRs" class="form-label">Expenses (Rs.)</label>
+                                                                    <input type="text" id="txtViewExpRs" class="form-control" disabled />
+                                                                </div>
 
+                                                            
+                                                                <!-- Auto Switch On Maturity -->
+                                                                <div class="col-md-6 ">
+                                                                    <div class="form-check mt-3">
+                                                                        <input type="checkbox" id="chkViewAutoSwitchOnMaturity" class="form-check-input" />
+                                                                        <label for="chkViewAutoSwitchOnMaturity" class="form-check-label">Auto Switch On Maturity</label>
+                                                                    </div>
+                                                                </div>
 
-                                                <!-- From Switch / STP Scheme -->
-                                                <div class="col-md-2 mt-4">
-                                                    <label for="txtViewSchemeSearch2_Close" class="form-label"></label>
-                                                    <div class="input-group">
-                                                        <input type="text" id="txtViewScheme3_Close"
-                                                            class="form-control" />
-                                                        <input type="hidden" id="hdnAddScheme3_Close"
-                                                            class="form-control" />
-                                                        <button id="btnAddScheme3_Close"
-                                                            class="btn btn-outline-primary btn-sm"
-                                                            data-bs-toggle="modal"
-                                                            data-bs-target="#psmModalSchemeSearch">Search</button>
-                                                    </div>
-                                                </div>
-                                                    <!-- Scheme Search -->
-                                                    <div class="col-md-2">
-                                                        <label for="txtViewScheme1" class="form-label">Scheme</label>
-                                                        <div class="input-group">
-                                                            <input type="text" id="txtViewScheme1" class="form-control" />
-                                                            <input type="hidden" id="hdnAddScheme1" class="form-control" />
-                                                            <button type="button" id="btnAddScheme1" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal"
-                                                                data-bs-target="#psmModalSchemeSearch">Search</button>
-                                                        </div>
-                                                        <input type="hidden" id="hdnSchemeSearchState" value="0" />
-                                                    </div>
-                                                    <div class="col-md-2">
-                                                        <label for="txtViewformSwitchFolio" class="form-label">From
-                                                            Switch/STP Folio</label>
-                                                        <input type="text" id="txtViewformSwitchFolio" class="form-control" />
-                                                    </div>
-                                                    <div class="col-md-2">
-                                                        <label for="txtViewformSwitchScheme" class="form-label">From
-                                                            Switch/STP Scheme</label>
-                                                        <div class="input-group">
-                                                            <input type="text" id="txtViewScheme2_fromSwitch" class="form-control" />
-                                                            <input type="hidden" id="hdnAddScheme2_fromSwitch" class="form-control" />
-                                                            <button type="button" id="btnAddScheme2_fromSwitch" class="btn btn-outline-primary btn-sm"
-                                                                data-bs-toggle="modal" data-bs-target="#psmModalSchemeSearch">Search</button>
-                                                        </div>
-                                                    </div>
-                                                    <!-- SIP/STP or Regular -->
-                                                    <div class="col-md-2">
-                                                        <label for="ddlViewSipStp" class="form-label">SIP/STP</label>
-                                                        <select id="ddlViewSipStp" class="form-select">
-                                                            <option value=""></option>
-                                            
-                                                            <option value="REGULAR">REGULAR</option>
-                                                            <option value="SIP">SIP</option>
-                                                            <option value="STP">STP</option>
-                                                        </select>
-                                                    </div>
-                                            
-                                                    <!-- Installment Type -->
-                                                    <div class="col-md-2">
-                                                        <label for="ddlViewInstallmentType" class="form-label">Installment
-                                                            Type</label>
-                                                        <select id="ddlViewInstallmentType" class="form-select" disabled>
-                                                            <option value=""></option>
-                                                            <option value="NORMAL">Normal</option>
-                                                            <option value="MICRO">Micro</option>
-                                                        </select>
-                                                    </div>
-                                            
-                                                    <!-- SIP Type -->
-                                                    <div class="col-md-2">
-                                                        <label for="ddlViewSipType" class="form-label">SIP TYPE (Sub
-                                                            SIP)</label>
-                                                        <select id="ddlViewSipType" class="form-select" disabled>
-                                                            <option value=""></option>
-                                                            <option value="N">NORMAL</option>
-                                                            <option value="Y">MICROSIP</option>
-                                                        </select>
-                                                    </div>
-                                            
-                                                    <!-- SIP Amount -->
-                                                    <div class="col-md-2">
-                                                        <label for="txtViewSipAmount" class="form-label">Sip Amount</label>
-                                                        <input type="text" id="txtViewSipAmount" class="form-control" />
-                                                    </div>
-                                            
-                                                    <!-- Frequency-->
-                                                    <div class="col-md-2">
-                                                        <label for="ddlViewFrequency" class="form-label">Frequency</label>
-                                                        <select id="ddlViewFrequency" class="form-select">
-                                                            <option value="">Select Frequency</option>
-                                                            <option value="208">Daily</option>
-                                                            <option value="173">Weekly</option>
-                                                            <option value="174">Fortnightly</option>
-                                                            <option value="175">Monthly</option>
-                                                            <option value="176">Quarterly</option>
-                                                            <option value="301">Yearly</option>
-                                                        </select>
-                                                    </div>
-                                            
-                                                    <!-- Installments Nos-->
-                                                    <div class="col-md-2">
-                                                        <label for="txtViewInstallmentsNo" class="form-label">Installments
-                                                            Nos</label>
-                                                        <input type="text" id="txtViewInstallmentsNo" class="form-control" maxlength="4" />
-                                                    </div>
-                                            
-                                                    <!-- SIP Start Date -->
-                                                    <div class="col-md-2">
-                                                        <label for="txtViewSIPStartDate" class="form-label">SIP Start
-                                                            Date</label>
-                                                        <div class="date">
-                                                            <input type="text" id="txtViewSIPStartDate" class="form-control" />
-                                                        </div>
-                                                    </div>
-                                            
-                                                    <!-- SIP End Date -->
-                                                    <div class="col-md-2">
-                                                        <label for="txtViewSIPEndDate" class="form-label">SIP End
-                                                            Date</label>
-                                                        <div class="date">
-                                                            <input type="text" id="txtViewSIPEndDate" class="form-control" />
-                                                        </div>
-                                                    </div>
-                                            
-                                                    <!-- Fresh/Renewal Radio Buttons  -->
-                                                    <div class="col-md-2">
-                                                        <div class="d-flex align-items-between gap-3 mt-4">
-                                                            <div class="form-check">
-                                                                <input type="radio" id="rdbViewFresh" name="rdbViewFreshRenewal" class="form-check-input"
-                                                                    value="FRESH" checked />
-                                                                <label for="rdbViewFresh" class="form-check-label">Fresh</label>
-                                                            </div>
-                                                            <div class="form-check">
-                                                                <input type="radio" id="rdbViewRenewal" name="rdbViewFreshRenewal" class="form-check-input"
-                                                                    value="RENEWAL" />
-                                                                <label for="rdbViewRenewal" class="form-check-label">Renewal</label>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                            
-                                                    <!-- COB, SWP, Freedom SIP, 99 Years -->
-                                                    <div class="col-md-5">
-                                                        <div class="d-flex align-items-between gap-3 mt-4">
-                                                            <div class="col-md-2">
-                                                                <div class="form-check">
-                                                                    <input type="checkbox" id="chkViewCOBCase" name="chkViewCOB99Case" class="form-check-input" />
-                                                                    <label for="chkViewCOBCase" class="form-check-label">COB
-                                                                        Case</label>
+                                                                <!-- Reco Status with danger asterisk -->
+                                                                <div class="col-md-6">
+                                                                    <div class="form-check mt-3">
+                                                                        <label for="txtViewRecoStatus" class="form-label text-uppercase text-danger">Reco Status</label>
+                                                                    </div>
+                                                                </div>
+
+                                                                <!-- Auto Switch Scheme -->
+                                                                <div class="col-md-12">
+                                                                    <label for="txtViewScheme3_Close" class="form-label"></label>
+                                                                    <div class="input-group">
+                                                                        <input type="text" id="txtViewScheme3_Close"
+                                                                            class="form-control" />
+                                                                        <input type="hidden" id="hdnViewScheme3_Close"
+                                                                            class="form-control" />
+                                                                        <button id="btnViewScheme3_Close"
+                                                                            class="btn btn-outline-primary btn-sm"
+                                                                            data-bs-toggle="modal"
+                                                                            data-bs-target="#psmModalSchemeSearch">Search</button>
+                                                                    </div>
                                                                 </div>
                                                             </div>
-                                                            <div class="col-md-2">
-                                                                <div class="form-check">
-                                                                    <input type="checkbox" id="chkViewSWPCase" name="chkViewCOB99Case" class="form-check-input" />
-                                                                    <label for="chkViewSWPCase" class="form-check-label">SWP
-                                                                        Case</label>
-                                                                </div>
-                                                            </div>
-                                                            <div class="col-md-3">
-                                                                <div class="form-check">
-                                                                    <input type="checkbox" id="chkViewFreedomSIP" name="chkViewCOB99Case"
-                                                                        class="form-check-input" />
-                                                                    <label for="chkViewFreedomSIP" class="form-check-label">Freedom SIP</label>
-                                                                </div>
-                                                            </div>
-                                                            <div class="col-md-4">
-                                                                <div class="form-check">
-                                                                    <input type="radio" id="chkView99Years" name="chkViewCOB99Case" class="form-check-input" />
-                                                                    <label for="chkView99Years" class="form-check-label">OR
-                                                                        99 Years or more</label>
-                                                                </div>
-                                                            </div>
-                                                        </div>
+                                                        </fieldset>
+
                                                     </div>
+
+                                                    <!-- SIP Details -->
+                                                    <div class="col-md-12">
+                                                        <fieldset class="border p-2">
+                                                            <legend class="card-title">SIP Details</legend>
+                                                            <div class="row g-3">
+
+                                                                <!-- SIP/STP or Regular -->
+                                                                <div class="col-md-2">
+                                                                    <label for="ddlViewSipStp" class="form-label">SIP/STP</label>
+                                                                    <select id="ddlViewSipStp" class="form-select">
+                                                                        <option value=""></option>
+                                                                        <option value="REGULAR">REGULAR</option>
+                                                                        <option value="SIP">SIP</option>
+                                                                        <option value="STP">STP</option>
+                                                                    </select>
+                                                                </div>
+
+                                                                <!-- Installment Type -->
+                                                                <div class="col-md-2">
+                                                                    <label for="ddlViewInstallmentType" class="form-label">Installment
+                                                                        Type</label>
+                                                                    <select id="ddlViewInstallmentType" class="form-select">
+                                                                        <option value=""></option>
+                                                                        <option value="NORMAL">NORMAL</option>
+                                                                        <option value="MICRO">MICRO</option>
+                                                                    </select>
+                                                                </div>
+
+                                                                <!-- SIP Type -->
+                                                                <div class="col-md-2">
+                                                                    <label for="ddlViewSipType" class="form-label">SIP TYPE (Sub
+                                                                        SIP)</label>
+                                                                    <select id="ddlViewSipType" class="form-select">
+                                                                        <option value=""></option>
+                                                                        <option value="N">NORMAL</option>
+                                                                        <option value="Y">MICROSIP</option>
+                                                                    </select>
+                                                                </div>
+
+                                                                <!-- SIP Amount -->
+                                                                <div class="col-md-2">
+                                                                    <label for="txtViewSipAmount" class="form-label">SIP Amount</label>
+                                                                    <input type="text" id="txtViewSipAmount" class="form-control" />
+                                                                </div>
+
+                                                                <!-- Drop Date -->
+                                                                <div class="col-md-2">
+                                                                    <label for="txtViewDropDate" class="form-label">Drop Date</label>
+                                                                    <input type="text" id="txtViewDropDate" class="form-control" />
+                                                                </div>
+
+                                                                <!-- Frequency-->
+                                                                <div class="col-md-2">
+                                                                    <label for="ddlViewFrequency" class="form-label">Frequency</label>
+                                                                    <select id="ddlViewFrequency" class="form-select">
+                                                                        <option value=""></option>
+                                                                        <option value="208">Daily</option>
+                                                                        <option value="173">Weekly</option>
+                                                                        <option value="174">Fortnightly</option>
+                                                                        <option value="175">Monthly</option>
+                                                                        <option value="176">Quarterly</option>
+                                                                        <option value="301">Yearly</option>
+                                                                    </select>
+                                                                </div>
+
+                                                                <!-- Installments Nos-->
+                                                                <div class="col-md-2">
+                                                                    <label for="txtViewInstallmentsNo" class="form-label">Installments
+                                                                        Nos</label>
+                                                                    <input type="text" id="txtViewInstallmentsNo" class="form-control"
+                                                                        maxlength="4" />
+                                                                </div>
+
+                                                                <!-- SIP Start Date -->
+                                                                <div class="col-md-2">
+                                                                    <label for="txtViewSIPStartDate" class="form-label">SIP Start Date</label>
+                                                                    <div class="date">
+                                                                        <input type="text" id="txtViewSIPStartDate" class="form-control" />
+                                                                    </div>
+                                                                </div>
+
+                                                                <!-- SIP End Date -->
+                                                                <div class="col-md-2">
+                                                                    <label for="txtViewSIPEndDate" class="form-label">SIP End Date</label>
+                                                                    <div class="date">
+                                                                        <input type="text" id="txtViewSIPEndDate" class="form-control" />
+                                                                    </div>
+                                                                </div>
+
+                                                                <!-- Fresh/Renewal Radio Buttons  -->
+                                                                <div class="col-md-2">
+                                                                    <div class="d-flex align-items-between gap-3 mt-4  " >
+                                                                        <div class="form-check">
+                                                                            <input type="radio" id="rdbViewFresh"
+                                                                                name="rdbViewFreshRenewal" class="form-check-input"
+                                                                                value="FRESH" disabled />
+                                                                            <label for="rdbViewFresh"
+                                                                                class="form-check-label">Fresh</label>
+                                                                        </div>
+                                                                        <div class="form-check">
+                                                                            <input type="radio" id="rdbViewRenewal"
+                                                                                name="rdbViewFreshRenewal" class="form-check-input"
+                                                                                value="RENEWAL" disabled />
+                                                                            <label for="rdbViewRenewal"
+                                                                                class="form-check-label">Renewal</label>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+
+                                                                <!-- COB, SWP, Freedom SIP, 99 Years -->
+                                                                <div class="col-md-4">
+                                                                    <div class="d-flex align-items-between gap-3 mt-3">
+                                                                        <div class="col-md-2">
+                                                                            <div class="form-check">
+                                                                                <input type="checkbox" id="chkViewCOBCase"
+                                                                                    name="chkViewCOB99Case" class="form-check-input" />
+                                                                                <label for="chkViewCOBCase" class="form-check-label">COB
+                                                                                    Case</label>
+                                                                            </div>
+                                                                        </div>
+                                                                        <div class="col-md-2">
+                                                                            <div class="form-check">
+                                                                                <input type="checkbox" id="chkViewSWPCase"
+                                                                                    name="chkViewCOB99Case" class="form-check-input" />
+                                                                                <label for="chkViewSWPCase" class="form-check-label">SWP
+                                                                                    Case</label>
+                                                                            </div>
+                                                                        </div>
+                                                                        <div class="col-md-3">
+                                                                            <div class="form-check">
+                                                                                <input type="checkbox" id="chkViewFreedomSIP"
+                                                                                    name="chkViewCOB99Case" class="form-check-input" />
+                                                                                <label for="chkViewFreedomSIP"
+                                                                                    class="form-check-label">Freedom SIP</label>
+                                                                            </div>
+                                                                        </div>
+                                                                        <div class="col-md-4">
+                                                                            <div class="form-check">
+                                                                                <input type="radio" id="chkView99Years"
+                                                                                    name="chkViewCOB99Case" class="form-check-input" />
+                                                                                <label for="chkView99Years" class="form-check-label">OR
+                                                                                    99 Years or more</label>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </fieldset>
+                                                    </div>
+
+                                                    <!-- PAN Details -->
+                                                    <div class="col-md-4 d-none">
+                                                        <fieldset class="border p-2">
+                                                            <legend>PAN Details</legend>
+                                                            <div class="col-md-12">
+                                                                <div class="d-flex">
+                                                                    <label for="txtViewPan2" class="form-label" style="width: 120px;">PAN
+                                                                        No</label>
+                                                                    <input type="text" id="txtViewPan2" class="form-control"
+                                                                        maxlength="10" />
+                                                                </div>
+                                                            </div>
+                                                        </fieldset>
+                                                    </div>
+
+                                                    <!-- Action Buttons -->
+                                                    <div class="col-md-12">
+                                                        <fieldset class="border p-2">
+                                                            <legend>Action </legend>
+                                                            <!-- Action Buttons -->
+                                                            <div class="col-md-12">
+                                                                <div class="d-flex align-items-md-center flex-wrap gap-3">
+                                                                    <button id="btnViewTransaction"
+                                                                        class="btn btn-outline-primary">Modify</button>
+                                                                    <button id="btnViewPrintAR" class="btn btn-outline-primary"
+                                                                        disabled>Print Search AR</button>
+                                                                    <button id="btnViewReset"
+                                                                        class="btn btn-outline-primary">Reset</button>
+                                                                    <button id="btnViewTranCancel" class="btn btn-outline-primary"
+                                                                        disabled>Tran Cancel</button>
+                                                                    <button id="btnViewViewLog"
+                                                                        class="btn btn-outline-primary">View Log</button>
+                                                                    <button id="btnViewExit"
+                                                                        class="btn btn-outline-primary">Exit</button>
+                                                                </div>
+                                                            </div>
+                                                        </fieldset>
+                                                    </div>
+
                                                 </div>
                                             </div>
-
                                         </fieldset>
                                     </div>
                                 </div>

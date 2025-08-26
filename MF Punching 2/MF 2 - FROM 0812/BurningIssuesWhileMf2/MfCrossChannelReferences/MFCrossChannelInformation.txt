@@ -1,0 +1,11 @@
+
+MF CROSS CHANNEL - VB TABLES, FUNCTIONS, PROCEDURES
+
+TABLES:
+tb_doc_upload
+cross_channel_investor_info
+
+
+FUNCTIONS:
+fn_check_for_approval_all
+PRC_VALIDATE_CROSS_CHNL_INFO
