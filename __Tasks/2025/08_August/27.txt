@@ -1,1 +1,7 @@
 2025-08-27 - Wednesday
+
+git add WM/Controllers/PsmController.cs
+git add WM/Controllers/sip_master_reconciliationController.cs
+git add WM/Masters/MF_Trail.aspx.cs
+git add WM/Masters/MfManualReconciliation.aspx
+git add WM/Masters/sip_master_reconciliation.aspx
