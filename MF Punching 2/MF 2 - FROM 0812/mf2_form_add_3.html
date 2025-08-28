@@ -264,6 +264,18 @@
             makeBootstrapModalsDraggable();
             managePersistentModalSession();
 
+            function handleSchemeTranType(dropdownId) {
+                var value = document.querySelector(dropdownId).value;
+
+                if (!value || value.trim() === "") {
+                    alert("Please select a transaction type before searching.");
+                    return false; // ❌ stop modal open
+                }
+
+                return true; // ✅ allow modal open
+            }
+        
+
             function handlePaymentChange(ddlChe, lblCheNo, lblCheDt, txtChecValue, txtCheDt) {
                     $(ddlChe).on("change", function () {
                         var selected = $(this).val();
@@ -450,6 +462,8 @@
 
 <body>
 
+    
+
     <div class="container-fluid py-4">
         <div class="page-header mb-4">
             <h3 class="page-title">MF Trans Punching</h3>
@@ -499,6 +513,16 @@
                                                             data-bs-toggle="modal">
                                                             Investor Add/Update </button>
                                                     </div>
+
+                                                    <div class="col-md-3">
+                                                        <button type="button" id="btnAddCrossDuplicateCheck"
+                                                            data-bs-target="#psmModalDuplicateCheck"
+                                                            class="btn btn-outline-primary btn-sm"
+                                                            data-bs-toggle="modal">
+                                                            Duplicate Check </button>
+                                                    </div>
+
+
                                                 </div>
 
                                                 <!-- DT Number Box & Button -->
@@ -621,6 +645,7 @@
                                                         <input type="text" id="txtAddScheme1" class="form-control" />
                                                         <input type="hidden" id="hdnAddScheme1" class="form-control" />
                                                         <button type="button" id="btnAddScheme1"
+                                                        onclick="return handleSchemeTranType(this, '#ddlAddTransactionType')"
                                                             class="btn btn-outline-primary btn-sm"
                                                             data-bs-toggle="modal"
                                                             data-bs-target="#psmModalSchemeSearch">Search</button>
@@ -1066,8 +1091,8 @@
 
 
                                                         <!-- Search Button -->
-                                                        <div class="col-md-2 mt-5">
-                                                            <button id="btnSearchAR" style="width: 100px;"
+                                                        <div class="col-md-1 mt-5">
+                                                            <button id="btnSearchAR" style="width: 100%;"
                                                                 class="btn btn-primary">View</button>
                                                         </div>
 
@@ -1082,9 +1107,8 @@
                                                             </div>
                                                         </div>
 
-                                                        <div class="col-md-2">
-                                                            <p><span class="text-danger">*</span> To Search any data
-                                                                click on the column to be searched and press Find</p>
+                                                        <div class="col-md-6">
+                                                            <p><span class="text-danger">*</span> To Search any data click on the column to be searched and press Find</p>
                                                         </div>
                                                     </div>
 
@@ -1952,7 +1976,7 @@
 
                 <!-- Header -->
                 <div class="modal-header">
-                    <h5 class="modal-title">Investor Detail</h5>
+                    <h5 class="modal-title">Investor Details</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
 
@@ -2044,8 +2068,67 @@
         </div>
     </div>
 
+    <!-- Duplicate Check Alert Modal -->
+    <div class="modal fade" id="psmModalDuplicateCheck" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
 
+                <!-- Header -->
+                <div class="modal-header">
+                    <h5 class="modal-title">Duplicate Check Alert</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
 
+                <!-- Body -->
+                <div class="modal-body">
+                    <!-- Message / Info -->
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <label id="psmDuplicateCheck_lblMessage" class="text-primary d-block"></label>
+                        </div>
+                    </div>
+
+                    <!-- Grid -->
+                    <div class="table-responsive" style="max-height: 400px; overflow-y: auto; width: 100%;">
+                        <table id="psmDuplicateCheck_gv" class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th style="width: 250px;">CLIENT_CODE</th>
+                                    <th style="width: 250px;">CLIENT_NAME</th>
+                                    <th style="width: 250px;">RM_NAME</th>
+                                    <th style="width: 250px;">PAN</th>
+                                    <th style="width: 250px;">EMAIL</th>
+                                    <th style="width: 250px;">MOBILE</th>
+                                    <th style="width: 250px;">BRANCH</th>
+                                    <th style="width: 250px;">ZONE</th>
+                                    <th style="width: 250px;">REGION</th>
+                                    <th style="width: 250px;">CHANNEL</th>
+                                    <th style="width: 250px;">REMARK</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td colspan="10" class="text-center">No data found</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- No Records -->
+                    <div id="psmDuplicateCheck_divNoRec" class="d-none">
+                        <h5 class="text-danger">No Records Found</h5>
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="modal-footer justify-content-center">
+                    <button id="psmDuplicateCheck_btnContinue" class="btn btn-primary btn-sm me-2">Continue & Save</button>
+                    <button id="psmDuplicateCheck_btnCancel" class="btn btn-primary btn-sm">Cancel</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
 
     <!-- JavaScript Libraries -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -2055,18 +2138,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Pikaday/1.8.2/css/pikaday.min.css">
 
 
-    <script>
-        $(document).ready(function () {
-            // Initialize datepicker
-            var picker = new Pikaday({
-                field: document.getElementById('transactionDate'),
-                format: 'YYYY-MM-DD',
-                onSelect: function (date) {
-                    console.log(date);
-                }
-            });
-        });
-    </script>
+ 
 </body>
 
 </html>

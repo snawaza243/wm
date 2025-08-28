@@ -1,0 +1,35 @@
+CREATE OR REPLACE PROCEDURE PSM_MF2_GET_SCHEMES_BY_AMC (
+    P_AMC_NAME   IN  VARCHAR2,
+    P_RESULT     OUT SYS_REFCURSOR
+) AS
+    V_AMC_CODE   VARCHAR2(100);
+    V_QUERY      VARCHAR2(4000);
+BEGIN
+    -- Try to find MUT_CODE from MUT_FUND
+    BEGIN
+        SELECT MUT_CODE INTO V_AMC_CODE
+        FROM MUT_FUND
+        WHERE UPPER(TRIM(MUT_NAME)) = UPPER(TRIM(P_AMC_NAME));
+
+        -- If found, query SCHEME_INFO
+        V_QUERY := 'SELECT SCH_CODE, SCH_NAME FROM SCHEME_INFO WHERE MUT_CODE = ''' || V_AMC_CODE || ''' ORDER BY SCH_NAME';
+    EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+            -- Try to find ISS_CODE from ISS_MASTER
+            BEGIN
+                SELECT ISS_CODE INTO V_AMC_CODE
+                FROM ISS_MASTER
+                WHERE UPPER(TRIM(ISS_NAME)) = UPPER(TRIM(P_AMC_NAME));
+
+                -- If found, query OTHER_PRODUCT
+                V_QUERY := 'SELECT OSCH_CODE AS SCH_CODE, OSCH_NAME AS SCH_NAME FROM OTHER_PRODUCT WHERE ISS_CODE = ''' || V_AMC_CODE || ''' ORDER BY OSCH_NAME';
+            EXCEPTION
+                WHEN NO_DATA_FOUND THEN
+                    -- No matching AMC found
+                    V_QUERY := 'SELECT NULL AS SCH_CODE, NULL AS SCH_NAME FROM DUAL WHERE 1=0';
+            END;
+    END;
+
+    -- Return result
+    OPEN P_RESULT FOR V_QUERY;
+END PSM_MF2_GET_SCHEMES_BY_AMC;

@@ -2,6 +2,8 @@ Public searchschflag As Integer
 Private Sub cmdExit_Click()
     Unload Me
 End Sub
+
+
 Private Sub cmdGo_Click()
 Dim rsFind As New ADODB.Recordset
 Dim strMF As String
@@ -60,6 +62,8 @@ Dim i As Integer
         End If
         Set rsFind = Nothing
 End Sub
+
+
 Private Sub cmdSelect_Click()
     msfgSchemes_DblClick
 End Sub
