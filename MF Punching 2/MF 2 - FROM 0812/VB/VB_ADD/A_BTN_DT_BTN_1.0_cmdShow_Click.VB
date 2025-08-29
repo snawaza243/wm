@@ -117,6 +117,8 @@ Dim sql As String
             sql = "Select INVESTOR_name,INV_code,a.address1,a.address2,c.city_name,b.Branch_name,DECODE(a.client_type,'RELIGARE','RELIGARE',NULL),e.rm_name,'',a.pan " & _
                     "FROM Branch_master b,EMPLOYEE_MASTER E,investor_master a,City_master c where  E.source=b.branch_code AND a.RM_CODE=E.RM_CODE AND a.city_id=C.city_id(+) " & _
                     "and INVESTOR_name IS NOT NULL AND b.branch_code<>10010226 AND b.branch_code<>10070257 and a.inv_code=" & rsGetDocPath("Inv_code")
+            
+            
             rs_get_invsrc.open sql, MyConn, adOpenForwardOnly
                     
             MyLoggedUserid = SqlRet("select loggeduserid from client_test where client_codekyc=" & rsGetDocPath("Inv_code") & "")
@@ -135,6 +137,7 @@ Dim sql As String
                End If
                End If
             End If
+            
             If frmtransactionmf.SSTab1.Tab = 0 Then
                 frmtransactionmf.TxtClientCodeA = Mid(rsGetDocPath("Inv_code"), 1, 8)
                 frmtransactionmf.Label32.Caption = rsGetDocPath("Inv_code")
