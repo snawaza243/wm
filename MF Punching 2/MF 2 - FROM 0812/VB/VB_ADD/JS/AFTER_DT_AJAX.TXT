@@ -1,0 +1,37 @@
+let response = JSON.parse(res.d);
+
+    if (response.success && response.message.startsWith("SUCCESS:")) {
+        alert("✅ " + response.message);
+
+        if (response.data) {
+            if (response.index === '0') {
+                onIndex0DataPopulate(response.data);
+            } else if (response.index === '1') {
+                onIndex1DataPopulate(response.data);
+            }
+        }
+    } else {
+        alert("❌ " + response.message);
+    }
+
+
+
+    let response = JSON.parse(res.d);
+
+if (response.success) {
+    alert("✅ " + response.message);
+
+    // Example: Populate fields dynamically
+    if (response.data) {
+        $('#lblBusiCode').text(response.data.VA_BUSI_CODE || '');
+        $('#lblAmc').text(response.data.VA_AMC || '');
+        $('#lblScheme').text(response.data.VA_SCH_NAME || '');
+    }
+
+    // If popup trigger is required
+    if (response.message.includes("OPEN_POPUP")) {
+        openCustomPopup(response.data);
+    }
+} else {
+    alert("❌ " + response.message);
+}

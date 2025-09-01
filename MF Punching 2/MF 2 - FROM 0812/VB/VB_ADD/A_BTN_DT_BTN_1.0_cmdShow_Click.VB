@@ -126,15 +126,15 @@ Dim sql As String
             If MyLoggedUserid = "PROC" Then
                MyUpdProc = SqlRet("select NVL(UPD_PROC,'N') from client_test where client_codekyc=" & rsGetDocPath("Inv_code") & " and dob is not null")
                If (Mid(rsGetDocPath("Inv_code"), 1, 1) <> 3) Then
-               If MyUpdProc = "N" Or MyUpdProc = "0" Then
-                  MsgBox "Some Mandatory Information Needs To Be Filled Before Punching Any Transaction Of This Account", vbInformation
-                  Unload Me
-                  frmactopen.Show
-                  frmactopen.ZOrder
-                  frmactopen.txtclientcode = MyMainCode
-                  frmactopen.cmdview_Click
-                  Exit Sub
-               End If
+                    If MyUpdProc = "N" Or MyUpdProc = "0" Then
+                        MsgBox "Some Mandatory Information Needs To Be Filled Before Punching Any Transaction Of This Account", vbInformation
+                        Unload Me
+                        frmactopen.Show
+                        frmactopen.ZOrder
+                        frmactopen.txtclientcode = MyMainCode
+                        frmactopen.cmdview_Click
+                        Exit Sub
+                    End If
                End If
             End If
             
@@ -183,17 +183,17 @@ Dim sql As String
             End If
             
         Else
-                frmtransactionmf.TxtClientCodeA = ""
-                frmtransactionmf.Label32.Caption = ""
-                frmtransactionmf.txtInvestorA = ""
-                If Mid(rsGetDocPath("Inv_code"), 1, 1) = "4" Then
-                    frmtransactionmf.TxtPanA = ""
-                    frmtransactionmf.TxtBusiCodeA = ""
-                    frmtransactionmf.TxtAcHolderA = ""
-                Else
-                    frmtransactionmf.TxtPanA = ""
-                    frmtransactionmf.TxtBusiCodeA = ""
-                End If
+            frmtransactionmf.TxtClientCodeA = ""
+            frmtransactionmf.Label32.Caption = ""
+            frmtransactionmf.txtInvestorA = ""
+            If Mid(rsGetDocPath("Inv_code"), 1, 1) = "4" Then
+                frmtransactionmf.TxtPanA = ""
+                frmtransactionmf.TxtBusiCodeA = ""
+                frmtransactionmf.TxtAcHolderA = ""
+            Else
+                frmtransactionmf.TxtPanA = ""
+                frmtransactionmf.TxtBusiCodeA = ""
+            End If
         
         End If
         
