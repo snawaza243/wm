@@ -1,0 +1,61 @@
+CREATE OR REPLACE PROCEDURE WEALTHMAKER.PSM_LOG_COUNTRY_STATE_CITY(
+    P_FOR       IN VARCHAR2, -- 'COUNTRY_LIST', 'STATE_LIST', 'CITY_LIST'
+    P_BY        IN VARCHAR2, -- 'BY_COUNTRY', 'BY_STATE', 'BY_CITY'
+    P_BY_VALUE  IN VARCHAR2, -- filter value
+    P_LOG_ID    IN VARCHAR2,
+    P_ROLE_ID   IN VARCHAR2,
+    P_CURSOR    OUT SYS_REFCURSOR
+) IS
+    V_QUERY VARCHAR2(4000);
+BEGIN
+    IF P_FOR = 'COUNTRY_LIST' THEN
+        V_QUERY := 'SELECT DISTINCT C.COUNTRY_ID, C.COUNTRY_NAME
+                    FROM COUNTRY_MASTER C';
+
+        IF P_BY = 'BY_STATE' AND P_BY_VALUE IS NOT NULL THEN
+            V_QUERY := V_QUERY || ' JOIN STATE_MASTER S ON C.COUNTRY_ID = S.COUNTRY_CODE
+                                    WHERE S.STATE_ID = '''||P_BY_VALUE||'''';
+        ELSIF P_BY = 'BY_CITY' AND P_BY_VALUE IS NOT NULL THEN
+            V_QUERY := V_QUERY || ' JOIN STATE_MASTER S ON C.COUNTRY_ID = S.COUNTRY_CODE
+                                    JOIN CITY_MASTER CI ON S.STATE_ID = CI.STATE_ID
+                                    WHERE CI.CITY_ID = '''||P_BY_VALUE||'''';
+        END IF;
+
+        V_QUERY := V_QUERY || ' ORDER BY C.COUNTRY_NAME';
+
+    ELSIF P_FOR = 'STATE_LIST' THEN
+        V_QUERY := 'SELECT DISTINCT S.STATE_ID, S.STATE_NAME, S.COUNTRY_CODE
+                    FROM STATE_MASTER S';
+
+        IF P_BY = 'BY_COUNTRY' AND P_BY_VALUE IS NOT NULL THEN
+            V_QUERY := V_QUERY || ' WHERE S.COUNTRY_CODE = '''||P_BY_VALUE||'''';
+        ELSIF P_BY = 'BY_CITY' AND P_BY_VALUE IS NOT NULL THEN
+            V_QUERY := V_QUERY || ' JOIN CITY_MASTER CI ON S.STATE_ID = CI.STATE_ID
+                                    WHERE CI.CITY_ID = '''||P_BY_VALUE||'''';
+        END IF;
+
+        V_QUERY := V_QUERY || ' ORDER BY S.STATE_NAME';
+
+    ELSIF P_FOR = 'CITY_LIST' THEN
+        V_QUERY := 'SELECT DISTINCT CI.CITY_ID, CI.CITY_NAME, CI.STATE_ID
+                    FROM CITY_MASTER CI';
+
+        IF P_BY = 'BY_COUNTRY' AND P_BY_VALUE IS NOT NULL THEN
+            V_QUERY := V_QUERY || ' JOIN STATE_MASTER S ON CI.STATE_ID = S.STATE_ID
+                                    WHERE S.COUNTRY_CODE = '''||P_BY_VALUE||'''';
+        ELSIF P_BY = 'BY_STATE' AND P_BY_VALUE IS NOT NULL THEN
+            V_QUERY := V_QUERY || ' WHERE CI.STATE_ID = '''||P_BY_VALUE||'''';
+        END IF;
+
+        V_QUERY := V_QUERY || ' ORDER BY CI.CITY_NAME';
+
+    ELSE
+        -- default case
+        V_QUERY := 'SELECT ''INVALID P_FOR'' AS MSG FROM DUAL';
+    END IF;
+
+    -- open the cursor with final query
+    OPEN P_CURSOR FOR V_QUERY;
+
+END;
+/
