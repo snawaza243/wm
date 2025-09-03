@@ -76,19 +76,24 @@ BEGIN
     -- Email Validation
     IF P_EMAIL IS NOT NULL THEN
         IF UPPER(P_EMAIL) NOT IN ('NOT AVAILABLE', 'N/A', 'N A', 'NILL', 'NONE', 'N-A' ) THEN
-            OPEN P_CURSOR FOR SELECT 'Invalid Email Format' msg FROM DUAL;
-            RETURN;
-        ELSE
-            SELECT COUNT(EMAIL) 
-            INTO V_CHECK_DUPLICATE 
-            FROM investor_master 
-            WHERE UPPER(TRIM(EMAIL)) = UPPER(TRIM(P_EMAIL)) 
-            AND inv_code NOT LIKE '%' || SUBSTR(P_INV_CODE,1,8) || '%';
+            DECLARE
+                ISVALIDEMAIL NUMBER;
+            BEGIN                
+                ISVALIDEMAIL := VALIDATE_EMAIL(UPPER(P_EMAIL));
+                IF ISVALIDEMAIL = 0 THEN
+                    OPEN P_CURSOR FOR SELECT 'Invalid Email Format' AS msg FROM DUAL; 
+                    RETURN;
 
-            IF V_CHECK_DUPLICATE > 0 THEN
-                OPEN P_CURSOR FOR SELECT 'Email already present!' msg FROM DUAL;
-                RETURN;
-            END IF;
+                ELSIF ISVALIDEMAIL > 0 THEN
+                    SELECT COUNT(EMAIL) INTO V_CHECK_DUPLICATE 
+                    FROM investor_master WHERE UPPER(TRIM(EMAIL)) = UPPER(TRIM(P_EMAIL)) AND inv_code NOT LIKE '%' || SUBSTR(P_INV_CODE,1,8) || '%';
+
+                    IF V_CHECK_DUPLICATE > 0 THEN
+                        OPEN P_CURSOR FOR SELECT 'Email already present!' msg FROM DUAL;
+                        RETURN;
+                    END IF;
+                END IF;
+            END;
         END IF;
     END IF;
 

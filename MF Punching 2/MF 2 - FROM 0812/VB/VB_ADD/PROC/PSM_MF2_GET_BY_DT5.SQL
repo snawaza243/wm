@@ -494,12 +494,7 @@ BEGIN
 
         -- Cross-channel validation
         BEGIN
-            WEALTHMAKER.PRC_VALIDATE_CROSS_CHNL_INFO(
-                P_COMMON_ID, 
-                V_INV_CODE, 
-                P_LOGIN_ID, 
-                V_CROSS_CHANEL_COUNT
-            );
+            WEALTHMAKER.PRC_VALIDATE_CROSS_CHNL_INFO(P_COMMON_ID, V_INV_CODE, P_LOGIN_ID, V_CROSS_CHANEL_COUNT);
             
             IF V_CROSS_CHANEL_COUNT > 0 THEN
                 V_RETURN_MESSAGE := 'SUCCESS:OPEN_POPUP:CROSS_CHANNEL_VALIDATION';
