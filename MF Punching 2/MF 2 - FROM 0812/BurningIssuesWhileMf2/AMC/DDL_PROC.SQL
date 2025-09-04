@@ -5,6 +5,7 @@ AS
 BEGIN
 
     OPEN p_cursor FOR 
+    /*
         select distinct MUT_CODE, mut_name
             from (
             SELECT OSCH_CODE SCH_CODE,OSCH_NAME SCH_NAME,LONGNAME SHORT_NAME,NAME,ISS_NAME MUT_NAME, I.ISS_CODE AS MUT_CODE 
@@ -18,5 +19,28 @@ BEGIN
             AND S.MUT_CODE=M.MUT_CODE AND M.MUT_CODE NOT IN ('MF001','MF036','MF002','MF013','MF039','MF029','MF027','MF035','MF020') 
             AND S.SCH_CODE IN (SELECT SCH_CODE FROM MP_SCHEME_MASTER SM WHERE SM.ACTIVE_STATUS='Active' )  
             )order by mut_name;
+            
+    */
+    
+    
+    -- NEW ON03-09-2025
+    SELECT DISTINCT MUT_NAME, MUT_CODE 
+        FROM (
+            SELECT OSCH_CODE SCH_CODE, OSCH_NAME SCH_NAME, LONGNAME, NAME, ISS_NAME MUT_NAME, I.ISS_CODE MUT_CODE 
+            FROM OTHER_PRODUCT O, PRODUCT_MASTER P, ISS_MASTER I 
+            WHERE 1=1--OSCH_CODE = 'OP#14220' 
+              AND O.PROD_CLASS_CODE = P.PROD_CODE 
+              AND O.ISS_CODE = I.ISS_CODE 
+              AND (I.BRANCH_CODE <> 'N' OR I.BRANCH_CODE IS NULL) 
+              AND (O.FLAG <> 'N' OR O.FLAG IS NULL)
+            UNION ALL
+            SELECT S.SCH_CODE, S.SCH_NAME, S.SHORT_NAME, 'MF' NAME, M.MUT_NAME, M.MUT_CODE 
+            FROM SCHEME_INFO S, MUT_FUND M 
+            WHERE 1=1--S.SCH_CODE = 'OP#14220' 
+              AND S.MUT_CODE = M.MUT_CODE 
+              AND M.MUT_CODE NOT IN ('MF001','MF036','MF002','MF013','MF039','MF029','MF027','MF035','MF020') 
+              AND S.SCH_CODE IN (SELECT SCH_CODE FROM MP_SCHEME_MASTER SM WHERE SM.ACTIVE_STATUS = 'Active')
+        ) order by mut_name;
+
 END GetAMCList;
 /

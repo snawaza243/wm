@@ -1,206 +1,187 @@
-CREATE OR REPLACE PROCEDURE PSMM_INV_ADD_UP_SET_DATA (
-    P_INV_CODE        IN VARCHAR2,
-    P_MOBILE          IN VARCHAR2,
-    P_PAN             IN VARCHAR2,
-    P_EMAIL           IN VARCHAR2,
-    P_AADHAR          IN VARCHAR2,
-    P_ADDRESS1        IN VARCHAR2,
-    P_ADDRESS2        IN VARCHAR2,
-    P_PINCODE         IN VARCHAR2,
-    P_CITY_ID         IN VARCHAR2,
-    P_STATE_ID        IN VARCHAR2,
-    P_DOB             IN VARCHAR2,
-    P_LOGIN           IN VARCHAR2,
-    P_ROLE            IN VARCHAR2,
-    P_CURSOR          OUT SYS_REFCURSOR
-) AS
+CREATE OR REPLACE PROCEDURE WEALTHMAKER.PSMM_INV_ADD_UP_SET_DATA(
+    P_INV_CODEX     VARCHAR2,
+    P_MOBILEX       VARCHAR2,
+    P_PANX          VARCHAR2,
+    P_EMAILX        VARCHAR2,
+    P_AADHARX       VARCHAR2,
+    P_ADDRESS1X     VARCHAR2,
+    P_ADDRESS2X     VARCHAR2,
+    P_PINCODEX      VARCHAR2,
+    P_CITY_IDX      VARCHAR2,
+    P_STATE_IDX     VARCHAR2,
+    P_DOBX          VARCHAR2,
+    P_LOGINX        VARCHAR2, 
+    P_ROLEX         VARCHAR2,
+    P_CURSORX       OUT SYS_REFCURSOR
+
+) 
+
+AS
     V_ERROR             VARCHAR2(4000);
-    V_CHECK_DUPLICATE   NUMBER;
-    V_CHECK_NUMBER      VARCHAR2(5);
-    V_DOB               DATE;
-    V_IS_FAMILY_HEAD    VARCHAR2(1);
-BEGIN 
-    SAVEPOINT sp_find;
 
-    select IS_FAMILY_HEAD(P_INV_CODE) INTO V_IS_FAMILY_HEAD from dual;
+    V_INVCOUNT    NUMBER;
+    V_MOBILECOUNT NUMBER;
+    V_PANCOUNT    NUMBER;
+    V_EMAILCOUNT  NUMBER;
+    V_AADHARCOUNT NUMBER;
+    V_DOB         DATE; 
+     
+BEGIN
+   
 
-    -- Role check
-    IF P_ROLE = '1' THEN 
-        OPEN P_CURSOR FOR SELECT 'You are not authorised to update the details' msg FROM DUAL;
+       -- Role check
+    IF P_ROLEX = '1' THEN 
+        OPEN P_CURSORX FOR SELECT 'You are not authorised to update the details' msg FROM DUAL;
         RETURN;
     END IF;
 
-    -- Mobile check for INV_CODE starting with 4
-    IF SUBSTR(P_INV_CODE,1,1) = '4' AND P_MOBILE IS NOT NULL THEN    
-        SELECT check_number(P_MOBILE) INTO V_CHECK_NUMBER FROM DUAL;
-        IF V_CHECK_NUMBER = 'N' THEN
-            OPEN P_CURSOR FOR SELECT 'Invalid Mobile No' msg FROM DUAL;
-            RETURN;
-        END IF;
-        
+    SELECT COUNT(*) INTO V_INVCOUNT
+    FROM INVESTOR_MASTER 
+    WHERE INV_CODE = P_INV_CODEX;
+
+    IF V_INVCOUNT = 0 THEN
+        OPEN P_CURSORX FOR SELECT 'Error: Inv Code ('|| P_INV_CODEX ||') not found' msg from dual;
+        RETURN;
     END IF;
-
-    -- Duplicate Mobile
-    IF P_MOBILE IS NOT NULL THEN 
-        SELECT COUNT(MOBILE) 
-        INTO V_CHECK_DUPLICATE 
-        FROM investor_master 
-        WHERE MOBILE = P_MOBILE 
-        AND inv_code NOT LIKE '%' || SUBSTR(P_INV_CODE,1,8) || '%';
-
-        IF V_CHECK_DUPLICATE > 0 THEN
-            OPEN P_CURSOR FOR SELECT 'Mobile Number already present!' msg FROM DUAL;
+    
+    IF P_INV_CODEX LIKE '4%' AND P_MOBILEX IS NOT NULL THEN
+        IF WEALTHMAKER.CHECK_NUMBER(P_MOBILEX) = 'N' THEN
+            OPEN P_CURSORX FOR SELECT 'Invalid Mobile No' msg from dual;
             RETURN;
         END IF;
     END IF;
-
-    -- PAN Validation
-    IF P_PAN IS NOT NULL THEN
-        IF NOT REGEXP_LIKE(P_PAN, '^[A-Z]{5}[0-9]{4}[A-Z]{1}$') THEN
-            OPEN P_CURSOR FOR SELECT 'Invalid PAN Format' msg FROM DUAL;
+    
+    IF P_MOBILEX IS NOT NULL THEN
+        V_MOBILECOUNT:=0;
+        SELECT COUNT(*) INTO V_MOBILECOUNT FROM INVESTOR_MASTER WHERE MOBILE=P_MOBILEX AND INV_CODE NOT LIKE SUBSTR(P_INV_CODEX,1,8)||'%';
+        IF V_MOBILECOUNT > 0 THEN
+            OPEN P_CURSORX FOR SELECT 'Error: Mobile('|| P_MOBILEX ||') no already present!' msg from dual;
             RETURN;
-        ELSE
-            SELECT COUNT(PAN) 
-            INTO V_CHECK_DUPLICATE 
-            FROM investor_master 
-            WHERE UPPER(TRIM(PAN)) = UPPER(TRIM(P_PAN)) 
-              AND inv_code NOT LIKE '%' || SUBSTR(P_INV_CODE,1,8) || '%';
-
-            IF V_CHECK_DUPLICATE > 0 THEN
-                OPEN P_CURSOR FOR SELECT 'PAN already present!' msg FROM DUAL;
+        END IF;
+    END IF;
+    
+    IF P_PANX IS NOT NULL THEN
+        IF WEALTHMAKER.VALIDATEPAN1(P_PANX) = 0 THEN
+            OPEN P_CURSORX FOR SELECT 'Invalid PAN' msg from dual;
+            RETURN;
+        END IF;
+    END IF;
+    
+    IF P_PANX IS NOT NULL THEN
+        V_PANCOUNT:=0;
+        SELECT COUNT(*) INTO V_PANCOUNT FROM INVESTOR_MASTER WHERE UPPER(PAN)=P_PANX AND INV_CODE NOT LIKE SUBSTR(P_INV_CODEX,1,8)||'%';
+        IF V_PANCOUNT>0 THEN
+            OPEN P_CURSORX FOR SELECT 'PAN already exists!' msg from dual;
+            RETURN;
+        END IF;
+    END IF;
+    
+    IF P_EMAILX IS NOT NULL THEN
+        V_EMAILCOUNT:=0;
+        IF REGEXP_REPLACE(UPPER(P_EMAILX), '\s+', '') NOT IN ('NOTAVAILABLE', 'NA', 'NILL', 'NONE', 'N-A') THEN
+            SELECT COUNT(*) INTO V_EMAILCOUNT FROM INVESTOR_MASTER WHERE UPPER(EMAIL)=UPPER(P_EMAILX) AND INV_CODE NOT LIKE SUBSTR(P_INV_CODEX,1,8)||'%';
+            IF V_EMAILCOUNT>0 THEN
+                OPEN P_CURSORX FOR SELECT 'EMAIL  already exists!' msg from dual;
                 RETURN;
-            END IF;
-        END IF;
+            END IF;    
+       END IF;
     END IF;
-
-    -- Email Validation
-    IF P_EMAIL IS NOT NULL THEN
-        IF UPPER(P_EMAIL) NOT IN ('NOT AVAILABLE', 'N/A', 'N A', 'NILL', 'NONE', 'N-A' ) THEN
-            DECLARE
-                ISVALIDEMAIL NUMBER;
-            BEGIN                
-                ISVALIDEMAIL := VALIDATE_EMAIL(UPPER(P_EMAIL));
-                IF ISVALIDEMAIL = 0 THEN
-                    OPEN P_CURSOR FOR SELECT 'Invalid Email Format' AS msg FROM DUAL; 
-                    RETURN;
-
-                ELSIF ISVALIDEMAIL > 0 THEN
-                    SELECT COUNT(EMAIL) INTO V_CHECK_DUPLICATE 
-                    FROM investor_master WHERE UPPER(TRIM(EMAIL)) = UPPER(TRIM(P_EMAIL)) AND inv_code NOT LIKE '%' || SUBSTR(P_INV_CODE,1,8) || '%';
-
-                    IF V_CHECK_DUPLICATE > 0 THEN
-                        OPEN P_CURSOR FOR SELECT 'Email already present!' msg FROM DUAL;
-                        RETURN;
-                    END IF;
-                END IF;
-            END;
-        END IF;
-    END IF;
-
-    -- Aadhar Validation
-    IF P_AADHAR IS NOT NULL THEN
-        IF NOT REGEXP_LIKE(P_AADHAR, '^[0-9]{12}$') THEN
-            OPEN P_CURSOR FOR SELECT 'Invalid Aadhar Format' msg FROM DUAL;
+    
+    IF P_AADHARX IS NOT NULL THEN
+        V_AADHARCOUNT:=0;
+        SELECT COUNT(*) INTO V_AADHARCOUNT FROM INVESTOR_MASTER WHERE AADHAR_CARD_NO=P_AADHARX AND INV_CODE <>P_INV_CODEX;
+        IF V_AADHARCOUNT>0 THEN
+            OPEN P_CURSORX FOR SELECT 'Aadhar Card Number already Exist' msg from dual;
             RETURN;
-        ELSE
-            SELECT COUNT(AADHAR_CARD_NO) 
-            INTO V_CHECK_DUPLICATE 
-            FROM investor_master 
-            WHERE AADHAR_CARD_NO = TRIM(P_AADHAR) 
-            AND inv_code NOT LIKE '%' || SUBSTR(P_INV_CODE,1,8) || '%';
-
-            IF V_CHECK_DUPLICATE > 0 THEN
-                OPEN P_CURSOR FOR SELECT 'Aadhar already present!' msg FROM DUAL;
-                RETURN;
-            END IF;
         END IF;
     END IF;
-
-    -- Update based on INV_CODE
-    IF SUBSTR(P_INV_CODE,1,1) = '3' THEN
-        UPDATE INVESTOR_MASTER 
-        SET MODIFY_USER = P_LOGIN, MODIFY_DATE = SYSDATE, 
-            AADHAR_CARD_NO = TRIM(P_AADHAR), PAN = TRIM(P_PAN), 
-            MOBILE = TRIM(P_MOBILE), EMAIL = TRIM(P_EMAIL), 
-            ADDRESS1 = TRIM(P_ADDRESS1), ADDRESS2 = TRIM(P_ADDRESS2), 
-            PINCODE = TRIM(P_PINCODE), CITY_ID = P_CITY_ID
-        WHERE inv_code = P_INV_CODE;
+    
+    BEGIN  
+        V_DOB:=TO_DATE(P_DOBX, 'dd/mm/yyyy');
+    EXCEPTION WHEN OTHERS THEN
+        V_DOB:=NULL;
+    END;    
+    
+    IF P_INV_CODEX LIKE '3%' THEN
+        UPDATE INVESTOR_MASTER
+        SET
+            MODIFY_USER     = P_LOGINX,
+            MODIFY_DATE     = SYSDATE,
+            AADHAR_CARD_NO  = P_AADHARX,
+            PAN             = P_PANX,
+            MOBILE          = P_MOBILEX,
+            EMAIL           = P_EMAILX,
+            ADDRESS1        = P_ADDRESS1X,
+            ADDRESS2        = P_ADDRESS2X,
+            PINCODE         = P_PINCODEX,
+            CITY_ID         = P_CITY_IDX,
+            DOB             = V_DOB
+            WHERE INV_CODE = P_INV_CODEX;
     ELSE
-        UPDATE INVESTOR_MASTER 
-        SET MODIFY_USER = P_LOGIN, MODIFY_DATE = SYSDATE, 
-            AADHAR_CARD_NO = TRIM(P_AADHAR), PAN = TRIM(P_PAN), 
-            MOBILE = TRIM(P_MOBILE), EMAIL = TRIM(P_EMAIL)
-        WHERE inv_code = P_INV_CODE;
-
-        UPDATE INVESTOR_MASTER 
-        SET MODIFY_USER = P_LOGIN, MODIFY_DATE = SYSDATE, 
-            ADDRESS1 = TRIM(P_ADDRESS1), ADDRESS2 = TRIM(P_ADDRESS2), 
-            PINCODE = TRIM(P_PINCODE), CITY_ID = P_CITY_ID
-        WHERE SOURCE_ID = SUBSTR(P_INV_CODE,1,8);
-
-        UPDATE CLIENT_TEST 
-        SET MODIFY_USER = P_LOGIN, MODIFY_DATE = SYSDATE, 
-            ADD1 = TRIM(P_ADDRESS1), ADD2 = TRIM(P_ADDRESS2), 
-            PINCODE = TRIM(P_PINCODE), CITY_ID = P_CITY_ID, STATE_ID = P_STATE_ID
-        WHERE SOURCE_CODE = SUBSTR(P_INV_CODE,1,8);
+      
+        
+        UPDATE INVESTOR_MASTER SET
+            MODIFY_USER     = P_LOGINX,
+            MODIFY_DATE     = SYSDATE,
+            AADHAR_CARD_NO  = P_AADHARX,
+            PAN             = P_PANX,
+            MOBILE          = P_MOBILEX,
+            EMAIL           = P_EMAILX,
+            DOB             = V_DOB
+            WHERE INV_CODE = P_INV_CODEX;
+        
+        UPDATE INVESTOR_MASTER
+        SET
+            MODIFY_USER     = P_LOGINX,
+            MODIFY_DATE     = SYSDATE,
+            ADDRESS1        = P_ADDRESS1X,
+            ADDRESS2        = P_ADDRESS2X,
+            PINCODE         = P_PINCODEX,
+            CITY_ID         = P_CITY_IDX
+            WHERE SOURCE_ID =SUBSTR(P_INV_CODEX,1,8);
+        
+       
+        UPDATE CLIENT_TEST
+        SET
+            MODIFY_USER = P_LOGINX,
+            MODIFY_DATE = SYSDATE,
+            ADD1        = P_ADDRESS1X,
+            ADD2        = P_ADDRESS2X,
+            PINCODE     = P_PINCODEX,
+            CITY_ID     = P_CITY_IDX,
+            STATE_ID    = P_STATE_IDX
+            WHERE SOURCE_CODE = SUBSTR(P_INV_CODEX,1,8);
+            
+            UPDATE CLIENT_TEST 
+            SET MODIFY_USER=P_LOGINX,
+            MODIFY_DATE=SYSDATE,
+            DOB = V_DOB 
+            WHERE CLIENT_CODEKYC = P_INV_CODEX;
     END IF;
-
-    UPDATE CLIENT_TEST 
-    SET MODIFY_USER = P_LOGIN, MODIFY_DATE = SYSDATE, 
-        AADHAR_CARD_NO = TRIM(P_AADHAR), CLIENT_PAN = TRIM(P_PAN), 
-        MOBILE_NO = TRIM(P_MOBILE), EMAIL = TRIM(P_EMAIL)
-    WHERE client_codekyc = P_INV_CODE;
-
-    -- DOB Validation
-    IF P_DOB IS NOT NULL THEN
-        IF NOT REGEXP_LIKE(P_DOB, '^\d{2}/\d{2}/\d{4}$') THEN
-            OPEN P_CURSOR FOR SELECT 'Invalid Date of Birth Format' msg FROM DUAL;
-            RETURN;
-        ELSE
-            V_DOB := TO_DATE(P_DOB, 'DD/MM/YYYY');
-            IF V_DOB > SYSDATE THEN
-                OPEN P_CURSOR FOR SELECT 'Date of Birth cannot be in the future' msg FROM DUAL;
-                RETURN;
-            END IF;
-        END IF;
-
-        UPDATE INVESTOR_MASTER 
-        SET MODIFY_USER = P_LOGIN, MODIFY_DATE = SYSDATE, DOB = TO_DATE(P_DOB,'DD/MM/YYYY')
-        WHERE inv_code = P_INV_CODE;
-
-        UPDATE CLIENT_TEST 
-        SET MODIFY_USER = P_LOGIN, MODIFY_DATE = SYSDATE, DOB = TO_DATE(P_DOB,'DD/MM/YYYY')
-        WHERE client_codekyc = P_INV_CODE;
+    
+    IF WEALTHMAKER.IS_FAMILY_HEAD(P_INV_CODEX)=1 THEN
+            UPDATE WEALTHMAKER.CLIENT_MASTER SET
+            MODIFY_USER     = P_LOGINX,
+            MODIFY_DATE     = SYSDATE,
+            PAN             = P_PANX,
+            MOBILE          = P_MOBILEX,
+            EMAIL           = P_EMAILX,
+            ADDRESS1        = P_ADDRESS1X,
+            ADDRESS2        = P_ADDRESS2X,
+            PINCODE         = P_PINCODEX,
+            CITY_ID         = P_CITY_IDX,
+            DOB             = V_DOB
+            WHERE CLIENT_CODE = SUBSTR(P_INV_CODEX,1,8);
     END IF;
+   
+    COMMIT;
+    OPEN P_CURSORX FOR SELECT 'SUCCESS: Address update successfully' msg from dual;
 
-    -- Family Head updates
-    IF V_IS_FAMILY_HEAD = '1' THEN
-        UPDATE CLIENT_MASTER 
-        SET MODIFY_USER = P_LOGIN, MODIFY_DATE = SYSDATE, 
-            PAN = TRIM(P_PAN), MOBILE = TRIM(P_MOBILE), 
-            EMAIL = TRIM(P_EMAIL), ADDRESS1 = TRIM(P_ADDRESS1), 
-            ADDRESS2 = TRIM(P_ADDRESS2), PINCODE = TRIM(P_PINCODE), CITY_ID = P_CITY_ID
-        WHERE client_code = SUBSTR(P_INV_CODE,1,8);
-
-        IF P_DOB IS NOT NULL THEN
-            V_DOB := TO_DATE(P_DOB, 'DD/MM/YYYY');
-            IF V_DOB > SYSDATE THEN
-                OPEN P_CURSOR FOR SELECT 'Date of Birth cannot be in the future' msg FROM DUAL;
-                RETURN;
-            END IF;
-
-            UPDATE CLIENT_MASTER 
-            SET MODIFY_USER = P_LOGIN, MODIFY_DATE = SYSDATE, DOB = TO_DATE(P_DOB,'DD/MM/YYYY')
-            WHERE client_code = SUBSTR(P_INV_CODE,1,8);
-        END IF;
-    END IF;
-
-    OPEN P_CURSOR FOR SELECT 'SUCCESS: Information Updated Successfully' msg FROM DUAL;
 
 EXCEPTION
     WHEN OTHERS THEN
         ROLLBACK TO sp_find;
-        V_ERROR := 'ERROR:' || SQLERRM ;
-        OPEN P_CURSOR FOR SELECT V_ERROR msg FROM DUAL;
+        V_ERROR := 'ERROR:' || SQLERRM;
+        OPEN P_CURSORX FOR SELECT V_ERROR msg FROM DUAL;
 END;
 /
