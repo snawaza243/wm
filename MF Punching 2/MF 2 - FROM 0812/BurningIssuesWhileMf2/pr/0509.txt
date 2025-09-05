@@ -1,0 +1,5 @@
+git add WM/Controllers/MfPunchingController.cs
+git add WM/Controllers/PsmController.cs
+git add WM/Masters/Mf_Punching.aspx
+git add WM/Masters/Mf_Punching.aspx.cs
+git add WM/Masters/Mf_Punching.aspx.designer.cs
