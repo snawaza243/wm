@@ -1,6 +1,5 @@
 Private Sub msfgClients_dblClick()
 On Error GoTo err1
-'On Error resume Next
 Dim rsexistcode As ADODB.Recordset
 Dim rs_get_type As ADODB.Recordset, rs_get_rm As ADODB.Recordset, rs_get_invsrc As ADODB.Recordset
 Dim i As Integer
@@ -75,6 +74,7 @@ If msfgClients.Rows > 1 Then
         Me.MousePointer = vbNormal
         Exit Sub
     End If
+
     If currentForm.Name = "frmClientInvestmentReport" Then
         For i = 1 To frmClientInvestmentReport.ClientDetails.Rows - 1
             If frmClientInvestmentReport.ClientDetails.TextMatrix(i, 4) = msfgClients.TextMatrix(R, 1) Then
@@ -165,6 +165,7 @@ If msfgClients.Rows > 1 Then
         'Unload Me
         Exit Sub
     End If
+
     If currentForm.Name = "frmtransactionmf" Then
         If frmtransactionmf.SSTab1.Tab = 0 Then
             frmtransactionmf.TxtClientCodeA = Mid(msfgClients.TextMatrix(R, 1), 1, 8)

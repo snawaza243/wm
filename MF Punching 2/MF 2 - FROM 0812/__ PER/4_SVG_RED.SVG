@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg"  viewBox="0 0 545 475" width="545" height="475" role="img" aria-label="building logo">
+
+  <!-- main shape with even-odd rule to allow internal holes -->
+  <path fill="#e74c3c" fill-rule="evenodd" d="
+    M 153 51
+    L 153 180
+    L 55 220
+    L 55 460
+    L 98 460
+    L 98 248
+    L 170 221
+    L 176 222
+    L 176 460
+    L 230 460
+    L 231 59
+    L 344 124
+    L 344 460
+    L 376 460
+    L 377 346
+    L 459 402
+    L 459 460
+    L 496 460
+    L 496 354
+    L 457 328
+    L 457 207
+    L 376 157
+    L 376 108
+    L 233 20
+    Z
+
+    M 377 199
+    L 433 231
+    L 432 310
+    L 376 275
+    Z
+  "/>
+</svg>
