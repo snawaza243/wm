@@ -104,9 +104,9 @@ If msfgClients.Rows > 1 Then
     End If
     
     If currentForm.Name = "frmClientMerging" Then
-    Dim MaxRow As Integer
-    Dim rsCount As New ADODB.Recordset
-    
+        Dim MaxRow As Integer
+        Dim rsCount As New ADODB.Recordset
+        
         For i = 1 To frmClientMerging.msfgInvestors.Rows - 1
             If frmClientMerging.msfgInvestors.TextMatrix(i, 9) = msfgClients.TextMatrix(R, 1) Then
                 MsgBox "This Client has already been Added ", vbInformation
@@ -125,7 +125,7 @@ If msfgClients.Rows > 1 Then
         
         With frmClientMerging.msfgInvestors
         
-          .Rows = .Rows + 1
+        .Rows = .Rows + 1
             MaxRow = .Rows - 1
             
             rsCount.open "select sum(cnt) cnt from(select count(*) cnt from transaction_st where source_code=" & msfgClients.TextMatrix(R, 1) & " and (ASA<>'C' or ASA is null) and (flag<>'NEWTRAN' or flag is null) " _
@@ -163,7 +163,7 @@ If msfgClients.Rows > 1 Then
         msfgClients.SetFocus
         DoEvents
         'Unload Me
-        Exit Sub
+        Exit Sub    
     End If
 
     If currentForm.Name = "frmtransactionmf" Then
@@ -239,57 +239,55 @@ If msfgClients.Rows > 1 Then
     
     
     If currentForm.Name = "frmFP" Then
-    Dim rsFP As New ADODB.Recordset
-    Dim rs_inv As New ADODB.Recordset
-    Dim strsql1 As String
-    Dim strsql2 As String
-    frmFP.txtFdate.Text = "__/__/____"
-    frmFP.txtTdate.Text = "__/__/____"
-     frmFP.cmbstatus.Text = ""
+        Dim rsFP As New ADODB.Recordset
+        Dim rs_inv As New ADODB.Recordset
+        Dim strsql1 As String
+        Dim strsql2 As String
+        frmFP.txtFdate.Text = "__/__/____"
+        frmFP.txtTdate.Text = "__/__/____"
+        frmFP.cmbstatus.Text = ""
         frmFP.txtINV_CD.Text = msfgClients.TextMatrix(R, 1)
         frmFP.Txtname.Text = msfgClients.TextMatrix(R, 0)
-        
-strsql1 = ""
-Dim Fam_Head As String
-If Left(msfgClients.TextMatrix(R, 1), 1) = "4" Then
-    strsql1 = "select family_head from investor_master where source_id='" & Left(Trim(msfgClients.TextMatrix(R, 1)), 8) & "' and fpf_date is not null"
-    If rs_inv.State = 1 Then rs_inv.Close
-    rs_inv.open strsql1, MyConn, adOpenForwardOnly
-    If rs_inv.EOF = False Then
-        If msfgClients.TextMatrix(R, 1) <> rs_inv("family_head") Then
-            Fam_Head = rs_inv("family_head")
-            rs_inv.Close
-            rs_inv.open "select Investor_name from investor_master where inv_code=" & Fam_Head, MyConn, adOpenForwardOnly
-            MsgBox "Financial Planning Already done for the Family Head " & vbCrLf & "Code : " & Fam_Head & " Name : " & rs_inv("investor_name"), vbInformation
-            rs_inv.Close
-            Set rs_inv = Nothing
-            Me.MousePointer = 0
-            Exit Sub
+                
+        strsql1 = ""
+        Dim Fam_Head As String
+        If Left(msfgClients.TextMatrix(R, 1), 1) = "4" Then
+            strsql1 = "select family_head from investor_master where source_id='" & Left(Trim(msfgClients.TextMatrix(R, 1)), 8) & "' and fpf_date is not null"
+            If rs_inv.State = 1 Then rs_inv.Close
+            rs_inv.open strsql1, MyConn, adOpenForwardOnly
+            If rs_inv.EOF = False Then
+                If msfgClients.TextMatrix(R, 1) <> rs_inv("family_head") Then
+                    Fam_Head = rs_inv("family_head")
+                    rs_inv.Close
+                    rs_inv.open "select Investor_name from investor_master where inv_code=" & Fam_Head, MyConn, adOpenForwardOnly
+                    MsgBox "Financial Planning Already done for the Family Head " & vbCrLf & "Code : " & Fam_Head & " Name : " & rs_inv("investor_name"), vbInformation
+                    rs_inv.Close
+                    Set rs_inv = Nothing
+                    Me.MousePointer = 0
+                    Exit Sub
+                End If
+            End If
         End If
-    End If
-End If
 
-strsql1 = ""
-strsql1 = "select investor_name,inv_code from investor_master where source_id='" & Left(Trim(msfgClients.TextMatrix(R, 1)), 8) & "' and inv_code <>'" & (msfgClients.TextMatrix(R, 1)) & "'"
-If rs_inv.State = 1 Then rs_inv.Close
-rs_inv.open strsql1, MyConn, adOpenStatic, adLockOptimistic, adCmdText
-If rs_inv.RecordCount > 0 Then
-    frmFP.Lstinv.Clear
-With frmFP.Lstinv
-For i = 0 To rs_inv.RecordCount - 1
- .AddItem rs_inv(0) & Space(100) & "#" & rs_inv(1)
-'''''                    lstscheme.AddItem rs_scheme(0) & Space(80 - Len(rs_scheme(0))) & rs_scheme(1) & Space(10 - Len(rs_scheme(1))) & rs_scheme(2)
- rs_inv.MoveNext
-Next
-End With
-Else
-    frmFP.Lstinv.Clear
-End If
-    rs_inv.Close
-    Set rs_inv = Nothing
-''End If
-        
-    
+        strsql1 = ""
+        strsql1 = "select investor_name,inv_code from investor_master where source_id='" & Left(Trim(msfgClients.TextMatrix(R, 1)), 8) & "' and inv_code <>'" & (msfgClients.TextMatrix(R, 1)) & "'"
+        If rs_inv.State = 1 Then rs_inv.Close
+        rs_inv.open strsql1, MyConn, adOpenStatic, adLockOptimistic, adCmdText
+        If rs_inv.RecordCount > 0 Then
+            frmFP.Lstinv.Clear
+            With frmFP.Lstinv
+            For i = 0 To rs_inv.RecordCount - 1
+            .AddItem rs_inv(0) & Space(100) & "#" & rs_inv(1)
+            '''''                    lstscheme.AddItem rs_scheme(0) & Space(80 - Len(rs_scheme(0))) & rs_scheme(1) & Space(10 - Len(rs_scheme(1))) & rs_scheme(2)
+            rs_inv.MoveNext
+            Next
+            End With
+        Else
+            frmFP.Lstinv.Clear
+        End If
+        rs_inv.Close
+        Set rs_inv = Nothing
+
         If rsFP.State = 1 Then rsFP.Close
         rsFP.open "select FPF_date,fpl_date,status,FAMILY_HEAD,implemented_date,audit_date from investor_master where inv_code=" & msfgClients.TextMatrix(R, 1), MyConn, adOpenForwardOnly
         If rsFP.EOF = False Then
@@ -334,39 +332,34 @@ End If
                 frmFP.chkaudit.Enabled = False
                 frmFP.MSK_AUDIT_DATE.Enabled = False
             End If
-        End If
+        End If        
         
-        
-        
-    strsql2 = ""
-    strsql2 = "select inv_code from investor_master where FAMILY_HEAD='" & Trim(msfgClients.TextMatrix(R, 1)) & "'"
-    If rs_inv.State = 1 Then rs_inv.Close
-    rs_inv.open strsql2, MyConn, adOpenStatic, adLockOptimistic, adCmdText
-    If rs_inv.EOF = False Then
-    If rs_inv.RecordCount > 0 Then
-    For j = 0 To rs_inv.RecordCount - 1
-        For i = 0 To frmFP.Lstinv.ListCount - 1
-        If IsNull(rsFP("FPF_DATE")) Then
-            frmFP.Lstinv.Selected(i) = True
+        strsql2 = ""
+        strsql2 = "select inv_code from investor_master where FAMILY_HEAD='" & Trim(msfgClients.TextMatrix(R, 1)) & "'"
+        If rs_inv.State = 1 Then rs_inv.Close
+        rs_inv.open strsql2, MyConn, adOpenStatic, adLockOptimistic, adCmdText
+        If rs_inv.EOF = False Then
+            If rs_inv.RecordCount > 0 Then
+            For j = 0 To rs_inv.RecordCount - 1
+                For i = 0 To frmFP.Lstinv.ListCount - 1
+                If IsNull(rsFP("FPF_DATE")) Then
+                    frmFP.Lstinv.Selected(i) = True
+                Else                
+                    If Trim(Right(frmFP.Lstinv.List(i), 11)) = Trim(rs_inv(0)) Then
+                        frmFP.Lstinv.Selected(i) = True
+                    End If
+                End If
+                Next
+                rs_inv.MoveNext
+            Next
+            End If
         Else
-        
-            If Trim(Right(frmFP.Lstinv.List(i), 11)) = Trim(rs_inv(0)) Then
+        For i = 0 To frmFP.Lstinv.ListCount - 1
+            If IsNull(rsFP("FPF_DATE")) Then
                 frmFP.Lstinv.Selected(i) = True
             End If
-        End If
         Next
-        rs_inv.MoveNext
-    Next
-    End If
-    Else
-    For i = 0 To frmFP.Lstinv.ListCount - 1
-        If IsNull(rsFP("FPF_DATE")) Then
-            frmFP.Lstinv.Selected(i) = True
-        End If
-    Next
-    End If
-    
-    
+        End If   
         
         rsFP.Close
         Set rsFP = Nothing
@@ -416,8 +409,8 @@ End If
     End If
     
     If currentForm.Name = "frmjv" Then
-    Dim clname As Variant
-    If Cmbcat.Text = "CLIENT" Then
+        Dim clname As Variant
+        If Cmbcat.Text = "CLIENT" Then
         For i = 0 To frmjv.clientlist.ListCount - 1
         clname = Split(frmjv.clientlist.List(i), "#")
             If clname(1) = msfgClients.TextMatrix(R, 1) Then
@@ -449,9 +442,9 @@ End If
         Me.MousePointer = vbNormal
         Me.Show
         Exit Sub
+    
     End If
-    
-    
+        
     If currentForm.Name = "frmSynchronization" Then  ' VISHAL
       If UCase(Trim(Cmbcat.Text)) = "INVESTOR" Then
          nodeValue = msfgClients.TextMatrix(R, 1)
@@ -499,67 +492,67 @@ End If
       Unload Me
       Exit Sub
   End If
-    '' end here
-     '''ADDED BY PRAVESH ON 24 MAY FOR lIFE iNSURANCE fORM
-        If currentForm.Name = "frmAR" And Ar_type = "" Then 'jogi010907
-            If MyOpt <> 1 Then
-                frmAR.FrmConfirmBoth.Visible = True
-                frmAR.FrmConfirmBoth.Move frmAR.txtInsured.Left, frmAR.txtInsured.Top - 200
-                frmAR.txtInsured1.Text = ""
-                frmAR.txtProposer1.Text = ""
-            End If
-            frmAR.txtClientCD.Text = msfgClients.TextMatrix(R, 1)
-            frmAR.txtInsured.Text = msfgClients.TextMatrix(R, 0)
-            frmAR.txtProposer.Text = msfgClients.TextMatrix(R, 0)
-            frmAR.txtAdd1.Text = msfgClients.TextMatrix(R, 2)
-            frmAR.txtAdd2.Text = msfgClients.TextMatrix(R, 3)
-            frmAR.txtIadd1.Text = msfgClients.TextMatrix(R, 2)
-            frmAR.txtIadd2.Text = msfgClients.TextMatrix(R, 3)
-            frmAR.txtPhone.Text = msfgClients.TextMatrix(R, 6)
-            frmAR.fillData
-            frmAR.txtClientCD.Enabled = False
-            If Left(msfgClients.TextMatrix(R, 1), 1) <> "3" Then
-                frmAR.TguestCode.Text = msfgClients.TextMatrix(R, 8)
-            End If
-           'frmAR.Lbl_LeadSearch_Click
-            Me.MousePointer = vbNormal
-            Unload Me
-        '' Exit Sub
+
+  '##############---- NEED TO DO CHANGES ----#############
+
+    If currentForm.Name = "frmAR" And Ar_type = "" Then 'jogi010907
+        If MyOpt <> 1 Then
+            frmAR.FrmConfirmBoth.Visible = True
+            frmAR.FrmConfirmBoth.Move frmAR.txtInsured.Left, frmAR.txtInsured.Top - 200
+            frmAR.txtInsured1.Text = ""
+            frmAR.txtProposer1.Text = ""
         End If
-        If currentForm.Name = "frmAR_Renewal" And Ar_type = "" Then 'jogi010907
-            frmAR_Renewal.txtClientCD.Text = msfgClients.TextMatrix(R, 1)
-            frmAR_Renewal.Lbl_P_Code.Caption = msfgClients.TextMatrix(R, 1)
-            
-            frmAR_Renewal.txtInsured.Text = msfgClients.TextMatrix(R, 0)
-            frmAR_Renewal.txtProposer.Text = msfgClients.TextMatrix(R, 0)
-            frmAR_Renewal.txtAdd1.Text = msfgClients.TextMatrix(R, 2)
-            frmAR_Renewal.txtAdd2.Text = msfgClients.TextMatrix(R, 3)
-            frmAR_Renewal.txtIadd1.Text = msfgClients.TextMatrix(R, 2)
-            frmAR_Renewal.txtIadd2.Text = msfgClients.TextMatrix(R, 3)
-            frmAR_Renewal.txtPhone.Text = msfgClients.TextMatrix(R, 6)
-            frmAR_Renewal.fillData
-            frmAR_Renewal.txtClientCD.Enabled = False
-            'frmAR.Lbl_LeadSearch_Click
-            Me.MousePointer = vbNormal
-            Unload Me
-        '' Exit Sub
-        End If
-        If currentForm.Name = "frmAR" And Ar_type = "P_NAME" Then 'jogi010907
-        frmAR.Lbl_P_Code.Caption = msfgClients.TextMatrix(R, 1)
+        frmAR.txtClientCD.Text = msfgClients.TextMatrix(R, 1)
+        frmAR.txtInsured.Text = msfgClients.TextMatrix(R, 0)
         frmAR.txtProposer.Text = msfgClients.TextMatrix(R, 0)
-        
         frmAR.txtAdd1.Text = msfgClients.TextMatrix(R, 2)
         frmAR.txtAdd2.Text = msfgClients.TextMatrix(R, 3)
-        
+        frmAR.txtIadd1.Text = msfgClients.TextMatrix(R, 2)
+        frmAR.txtIadd2.Text = msfgClients.TextMatrix(R, 3)
         frmAR.txtPhone.Text = msfgClients.TextMatrix(R, 6)
+        frmAR.fillData
+        frmAR.txtClientCD.Enabled = False
+        If Left(msfgClients.TextMatrix(R, 1), 1) <> "3" Then
+            frmAR.TguestCode.Text = msfgClients.TextMatrix(R, 8)
+        End If
+        'frmAR.Lbl_LeadSearch_Click
+        Me.MousePointer = vbNormal
+        Unload Me
+    
+    End If
+    
+    If currentForm.Name = "frmAR_Renewal" And Ar_type = "" Then 'jogi010907
+        frmAR_Renewal.txtClientCD.Text = msfgClients.TextMatrix(R, 1)
+        frmAR_Renewal.Lbl_P_Code.Caption = msfgClients.TextMatrix(R, 1)        
+        frmAR_Renewal.txtInsured.Text = msfgClients.TextMatrix(R, 0)
+        frmAR_Renewal.txtProposer.Text = msfgClients.TextMatrix(R, 0)
+        frmAR_Renewal.txtAdd1.Text = msfgClients.TextMatrix(R, 2)
+        frmAR_Renewal.txtAdd2.Text = msfgClients.TextMatrix(R, 3)
+        frmAR_Renewal.txtIadd1.Text = msfgClients.TextMatrix(R, 2)
+        frmAR_Renewal.txtIadd2.Text = msfgClients.TextMatrix(R, 3)
+        frmAR_Renewal.txtPhone.Text = msfgClients.TextMatrix(R, 6)
+        frmAR_Renewal.fillData
+        frmAR_Renewal.txtClientCD.Enabled = False
+        Me.MousePointer = vbNormal
+        Unload Me
+    
+    End If
+
+    If currentForm.Name = "frmAR" And Ar_type = "P_NAME" Then 'jogi010907
+        frmAR.Lbl_P_Code.Caption = msfgClients.TextMatrix(R, 1)
+        frmAR.txtProposer.Text = msfgClients.TextMatrix(R, 0)        
+        frmAR.txtAdd1.Text = msfgClients.TextMatrix(R, 2)
+        frmAR.txtAdd2.Text = msfgClients.TextMatrix(R, 3)        
+        frmAR.txtPhone.Text = msfgClients.TextMatrix(R, 6)
+        
         If Left(msfgClients.TextMatrix(R, 1), 1) <> "3" Then
             frmAR.TguestCode.Text = msfgClients.TextMatrix(R, 8)
         End If
         'frmAR.fillData
         Me.MousePointer = vbNormal
-        Unload Me
-    
+        Unload Me    
     End If
+
     If currentForm.Name = "frmAR_Renewal" And Ar_type = "P_NAME" Then 'jogi010907
         frmAR_Renewal.Lbl_P_Code.Caption = msfgClients.TextMatrix(R, 1)
         frmAR_Renewal.txtProposer.Text = msfgClients.TextMatrix(R, 0)
@@ -570,9 +563,9 @@ End If
         frmAR_Renewal.txtPhone.Text = msfgClients.TextMatrix(R, 6)
         'frmAR.fillData
         Me.MousePointer = vbNormal
-        Unload Me
-    
+        Unload Me    
     End If
+
     If currentForm.Name = "frmAR" And Ar_type = "N_NAME" Then  'jogi010907
         frmAR.Lbl_N_Code.Caption = msfgClients.TextMatrix(R, 1)
         frmAR.txtNominee.Text = msfgClients.TextMatrix(R, 0)
@@ -592,18 +585,17 @@ End If
         Unload Me
     
     End If
-    'By joginder  for venue day book form
+    
     If currentForm.Name = "FrmVenDayBook" Then
             FrmVenDayBook.txtClientCD.Text = msfgClients.TextMatrix(R, 1)
             FrmVenDayBook.txtclname.Text = msfgClients.TextMatrix(R, 0)
             FrmVenDayBook.fillData
             Me.MousePointer = vbNormal
         Unload Me
-     '' Exit Sub
+  
     End If
-    'end Change by joginder
-         
-     If currentForm.Name = "frmARGeneral" Then
+    
+    If currentForm.Name = "frmARGeneral" Then
             frmARGeneral.txtClientCD.Text = msfgClients.TextMatrix(R, 1)
             frmARGeneral.txtClientCD.Enabled = False
             frmARGeneral.txtAdd1.Text = msfgClients.TextMatrix(R, 2)
@@ -615,15 +607,9 @@ End If
             frmARGeneral.fillData
             Me.MousePointer = vbNormal
         Unload Me
-     '' Exit Sub
     End If
     
-    
-    
-    
-    
-       If currentForm.Name = "frm_MF_AUM_rpt" Then
-       '' Dim EXISTCODE As String
+    If currentForm.Name = "frm_MF_AUM_rpt" Then
          EXISTCODE = ""
         If Left(msfgClients.TextMatrix(R, 1), 1) = "3" Then
             Set rsexistcode = MyConn.Execute("select exist_code from agent_master where agent_code='" & msfgClients.TextMatrix(R, 1) & "'")
@@ -645,11 +631,8 @@ End If
           Exit Sub
     End If
     
-    
-    ''by Jawahar for transaction report on 03 Feb 06
     If currentForm.Name = "frmtstatementrpt" Then
-      ''  Dim EXISTCODE As String
-         EXISTCODE = ""
+        EXISTCODE = ""
         If Left(msfgClients.TextMatrix(R, 1), 1) = "3" Then
             Set rsexistcode = MyConn.Execute("select exist_code from agent_master where agent_code='" & msfgClients.TextMatrix(R, 1) & "'")
         Else
@@ -669,8 +652,9 @@ End If
         Unload Me
           Exit Sub
     End If
+
     If currentForm.Name = "frmtstatementrptop" Then
-    EXISTCODE = ""
+        EXISTCODE = ""
         If Left(msfgClients.TextMatrix(R, 1), 1) = "3" Then
             Set rsexistcode = MyConn.Execute("select exist_code from agent_master where agent_code='" & msfgClients.TextMatrix(R, 1) & "'")
         Else
@@ -692,12 +676,8 @@ End If
       Exit Sub
     End If
     
-    
-    
-    ''FRM_FP_STATEMENT
-    
     If currentForm.Name = "FRM_FP_STATEMENT" Then
-    EXISTCODE = ""
+        EXISTCODE = ""
         If Left(msfgClients.TextMatrix(R, 1), 1) = "3" Then
             Set rsexistcode = MyConn.Execute("select exist_code from agent_master where agent_code='" & msfgClients.TextMatrix(R, 1) & "'")
         Else
@@ -717,20 +697,10 @@ End If
             Me.MousePointer = vbNormal
         Unload Me
       Exit Sub
-    End If
-    
-    
-    
-    
-    
-    
-    
-    
-    
-     '''FRMTSTATEOP_STAX
+    End If    
     
     If currentForm.Name = "frmtstateop_stax" Then
-    EXISTCODE = ""
+        EXISTCODE = ""
         If Left(msfgClients.TextMatrix(R, 1), 1) = "3" Then
             Set rsexistcode = MyConn.Execute("select exist_code from agent_master where agent_code='" & msfgClients.TextMatrix(R, 1) & "'")
         Else
@@ -854,163 +824,165 @@ End If
         End If
             Me.MousePointer = vbNormal
             Unload Me
-          Exit Sub
-    End If
-    
-    If ReportFlag = True Then
-    If currentForm.Caption = f(0).Caption Then
-            For i = 0 To f(0).cmbAgent.ListCount - 1
-             If Mid(f(0).cmbAgent.List(i), 51) = msfgClients.TextMatrix(R, 1) Then
-                f(0).cmbAgent.ListIndex = i
-                Exit For
-             End If
-            Next
-            Me.MousePointer = vbNormal
-            Unload f(1)
-            Unload f(2)
-            ReportFlag = False
-        Unload Me
-      Exit Sub
-    End If
+        ''Exit Sub
+        ''End If
+        
+        If ReportFlag = True Then
+        If currentForm.Caption = f(0).Caption Then
+                For i = 0 To f(0).cmbAgent.ListCount - 1
+                If Mid(f(0).cmbAgent.List(i), 51) = msfgClients.TextMatrix(R, 1) Then
+                    f(0).cmbAgent.ListIndex = i
+                    Exit For
+                End If
+                Next
+                Me.MousePointer = vbNormal
+                Unload f(1)
+                Unload f(2)
+                ReportFlag = False
+            Unload Me
+        Exit Sub
+        End If
 
-    If currentForm.Caption = f(1).Caption Then
-            For i = 0 To f(1).cmbAgent.ListCount - 1
-             If Mid(f(1).cmbAgent.List(i), 51) = msfgClients.TextMatrix(R, 1) Then
-                f(1).cmbAgent.ListIndex = i
-                Exit For
-             End If
-            Next
-            Me.MousePointer = vbNormal
-            Unload f(0)
-            Unload f(2)
-            ReportFlag = False
-        Unload Me
-      Exit Sub
-    End If
+        If currentForm.Caption = f(1).Caption Then
+                For i = 0 To f(1).cmbAgent.ListCount - 1
+                If Mid(f(1).cmbAgent.List(i), 51) = msfgClients.TextMatrix(R, 1) Then
+                    f(1).cmbAgent.ListIndex = i
+                    Exit For
+                End If
+                Next
+                Me.MousePointer = vbNormal
+                Unload f(0)
+                Unload f(2)
+                ReportFlag = False
+            Unload Me
+        Exit Sub
+        End If
 
-    If currentForm.Caption = f(2).Caption Then
-           For i = 0 To f(2).cmbAgent.ListCount - 1
-             If Mid(f(2).cmbAgent.List(i), 51) = msfgClients.TextMatrix(R, 1) Then
-                f(2).cmbAgent.ListIndex = i
-                Exit For
-             End If
-            Next
-            Me.MousePointer = vbNormal
-            Unload f(0)
-            Unload f(1)
-            ReportFlag = False
-        Unload Me
-      Exit Sub
-    End If
+        If currentForm.Caption = f(2).Caption Then
+            For i = 0 To f(2).cmbAgent.ListCount - 1
+                If Mid(f(2).cmbAgent.List(i), 51) = msfgClients.TextMatrix(R, 1) Then
+                    f(2).cmbAgent.ListIndex = i
+                    Exit For
+                End If
+                Next
+                Me.MousePointer = vbNormal
+                Unload f(0)
+                Unload f(1)
+                ReportFlag = False
+            Unload Me
+        Exit Sub
+        End If
 
-  End If
+    End If
     
     
-    
-    '''''''''''''''''''end here
+     
 If currentForm.Name <> "frmAR" And currentForm.Name <> "frmARGeneral" And currentForm.Name <> "FrmVenDayBook" And currentForm.Name <> "frmAR_Renewal" Then 'jogi010907
-If chkIndia.Value = 0 Then
-    AllIndia = False
-Dim tr As TreeView
-    Set tr = currentForm.Controls(treeName)
-    preSelectedCode = "MFIBR"
-Dim Fcode As String
-Dim Pcode As Long
-    nodeValue = msfgClients.TextMatrix(R, 1)
-    If currentForm.Name = "FrmtransactionNew" Then FrmtransactionNew.cmbBusiBranch.Clear
-Dim Get_rm As New ADODB.Recordset
-    If UCase(Trim(Cmbcat.Text)) = "CLIENT" Then
-        Set Get_rm = MyConn.Execute("select rm_code from client_master where client_code=" & nodeValue)
-        If Not Get_rm.EOF Then
-            Pcode = Get_rm(0)
-        End If
-        'treeClientFill currentForm.Controls(treeName), "R" & CStr(pcode), currentForm.Controls(treeName).Nodes("R" & pcode).Child.Key  'BY HIMANSHU
-        treeClientFill currentForm.Controls(treeName), "R" & CStr(Pcode), currentForm.Controls(treeName).Nodes("R" & Pcode).Child.Key, msfgClients.TextMatrix(R, 1) 'BY HIMANSHU LATEST
-        currentForm.Controls(treeName).Nodes("C" & CStr(nodeValue)).Selected = True
-        currentForm.Controls(treeName).Nodes("C" & CStr(nodeValue)).Bold = True
-        currentForm.Controls(treeName).Nodes("C" & CStr(nodeValue)).Expanded = True
-        If currentForm.Name = "FrmtransactionNew" Then
-            FrmtransactionNew.userCode = FrmtransactionNew.treeClient.SelectedItem.Key
-            FrmtransactionNew.userType = "CLIENT"
-        End If
-    End If
-    If UCase(Trim(Cmbcat.Text)) = "AGENT" Then
-        Set Get_rm = MyConn.Execute("select rm_code from agent_master where agent_code=" & nodeValue)
-        If Not Get_rm.EOF Then
-            Pcode = Get_rm(0)
-        End If
-        'treeAgentFill currentForm.Controls(treeName), "R" & CStr(pcode), currentForm.Controls(treeName).Nodes("R" & CStr(pcode)).Child.Key, Left(msfgClients.TextMatrix(r, 1), 8) 'BY HIMANSHU LATEST  06-SEP
-        treeAgentFill currentForm.Controls(treeName), "R" & CStr(Pcode), currentForm.Controls(treeName).Nodes("R" & CStr(Pcode)).Child.Next.Key, Left(msfgClients.TextMatrix(R, 1), 8) 'BY HIMANSHU LATEST  06-SEP
-        currentForm.Controls(treeName).Nodes("A" & CStr(nodeValue)).Selected = True
-        currentForm.Controls(treeName).Nodes("A" & CStr(nodeValue)).Bold = True
-        currentForm.Controls(treeName).Nodes("A" & CStr(nodeValue)).Expanded = True
-        If currentForm.Name = "FrmtransactionNew" Then
-            FrmtransactionNew.userCode = FrmtransactionNew.treeClient.SelectedItem.Key
-            FrmtransactionNew.userType = "AGENT"
-        End If
-    End If
-    If UCase(Trim(Cmbcat.Text)) = "INVESTOR" Then
-        Set rs_get_invsrc = MyConn.Execute("Select source_id from investor_master where inv_code=" & nodeValue)
-        If Left(rs_get_invsrc(0), 1) = 4 Then
-            Set rs_get_rm = MyConn.Execute("select rm_code from client_master where client_code=" & rs_get_invsrc(0))
-            If Not rs_get_rm.EOF Then
-                Pcode = rs_get_rm(0)
-                    'treeClientFill currentForm.Controls(treeName), "R" & CStr(pcode), currentForm.Controls(treeName).Nodes("R" & pcode).Child.Key
-                    treeClientFill currentForm.Controls(treeName), "R" & CStr(Pcode), currentForm.Controls(treeName).Nodes("R" & Pcode).Child.Key, Left(msfgClients.TextMatrix(R, 1), 8) 'BY HIMANSHU LATEST
-                    treeInvestorFill currentForm.Controls(treeName), "C" & rs_get_invsrc(0), currentForm.Controls(treeName).Nodes("C" & rs_get_invsrc(0)).Child.Key
-                currentForm.Controls(treeName).Nodes("I" & CStr(nodeValue)).Selected = True
-                currentForm.Controls(treeName).Nodes("I" & CStr(nodeValue)).Bold = True
-                currentForm.Controls(treeName).Nodes("I" & CStr(nodeValue)).Expanded = True
+
+    If chkIndia.Value = 0 Then
+        AllIndia = False
+        Dim tr As TreeView
+        Set tr = currentForm.Controls(treeName)
+        preSelectedCode = "MFIBR"
+        Dim Fcode As String
+        Dim Pcode As Long
+        nodeValue = msfgClients.TextMatrix(R, 1)
+        If currentForm.Name = "FrmtransactionNew" Then FrmtransactionNew.cmbBusiBranch.Clear
+            Dim Get_rm As New ADODB.Recordset
+            If UCase(Trim(Cmbcat.Text)) = "CLIENT" Then
+                Set Get_rm = MyConn.Execute("select rm_code from client_master where client_code=" & nodeValue)
+                If Not Get_rm.EOF Then
+                    Pcode = Get_rm(0)
+                End If
+                'treeClientFill currentForm.Controls(treeName), "R" & CStr(pcode), currentForm.Controls(treeName).Nodes("R" & pcode).Child.Key  'BY HIMANSHU
+                treeClientFilcurrentForm.Controls(treeName), "R" & CStr(Pcode), currentForm.Controls(treeName).Nodes("R" & Pcode).Child.Key, msfgClients.TextMatrix(R, 1) 'BY HIMANSHU LATEST
+                currentForm.Controls(treeName).Nodes("C" & CStr(nodeValue)).Selected = True
+                currentForm.Controls(treeName).Nodes("C" & CStr(nodeValue)).Bold = True
+                currentForm.Controls(treeName).Nodes("C" & CStr(nodeValue)).Expanded = True
                 If currentForm.Name = "FrmtransactionNew" Then
                     FrmtransactionNew.userCode = FrmtransactionNew.treeClient.SelectedItem.Key
-                    FrmtransactionNew.userType = "INVESTOR"
+                    FrmtransactionNew.userType = "CLIENT"
                 End If
             End If
-        End If
-        If Left(rs_get_invsrc(0), 1) = 3 Then
-            Set rs_get_rm = MyConn.Execute("select rm_code from agent_master where agent_code=" & rs_get_invsrc(0))
-            If Not rs_get_rm.EOF Then
-                Pcode = rs_get_rm(0)
-                treeAgentFill currentForm.Controls(treeName), "R" & CStr(Pcode), currentForm.Controls(treeName).Nodes("R" & Pcode).Child.Next.Key, Left(msfgClients.TextMatrix(R, 1), 8)
-                treeInvestorFill currentForm.Controls(treeName), "A" & rs_get_invsrc(0), currentForm.Controls(treeName).Nodes("A" & rs_get_invsrc(0)).Child.Key
-                currentForm.Controls(treeName).Nodes("I" & CStr(nodeValue)).Selected = True
-                currentForm.Controls(treeName).Nodes("I" & CStr(nodeValue)).Expanded = True
+            If UCase(Trim(Cmbcat.Text)) = "AGENT" Then
+                Set Get_rm = MyConn.Execute("select rm_code from agent_master where agent_code=" & nodeValue)
+                If Not Get_rm.EOF Then
+                    Pcode = Get_rm(0)
+                End If
+                'treeAgentFill currentForm.Controls(treeName), "R" & CStr(pcode), currentForm.Controls(treeName).Nodes("R" & CStr(pcode)).Child.Key, Left(msfgClients.TextMatrix(r, 1), 8) 'BY HIMANSHU LATEST  06-SEP
+                treeAgentFill currentForm.Controls(treeName), "R" & CStr(Pcode), currentForm.Controls(treeName).Nodes("R" & CStr(Pcode)).Child.Next.Key, Left(msfgClients.TextMatrix(R, 1), 8) 'BY HIMANSHU LATEST  06-SEP
+                currentForm.Controls(treeName).Nodes("A" & CStr(nodeValue)).Selected = True
+                currentForm.Controls(treeName).Nodes("A" & CStr(nodeValue)).Bold = True
+                currentForm.Controls(treeName).Nodes("A" & CStr(nodeValue)).Expanded = True
+                If currentForm.Name = "FrmtransactionNew" Then
+                    FrmtransactionNew.userCode = FrmtransactionNew.treeClient.SelectedItem.Key
+                    FrmtransactionNew.userType = "AGENT"
+                End If
             End If
-        End If
+            If UCase(Trim(Cmbcat.Text)) = "INVESTOR" Then
+                Set rs_get_invsrc = MyConn.Execute("Select source_id from investor_master where inv_code=" & nodeValue)
+                If Left(rs_get_invsrc(0), 1) = 4 Then
+                    Set rs_get_rm = MyConn.Execute("select rm_code from client_master where client_code=" & rs_get_invsrc(0))
+                    If Not rs_get_rm.EOF Then
+                        Pcode = rs_get_rm(0)
+                            'treeClientFill currentForm.Controls(treeName), "R" & CStr(pcode), currentForm.Controls(treeName).Nodes("R" & pcode).Child.Key
+                            treeClientFill currentForm.Controls(treeName), "R" & CStr(Pcode), currentForm.Controls(treeName).Nodes("R" & Pcode).Child.Key, Left(msfgClients.TextMatrix(R, 1), 8) 'BY HIMANSHU LATEST
+                            treeInvestorFill currentForm.Controls(treeName), "C" & rs_get_invsrc(0), currentForm.Controls(treeName).Nodes("C" & rs_get_invsrc(0)).Child.Key
+                        currentForm.Controls(treeName).Nodes("I" & CStr(nodeValue)).Selected = True
+                        currentForm.Controls(treeName).Nodes("I" & CStr(nodeValue)).Bold = True
+                        currentForm.Controls(treeName).Nodes("I" & CStr(nodeValue)).Expanded = True
+                        If currentForm.Name = "FrmtransactionNew" Then
+                            FrmtransactionNew.userCode = FrmtransactionNew.treeClient.SelectedItem.Key
+                            FrmtransactionNew.userType = "INVESTOR"
+                        End If
+                    End If
+                End If
+                If Left(rs_get_invsrc(0), 1) = 3 Then
+                    Set rs_get_rm = MyConn.Execute("select rm_code from agent_master where agent_code=" & rs_get_invsrc(0))
+                    If Not rs_get_rm.EOF Then
+                        Pcode = rs_get_rm(0)
+                        treeAgentFill currentForm.Controls(treeName), "R" & CStr(Pcode), currentForm.Controls(treeName).Nodes("R" & Pcode).Child.Next.Key, Left(msfgClients.TextMatrix(R, 1), 8)
+                        treeInvestorFill currentForm.Controls(treeName), "A" & rs_get_invsrc(0), currentForm.Controls(treeName).Nodes("A" & rs_get_invsrc(0)).Child.Key
+                        currentForm.Controls(treeName).Nodes("I" & CStr(nodeValue)).Selected = True
+                        currentForm.Controls(treeName).Nodes("I" & CStr(nodeValue)).Expanded = True
+                    End If
+                End If
+            End If
+    Else
+        AllIndia = True
+        AllIndia_Inv_code = msfgClients.TextMatrix(R, 1)
     End If
-Else
-    AllIndia = True
-    AllIndia_Inv_code = msfgClients.TextMatrix(R, 1)
-End If
+        
     If susPense = "" Then
+    
     End If
     Me.MousePointer = vbNormal
     Unload Me
 End If
+        
+If currentForm.Name = "frmUpdateClient" Then
+    Debug.Print frmUpdateClient.treeClient.SelectedItem.Key, 1
+    DoEvents
+    frmUpdateClient.treeClient_Click
+End If
+If currentForm.Name = "frmupdatedinvestor" Then
+    Debug.Print frmupdatedinvestor.treeClient.SelectedItem.Key, 1
+    DoEvents
+    frmupdatedinvestor.treeClient_Click
+End If
+If currentForm.Name = "FrmtransactionNew" Then
+    FrmtransactionNew.treeClient_Click
+    DoEvents
+    If FrmtransactionNew.cmbBankName.Enabled = True Then
+        FrmtransactionNew.cmbBankName.SetFocus
+    End If
+    DoEvents
+End If
+If currentForm.Name = "frmPaySlabs" Then
+    frmPaySlabs.treeClient_Click
+    DoEvents
+End If
     
-    If currentForm.Name = "frmUpdateClient" Then
-        Debug.Print frmUpdateClient.treeClient.SelectedItem.Key, 1
-        DoEvents
-        frmUpdateClient.treeClient_Click
-    End If
-    If currentForm.Name = "frmupdatedinvestor" Then
-        Debug.Print frmupdatedinvestor.treeClient.SelectedItem.Key, 1
-        DoEvents
-        frmupdatedinvestor.treeClient_Click
-    End If
-    If currentForm.Name = "FrmtransactionNew" Then
-        FrmtransactionNew.treeClient_Click
-        DoEvents
-        If FrmtransactionNew.cmbBankName.Enabled = True Then
-            FrmtransactionNew.cmbBankName.SetFocus
-        End If
-        DoEvents
-    End If
-    If currentForm.Name = "frmPaySlabs" Then
-        frmPaySlabs.treeClient_Click
-        DoEvents
-    End If
-  
 End If
 'ankit
 'If currentForm.Name = "FrmtransactionNew" Then
