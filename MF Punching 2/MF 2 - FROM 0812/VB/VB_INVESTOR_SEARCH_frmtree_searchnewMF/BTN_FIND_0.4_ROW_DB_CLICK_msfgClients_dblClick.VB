@@ -493,8 +493,6 @@ If msfgClients.Rows > 1 Then
       Exit Sub
   End If
 
-  '##############---- NEED TO DO CHANGES ----#############
-
     If currentForm.Name = "frmAR" And Ar_type = "" Then 'jogi010907
         If MyOpt <> 1 Then
             frmAR.FrmConfirmBoth.Visible = True
@@ -876,112 +874,114 @@ If msfgClients.Rows > 1 Then
     End If
     
     
-     
-If currentForm.Name <> "frmAR" And currentForm.Name <> "frmARGeneral" And currentForm.Name <> "FrmVenDayBook" And currentForm.Name <> "frmAR_Renewal" Then 'jogi010907
+    If currentForm.Name <> "frmAR" And currentForm.Name <> "frmARGeneral" And currentForm.Name <> "FrmVenDayBook" And currentForm.Name <> "frmAR_Renewal" Then 'jogi010907
 
-    If chkIndia.Value = 0 Then
-        AllIndia = False
-        Dim tr As TreeView
-        Set tr = currentForm.Controls(treeName)
-        preSelectedCode = "MFIBR"
-        Dim Fcode As String
-        Dim Pcode As Long
-        nodeValue = msfgClients.TextMatrix(R, 1)
-        If currentForm.Name = "FrmtransactionNew" Then FrmtransactionNew.cmbBusiBranch.Clear
-            Dim Get_rm As New ADODB.Recordset
-            If UCase(Trim(Cmbcat.Text)) = "CLIENT" Then
-                Set Get_rm = MyConn.Execute("select rm_code from client_master where client_code=" & nodeValue)
-                If Not Get_rm.EOF Then
-                    Pcode = Get_rm(0)
+        If chkIndia.Value = 0 Then
+            AllIndia = False
+            Dim tr As TreeView
+            Set tr = currentForm.Controls(treeName)
+            preSelectedCode = "MFIBR"
+            Dim Fcode As String
+            Dim Pcode As Long
+            nodeValue = msfgClients.TextMatrix(R, 1)
+            If currentForm.Name = "FrmtransactionNew" Then FrmtransactionNew.cmbBusiBranch.Clear
+                Dim Get_rm As New ADODB.Recordset
+                If UCase(Trim(Cmbcat.Text)) = "CLIENT" Then
+                    Set Get_rm = MyConn.Execute("select rm_code from client_master where client_code=" & nodeValue)
+                    If Not Get_rm.EOF Then
+                        Pcode = Get_rm(0)
+                    End If
+                    'treeClientFill currentForm.Controls(treeName), "R" & CStr(pcode), currentForm.Controls(treeName).Nodes("R" & pcode).Child.Key  'BY HIMANSHU
+                    treeClientFilcurrentForm.Controls(treeName), "R" & CStr(Pcode), currentForm.Controls(treeName).Nodes("R" & Pcode).Child.Key, msfgClients.TextMatrix(R, 1) 'BY HIMANSHU LATEST
+                    currentForm.Controls(treeName).Nodes("C" & CStr(nodeValue)).Selected = True
+                    currentForm.Controls(treeName).Nodes("C" & CStr(nodeValue)).Bold = True
+                    currentForm.Controls(treeName).Nodes("C" & CStr(nodeValue)).Expanded = True
+                    If currentForm.Name = "FrmtransactionNew" Then
+                        FrmtransactionNew.userCode = FrmtransactionNew.treeClient.SelectedItem.Key
+                        FrmtransactionNew.userType = "CLIENT"
+                    End If
                 End If
-                'treeClientFill currentForm.Controls(treeName), "R" & CStr(pcode), currentForm.Controls(treeName).Nodes("R" & pcode).Child.Key  'BY HIMANSHU
-                treeClientFilcurrentForm.Controls(treeName), "R" & CStr(Pcode), currentForm.Controls(treeName).Nodes("R" & Pcode).Child.Key, msfgClients.TextMatrix(R, 1) 'BY HIMANSHU LATEST
-                currentForm.Controls(treeName).Nodes("C" & CStr(nodeValue)).Selected = True
-                currentForm.Controls(treeName).Nodes("C" & CStr(nodeValue)).Bold = True
-                currentForm.Controls(treeName).Nodes("C" & CStr(nodeValue)).Expanded = True
-                If currentForm.Name = "FrmtransactionNew" Then
-                    FrmtransactionNew.userCode = FrmtransactionNew.treeClient.SelectedItem.Key
-                    FrmtransactionNew.userType = "CLIENT"
+                If UCase(Trim(Cmbcat.Text)) = "AGENT" Then
+                    Set Get_rm = MyConn.Execute("select rm_code from agent_master where agent_code=" & nodeValue)
+                    If Not Get_rm.EOF Then
+                        Pcode = Get_rm(0)
+                    End If
+                    'treeAgentFill currentForm.Controls(treeName), "R" & CStr(pcode), currentForm.Controls(treeName).Nodes("R" & CStr(pcode)).Child.Key, Left(msfgClients.TextMatrix(r, 1), 8) 'BY HIMANSHU LATEST  06-SEP
+                    treeAgentFill currentForm.Controls(treeName), "R" & CStr(Pcode), currentForm.Controls(treeName).Nodes("R" & CStr(Pcode)).Child.Next.Key, Left(msfgClients.TextMatrix(R, 1), 8) 'BY HIMANSHU LATEST  06-SEP
+                    currentForm.Controls(treeName).Nodes("A" & CStr(nodeValue)).Selected = True
+                    currentForm.Controls(treeName).Nodes("A" & CStr(nodeValue)).Bold = True
+                    currentForm.Controls(treeName).Nodes("A" & CStr(nodeValue)).Expanded = True
+                    If currentForm.Name = "FrmtransactionNew" Then
+                        FrmtransactionNew.userCode = FrmtransactionNew.treeClient.SelectedItem.Key
+                        FrmtransactionNew.userType = "AGENT"
+                    End If
                 End If
-            End If
-            If UCase(Trim(Cmbcat.Text)) = "AGENT" Then
-                Set Get_rm = MyConn.Execute("select rm_code from agent_master where agent_code=" & nodeValue)
-                If Not Get_rm.EOF Then
-                    Pcode = Get_rm(0)
-                End If
-                'treeAgentFill currentForm.Controls(treeName), "R" & CStr(pcode), currentForm.Controls(treeName).Nodes("R" & CStr(pcode)).Child.Key, Left(msfgClients.TextMatrix(r, 1), 8) 'BY HIMANSHU LATEST  06-SEP
-                treeAgentFill currentForm.Controls(treeName), "R" & CStr(Pcode), currentForm.Controls(treeName).Nodes("R" & CStr(Pcode)).Child.Next.Key, Left(msfgClients.TextMatrix(R, 1), 8) 'BY HIMANSHU LATEST  06-SEP
-                currentForm.Controls(treeName).Nodes("A" & CStr(nodeValue)).Selected = True
-                currentForm.Controls(treeName).Nodes("A" & CStr(nodeValue)).Bold = True
-                currentForm.Controls(treeName).Nodes("A" & CStr(nodeValue)).Expanded = True
-                If currentForm.Name = "FrmtransactionNew" Then
-                    FrmtransactionNew.userCode = FrmtransactionNew.treeClient.SelectedItem.Key
-                    FrmtransactionNew.userType = "AGENT"
-                End If
-            End If
-            If UCase(Trim(Cmbcat.Text)) = "INVESTOR" Then
-                Set rs_get_invsrc = MyConn.Execute("Select source_id from investor_master where inv_code=" & nodeValue)
-                If Left(rs_get_invsrc(0), 1) = 4 Then
-                    Set rs_get_rm = MyConn.Execute("select rm_code from client_master where client_code=" & rs_get_invsrc(0))
-                    If Not rs_get_rm.EOF Then
-                        Pcode = rs_get_rm(0)
-                            'treeClientFill currentForm.Controls(treeName), "R" & CStr(pcode), currentForm.Controls(treeName).Nodes("R" & pcode).Child.Key
-                            treeClientFill currentForm.Controls(treeName), "R" & CStr(Pcode), currentForm.Controls(treeName).Nodes("R" & Pcode).Child.Key, Left(msfgClients.TextMatrix(R, 1), 8) 'BY HIMANSHU LATEST
-                            treeInvestorFill currentForm.Controls(treeName), "C" & rs_get_invsrc(0), currentForm.Controls(treeName).Nodes("C" & rs_get_invsrc(0)).Child.Key
-                        currentForm.Controls(treeName).Nodes("I" & CStr(nodeValue)).Selected = True
-                        currentForm.Controls(treeName).Nodes("I" & CStr(nodeValue)).Bold = True
-                        currentForm.Controls(treeName).Nodes("I" & CStr(nodeValue)).Expanded = True
-                        If currentForm.Name = "FrmtransactionNew" Then
-                            FrmtransactionNew.userCode = FrmtransactionNew.treeClient.SelectedItem.Key
-                            FrmtransactionNew.userType = "INVESTOR"
+                If UCase(Trim(Cmbcat.Text)) = "INVESTOR" Then
+                    Set rs_get_invsrc = MyConn.Execute("Select source_id from investor_master where inv_code=" & nodeValue)
+                    If Left(rs_get_invsrc(0), 1) = 4 Then
+                        Set rs_get_rm = MyConn.Execute("select rm_code from client_master where client_code=" & rs_get_invsrc(0))
+                        If Not rs_get_rm.EOF Then
+                            Pcode = rs_get_rm(0)
+                                'treeClientFill currentForm.Controls(treeName), "R" & CStr(pcode), currentForm.Controls(treeName).Nodes("R" & pcode).Child.Key
+                                treeClientFill currentForm.Controls(treeName), "R" & CStr(Pcode), currentForm.Controls(treeName).Nodes("R" & Pcode).Child.Key, Left(msfgClients.TextMatrix(R, 1), 8) 'BY HIMANSHU LATEST
+                                treeInvestorFill currentForm.Controls(treeName), "C" & rs_get_invsrc(0), currentForm.Controls(treeName).Nodes("C" & rs_get_invsrc(0)).Child.Key
+                            currentForm.Controls(treeName).Nodes("I" & CStr(nodeValue)).Selected = True
+                            currentForm.Controls(treeName).Nodes("I" & CStr(nodeValue)).Bold = True
+                            currentForm.Controls(treeName).Nodes("I" & CStr(nodeValue)).Expanded = True
+                            If currentForm.Name = "FrmtransactionNew" Then
+                                FrmtransactionNew.userCode = FrmtransactionNew.treeClient.SelectedItem.Key
+                                FrmtransactionNew.userType = "INVESTOR"
+                            End If
+                        End If
+                    End If
+                    If Left(rs_get_invsrc(0), 1) = 3 Then
+                        Set rs_get_rm = MyConn.Execute("select rm_code from agent_master where agent_code=" & rs_get_invsrc(0))
+                        If Not rs_get_rm.EOF Then
+                            Pcode = rs_get_rm(0)
+                            treeAgentFill currentForm.Controls(treeName), "R" & CStr(Pcode), currentForm.Controls(treeName).Nodes("R" & Pcode).Child.Next.Key, Left(msfgClients.TextMatrix(R, 1), 8)
+                            treeInvestorFill currentForm.Controls(treeName), "A" & rs_get_invsrc(0), currentForm.Controls(treeName).Nodes("A" & rs_get_invsrc(0)).Child.Key
+                            currentForm.Controls(treeName).Nodes("I" & CStr(nodeValue)).Selected = True
+                            currentForm.Controls(treeName).Nodes("I" & CStr(nodeValue)).Expanded = True
                         End If
                     End If
                 End If
-                If Left(rs_get_invsrc(0), 1) = 3 Then
-                    Set rs_get_rm = MyConn.Execute("select rm_code from agent_master where agent_code=" & rs_get_invsrc(0))
-                    If Not rs_get_rm.EOF Then
-                        Pcode = rs_get_rm(0)
-                        treeAgentFill currentForm.Controls(treeName), "R" & CStr(Pcode), currentForm.Controls(treeName).Nodes("R" & Pcode).Child.Next.Key, Left(msfgClients.TextMatrix(R, 1), 8)
-                        treeInvestorFill currentForm.Controls(treeName), "A" & rs_get_invsrc(0), currentForm.Controls(treeName).Nodes("A" & rs_get_invsrc(0)).Child.Key
-                        currentForm.Controls(treeName).Nodes("I" & CStr(nodeValue)).Selected = True
-                        currentForm.Controls(treeName).Nodes("I" & CStr(nodeValue)).Expanded = True
-                    End If
-                End If
-            End If
-    Else
-        AllIndia = True
-        AllIndia_Inv_code = msfgClients.TextMatrix(R, 1)
+        Else
+            AllIndia = True
+            AllIndia_Inv_code = msfgClients.TextMatrix(R, 1)
+        End If
+            
+        If susPense = "" Then
+        
+        End If
+        Me.MousePointer = vbNormal
+        Unload Me
     End If
         
-    If susPense = "" Then
-    
+    If currentForm.Name = "frmUpdateClient" Then
+        Debug.Print frmUpdateClient.treeClient.SelectedItem.Key, 1
+        DoEvents
+        frmUpdateClient.treeClient_Click
     End If
-    Me.MousePointer = vbNormal
-    Unload Me
-End If
-        
-If currentForm.Name = "frmUpdateClient" Then
-    Debug.Print frmUpdateClient.treeClient.SelectedItem.Key, 1
-    DoEvents
-    frmUpdateClient.treeClient_Click
-End If
-If currentForm.Name = "frmupdatedinvestor" Then
-    Debug.Print frmupdatedinvestor.treeClient.SelectedItem.Key, 1
-    DoEvents
-    frmupdatedinvestor.treeClient_Click
-End If
-If currentForm.Name = "FrmtransactionNew" Then
-    FrmtransactionNew.treeClient_Click
-    DoEvents
-    If FrmtransactionNew.cmbBankName.Enabled = True Then
-        FrmtransactionNew.cmbBankName.SetFocus
+
+    If currentForm.Name = "frmupdatedinvestor" Then
+        Debug.Print frmupdatedinvestor.treeClient.SelectedItem.Key, 1
+        DoEvents
+        frmupdatedinvestor.treeClient_Click
     End If
-    DoEvents
-End If
-If currentForm.Name = "frmPaySlabs" Then
-    frmPaySlabs.treeClient_Click
-    DoEvents
-End If
+
+    If currentForm.Name = "FrmtransactionNew" Then
+        FrmtransactionNew.treeClient_Click
+        DoEvents
+        If FrmtransactionNew.cmbBankName.Enabled = True Then
+            FrmtransactionNew.cmbBankName.SetFocus
+        End If
+        DoEvents
+    End If
+
+    If currentForm.Name = "frmPaySlabs" Then
+        frmPaySlabs.treeClient_Click
+        DoEvents
+    End If
     
 End If
 'ankit
