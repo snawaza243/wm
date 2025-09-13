@@ -38,8 +38,7 @@ BEGIN
                     A.SA                                AS SA,
                     TO_CHAR(A.PLY_ISSUE_DT, 'DD-MON-YYYY') AS ISSUE_DATE,
                     A.FRESH_RENEWAL                     AS FRESH_RENEWAL,
-                    PM.SUB_CATEGORY                     AS PLAN_TYPE,
-                    DOC                                 AS DOC
+                    PM.SUB_CATEGORY                     AS PLAN_TYPE 
                  FROM 
                     BAJAJ_AR_HEAD A
                     --LEFT JOIN BAJAJ_AR_DETAILS D ON A.SYS_AR_NO = D.SYS_AR_NO
@@ -60,7 +59,7 @@ BEGIN
                     A.SYS_AR_NO, A.SYS_AR_DT, D.REMARKS, FI.ITEMNAME, R.REGION_NAME, Z.ZONE_NAME,
                     B.BRANCH_NAME, E.RM_NAME, D.STATUS_CD, D.STATUS_DT, A.PREM_FREQ, A.PREM_AMT, 
                     A.COMPANY_CD, PM.PLAN, A.POLICY_NO, A.PAYMENT_MODE, A.SA, A.PLY_ISSUE_DT,
-                    A.FRESH_RENEWAL, PM.SUB_CATEGORY,DOC;
+                    A.FRESH_RENEWAL, PM.SUB_CATEGORY;
 
         ELSIF IS_POLICY > 0 AND IS_COMPANY > 0 AND IS_AR = 0 THEN
             IF TRIM(P_COMPANY_CD) IS NULL THEN
@@ -86,8 +85,7 @@ BEGIN
                         A.SA                                AS SA,
                         TO_CHAR(A.PLY_ISSUE_DT, 'DD-MON-YYYY') AS ISSUE_DATE,
                         A.FRESH_RENEWAL                     AS FRESH_RENEWAL,
-                        PM.SUB_CATEGORY                     AS PLAN_TYPE,
-                        doc                                 as DOC
+                        PM.SUB_CATEGORY                     AS PLAN_TYPE 
                     FROM 
                         BAJAJ_AR_HEAD A
                         --LEFT JOIN BAJAJ_AR_DETAILS D ON A.SYS_AR_NO = D.SYS_AR_NO
@@ -109,7 +107,7 @@ BEGIN
                         A.SYS_AR_NO, A.SYS_AR_DT, D.REMARKS, FI.ITEMNAME, R.REGION_NAME, Z.ZONE_NAME,
                         B.BRANCH_NAME, E.RM_NAME, D.STATUS_CD, D.STATUS_DT, A.PREM_FREQ, A.PREM_AMT, 
                         A.COMPANY_CD, PM.PLAN, A.PAYMENT_MODE, A.SA, A.PLY_ISSUE_DT,
-                        A.FRESH_RENEWAL, PM.SUB_CATEGORY,doc;                        
+                        A.FRESH_RENEWAL, PM.SUB_CATEGORY;                        
             END IF; 
         ELSE
             OPEN P_CURSOR FOR 
@@ -128,8 +126,7 @@ BEGIN
                     C.CITY_NAME                                 AS CITY_NAME,
                     S.STATE_NAME                                AS STATE_NAME,
                     I.MOBILE                                    AS MOBILE,
-                    I.PHONE                                     AS PHONE,
-                    doc                                         as DOC
+                    I.PHONE                                     AS PHONE
                 FROM BRANCH_MASTER B,
                     ZONE_MASTER Z,
                     POLICY_MAP_TEMP1 P,
@@ -151,7 +148,7 @@ BEGIN
                     AND (P_COMPANY_CD IS NULL OR a.COMPANY_CD = P_COMPANY_CD)
                 GROUP BY P.POLICY_NO, P.COMPANY_CD, B.BRANCH_NAME, R.REGION_NAME,
                     Z.ZONE_NAME, I.INVESTOR_NAME, I.ADDRESS1, I.ADDRESS2,
-                    I.MOBILE, I.PHONE, E.RM_NAME, C.CITY_NAME, S.STATE_NAME, doc;
+                    I.MOBILE, I.PHONE, E.RM_NAME, C.CITY_NAME, S.STATE_NAME;
         END IF;
     END IF;
 END;
