@@ -80,7 +80,7 @@ BEGIN
         TR_DATE                 = P_TRAN_DATE,
         CHEQUE_NO               = P_CHEQUE_NO,
         CHEQUE_DATE             = P_CHEQUE_DATE,
-        microsip              = p_sip_sub_type
+        microsip               = p_sip_sub_type
     WHERE TRAN_CODE             = P_TRAN_CODE;
 
     -- Update WM_TRAN_SIP table

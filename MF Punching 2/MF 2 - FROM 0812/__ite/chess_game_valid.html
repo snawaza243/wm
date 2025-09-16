@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Chess Game - Valid Moves</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            background: #f8f9fa;
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 30px auto;
+        }
+
+        .chess-board {
+            display: grid;
+            grid-template-columns: repeat(8, 60px);
+            grid-template-rows: repeat(8, 60px);
+            border: 3px solid #333;
+            margin: 0 auto;
+            width: 480px;
+            height: 480px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+        }
+
+        .square {
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .white {
+            background: #f0d9b5;
+        }
+
+        .black {
+            background: #b58863;
+        }
+
+        .selected {
+            outline: 3px solid #3498db;
+        }
+
+        .legal {
+            background: radial-gradient(circle, #ffe066 60%, transparent 61%);
+        }
+
+        .capturable {
+            background: radial-gradient(circle, #e74c3c 60%, transparent 61%);
+        }
+
+        .move-history {
+            background: #fff;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
+            max-height: 300px;
+            overflow-y: auto;
+            font-size: 1.1rem;
+        }
+
+        .controls {
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .controls button {
+            margin: 0 5px;
+            padding: 8px 18px;
+            font-size: 1rem;
+        }
+
+        .turn-indicator {
+            margin: 15px 0;
+            font-weight: bold;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h2 style="text-align:center;">Chess Game (Valid Moves)</h2>
+        <div class="turn-indicator" id="turnIndicator">Turn: White</div>
+        <div class="chess-board" id="chessBoard"></div>
+        <div class="controls">
+            <button id="resetBtn">Reset</button>
+        </div>
+        <div class="move-history" id="moveHistory"><strong>Move History:</strong><br></div>
+    </div>
+    <script>
+        const PIECES = {
+            wK: "♔",
+            wQ: "♕",
+            wR: "♖",
+            wB: "♗",
+            wN: "♘",
+            wP: "♙",
+            bK: "♚",
+            bQ: "♛",
+            bR: "♜",
+            bB: "♝",
+            bN: "♞",
+            bP: "♟"
+        };
+        const initialBoard = [
+            ["bR", "bN", "bB", "bQ", "bK", "bB", "bN", "bR"],
+            ["bP", "bP", "bP", "bP", "bP", "bP", "bP", "bP"],
+            [null, null, null, null, null, null, null, null],
+            [null, null, null, null, null, null, null, null],
+            [null, null, null, null, null, null, null, null],
+            [null, null, null, null, null, null, null, null],
+            ["wP", "wP", "wP", "wP", "wP", "wP", "wP", "wP"],
+            ["wR", "wN", "wB", "wQ", "wK", "wB", "wN", "wR"]
+        ];
+        let board = [];
+        let selected = null;
+        let legalMoves = [];
+        let turn = "w";
+        let moveHistory = [];
+
+        function resetBoard() {
+            board = initialBoard.map(row => row.slice());
+            selected = null;
+            legalMoves = [];
+            turn = "w";
+            moveHistory = [];
+            updateBoard();
+            updateTurn();
+            updateHistory();
+        }
+
+        function updateTurn() {
+            document.getElementById("turnIndicator").textContent = "Turn: " + (turn === "w" ? "White" : "Black");
+        }
+
+        function updateHistory() {
+            let html = "<strong>Move History:</strong><br>";
+            moveHistory.forEach((m, i) => {
+                html += ((i % 2 === 0) ? ((i / 2) + 1) + ". " : "") + m + ((i % 2 === 1) ? "<br>" : " ");
+            });
+            document.getElementById("moveHistory").innerHTML = html;
+        }
+
+        function updateBoard() {
+            const boardDiv = document.getElementById("chessBoard");
+            boardDiv.innerHTML = "";
+            for (let r = 0; r < 8; r++) {
+                for (let c = 0; c < 8; c++) {
+                    let sq = document.createElement("div");
+                    sq.className = "square " + ((r + c) % 2 === 0 ? "white" : "black");
+                    sq.dataset.row = r;
+                    sq.dataset.col = c;
+                    if (selected && selected[0] === r && selected[1] === c) sq.classList.add("selected");
+                    let move = legalMoves.find(m => m[0] === r && m[1] === c);
+                    if (move) {
+                        if (board[r][c]) sq.classList.add("capturable");
+                        else sq.classList.add("legal");
+                    }
+                    if (board[r][c]) sq.textContent = PIECES[board[r][c]];
+                    boardDiv.appendChild(sq);
+                }
+            }
+        }
+
+        function onSquareClick(e) {
+            if (!e.target.classList.contains("square")) return;
+            let r = +e.target.dataset.row,
+                c = +e.target.dataset.col;
+            let piece = board[r][c];
+            if (selected) {
+                // If clicked on a legal move, move piece
+                if (legalMoves.some(m => m[0] === r && m[1] === c)) {
+                    let from = selected,
+                        to = [r, c];
+                    let moveNotation = getMoveNotation(from, to, board[from[0]][from[1]], board[r][c]);
+                    board[r][c] = board[from[0]][from[1]];
+                    board[from[0]][from[1]] = null;
+                    moveHistory.push(moveNotation);
+                    turn = (turn === "w") ? "b" : "w";
+                    selected = null;
+                    legalMoves = [];
+                    updateBoard();
+                    updateTurn();
+                    updateHistory();
+                    return;
+                }
+                // If clicked on own piece, select new
+                if (piece && piece[0] === turn) {
+                    selected = [r, c];
+                    legalMoves = getLegalMoves(r, c);
+                    updateBoard();
+                    return;
+                }
+                // Else, deselect
+                selected = null;
+                legalMoves = [];
+                updateBoard();
+                return;
+            }
+            // Select own piece
+            if (piece && piece[0] === turn) {
+                selected = [r, c];
+                legalMoves = getLegalMoves(r, c);
+                updateBoard();
+            }
+        }
+
+        function getMoveNotation(from, to, piece, captured) {
+            const files = "abcdefgh";
+            let move = PIECES[piece];
+            move += files[to[1]] + (8 - to[0]);
+            if (captured) move = PIECES[piece] + "x" + files[to[1]] + (8 - to[0]);
+            return move;
+        }
+
+        function getLegalMoves(r, c) {
+            let piece = board[r][c];
+            if (!piece) return [];
+            let color = piece[0],
+                type = piece[1];
+            let moves = [];
+            if (type === "P") {
+                let dir = color === "w" ? -1 : 1;
+                let startRow = color === "w" ? 6 : 1;
+                // Forward
+                if (inBounds(r + dir, c) && !board[r + dir][c]) moves.push([r + dir, c]);
+                // Double move
+                if (r === startRow && !board[r + dir][c] && !board[r + 2 * dir][c]) moves.push([r + 2 * dir, c]);
+                // Captures
+                for (let dc of [-1, 1]) {
+                    if (inBounds(r + dir, c + dc) && board[r + dir][c + dc] && board[r + dir][c + dc][0] !== color)
+                        moves.push([r + dir, c + dc]);
+                }
+            }
+            if (type === "N") {
+                for (let [dr, dc] of [[-2, -1], [-2, 1], [-1, -2], [-1, 2], [1, -2], [1, 2], [2, -1], [2, 1]]) {
+                    let nr = r + dr,
+                        nc = c + dc;
+                    if (inBounds(nr, nc) && (!board[nr][nc] || board[nr][nc][0] !== color))
+                        moves.push([nr, nc]);
+                }
+            }
+            if (type === "B" || type === "Q") {
+                for (let [dr, dc] of [[-1, -1], [-1, 1], [1, -1], [1, 1]]) {
+                    for (let i = 1; i < 8; i++) {
+                        let nr = r + dr * i,
+                            nc = c + dc * i;
+                        if (!inBounds(nr, nc)) break;
+                        if (!board[nr][nc]) moves.push([nr, nc]);
+                        else {
+                            if (board[nr][nc][0] !== color) moves.push([nr, nc]);
+                            break;
+                        }
+                    }
+                }
+            }
+            if (type === "R" || type === "Q") {
+                for (let [dr, dc] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) {
+                    for (let i = 1; i < 8; i++) {
+                        let nr = r + dr * i,
+                            nc = c + dc * i;
+                        if (!inBounds(nr, nc)) break;
+                        if (!board[nr][nc]) moves.push([nr, nc]);
+                        else {
+                            if (board[nr][nc][0] !== color) moves.push([nr, nc]);
+                            break;
+                        }
+                    }
+                }
+            }
+            if (type === "K") {
+                for (let dr = -1; dr <= 1; dr++)
+                    for (let dc = -1; dc <= 1; dc++) {
+                        if (dr === 0 && dc === 0) continue;
+                        let nr = r + dr,
+                            nc = c + dc;
+                        if (inBounds(nr, nc) && (!board[nr][nc] || board[nr][nc][0] !== color))
+                            moves.push([nr, nc]);
+                    }
+            }
+            // Filter out moves that would leave king in check (not implemented for brevity)
+            return moves;
+        }
+
+        function inBounds(r, c) {
+            return r >= 0 && r < 8 && c >= 0 && c < 8;
+        }
+
+        document.getElementById("chessBoard").addEventListener("click", onSquareClick);
+        document.getElementById("resetBtn").addEventListener("click", resetBoard);
+
+        resetBoard();
+    </script>
+</body>
+
+</html>

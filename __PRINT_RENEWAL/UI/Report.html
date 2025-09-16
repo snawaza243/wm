@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Letter Generator</title>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+<style>
+body { font-family: Arial, sans-serif; background:#4ea6ff; padding:20px; }
+button { padding:10px 20px; font-size:16px; }
+
+/* Letter Styling */
+.letter-page {
+
+  border: 1px solid #d0d0d0;
+  background: #fff;
+  /* font-family: Georgia, "Times New Roman", serif; */
+  color: #111;
+  line-height: 1.45;
+  page-break-after: always;
+}
+.letter-page h1 {
+  text-align: center;
+  font-size: 20px;
+  text-decoration: underline;
+  margin-bottom: 5px;
+}
+.letter-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  margin: 12px 0;
+}
+.letter-address {
+  border-top: 1px solid #999;
+  border-bottom: 1px solid #999;
+  padding: 10px;
+  font-size: 13px;
+  margin-bottom: 15px;
+}
+.letter-subject {
+  text-align: center;
+  font-weight: bold;
+  margin-bottom: 15px;
+}
+.fd-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 12px 0;
+}
+.fd-table th, .fd-table td {
+  border: 1px solid #ccc;
+  padding: 5px 8px;
+  font-size: 13px;
+}
+.fd-table th { background: #f5f5f5; font-weight: bold; }
+.letter-body p { margin-bottom: 10px; font-size: 13px; text-align: justify; }
+.letter-sign { margin-top: 25px; font-size: 13px; }
+.letter-sign .name { font-weight: bold; margin-top: 20px; }
+.ps { margin-top: 15px; font-size: 12px; }
+</style>
+</head>
+<body>
+
+<button id="generateLetters">Generate Letters</button>
+
+<script>
+const lettersData = [
+  {
+    refNo: "REF001",
+    printDate: "16-Sep-2025",
+    sourceCode: "SC12345",
+    number: "001",
+    clientName: "John Doe",
+    add1: "123 Street Name",
+    add2: "Near City Center",
+    cityName: "New Delhi",
+    maturityMonth: "September 2025",
+    fds: [
+      { instrument: "FD", ref: "FD12345", matDate: "25-Sep-2025", amount: "₹50,000" },
+      { instrument: "Bond", ref: "BD67890", matDate: "28-Sep-2025", amount: "₹75,000" }
+    ]
+  },
+  {
+    refNo: "REF002",
+    printDate: "16-Sep-2025",
+    sourceCode: "SC98765",
+    number: "002",
+    clientName: "Jane Smith",
+    add1: "45 Green Avenue",
+    add2: "2nd Floor",
+    cityName: "Mumbai",
+    maturityMonth: "October 2025",
+    fds: [
+      { instrument: "FD", ref: "FD54321", matDate: "15-Oct-2025", amount: "₹1,20,000" }
+    ]
+  },
+  
+  {
+    refNo: "REF001",
+    printDate: "16-Sep-2025",
+    sourceCode: "SC12345",
+    number: "001",
+    clientName: "John Doe",
+    add1: "123 Street Name",
+    add2: "Near City Center",
+    cityName: "New Delhi",
+    maturityMonth: "September 2025",
+    fds: [
+      { instrument: "FD", ref: "FD12345", matDate: "25-Sep-2025", amount: "₹50,000" },
+      { instrument: "Bond", ref: "BD67890", matDate: "28-Sep-2025", amount: "₹75,000" }
+    ]
+  },
+  {
+    refNo: "REF002",
+    printDate: "16-Sep-2025",
+    sourceCode: "SC98765",
+    number: "002",
+    clientName: "Jane Smith",
+    add1: "45 Green Avenue",
+    add2: "2nd Floor",
+    cityName: "Mumbai",
+    maturityMonth: "October 2025",
+    fds: [
+      { instrument: "FD", ref: "FD54321", matDate: "15-Oct-2025", amount: "₹1,20,000" }
+    ]
+  }
+
+
+];
+
+function generateLetterHTML(letter) {
+  let fdRows = "";
+  letter.fds.forEach(fd => {
+    fdRows += `<tr>
+      <td>${fd.instrument}</td>
+      <td>${fd.ref}</td>
+      <td>${fd.matDate}</td>
+      <td>${fd.amount}</td>
+    </tr>`;
+  });
+
+  return `
+  <div class="letter-page">
+    <h1>Maturity / Renewal Reminder</h1>
+    <div class="letter-meta">
+      <div>Ref No: <strong>${letter.refNo}</strong></div>
+      <div>Print Date: <strong>${letter.printDate}</strong></div>
+    </div>
+    <div class="letter-address">
+      ${letter.clientName}<br>
+      ${letter.add1}<br>
+      ${letter.add2}<br>
+      ${letter.cityName}
+    </div>
+    <div class="letter-subject">Sub: Maturity of your Fixed Deposits / Bonds</div>
+    <div class="letter-body">
+      <p>Dear Sir / Madam,</p>
+      <p>We would like to thank you for patronizing our services. We are India’s premier investment services company with more than 60 years of experience in helping people protect and grow their wealth.</p>
+      <p>Going forward, we wish to inform you that your following Fixed Deposits / Bonds are maturing in the month of <strong>${letter.maturityMonth || ''}</strong>:</p>
+      <table class="fd-table">
+        <thead>
+          <tr>
+            <th>Instrument</th>
+            <th>Ref No</th>
+            <th>Maturity Date</th>
+            <th>Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${fdRows}
+        </tbody>
+      </table>
+      <p>We would like to thank you for patronizing our services. We are India's Premier Investment Services Company with more than 60 years of experience in helping people protect and grow their wealth. Over 10 Lakh Investor rely on our Investment Services</p>
+      <p>Going forward, we wich to inform you that your following Fixed Deposits/Bonds are maturing in the nonth of ${letter.sourceCode}</p>
+      <p>We request you to visit or call your rearest Bajaj Capital Investment Center TM. We have some investment opportunities waiting for you that can help give boost to your investment further. Expect thsi meeting to add a fresh perspective to your investments that would really be insightful and worthy of pondering over.</p>
+      <p>Looking forward to meet you and discuss newer opportunities to multiply your wealth.</p>
+    </div>
+    <div class="letter-sign">
+      Warm Regards,<br>
+      <span class="name">Aparna Razdan</span><br>
+      Manager - Fixed Income Group
+    </div>
+    <div class="ps">PS: Your Client Reference Number is: <strong>${letter.sourceCode}</strong></div>
+  </div>`;
+}
+
+$("#generateLetters").on("click", function() {
+  let popup = window.open("", "_blank");
+  let popupContent = `
+    <html>
+    <head><title>Generated Letters</title>
+      <style>${$("style").html()}</style>
+    </head>
+    <body>
+      ${lettersData.map(l => generateLetterHTML(l)).join("")}
+      <script>
+        window.onload = function() {
+          window.print();
+        };
+        window.onafterprint = function() {
+          window.close();
+        };
+      <\/script>
+    </body>
+    </html>`;
+  popup.document.open();
+  popup.document.write(popupContent);
+  popup.document.close();
+});
+
+</script>
+</body>
+</html>
