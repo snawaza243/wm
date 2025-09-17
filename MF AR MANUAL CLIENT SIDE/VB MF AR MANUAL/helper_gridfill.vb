@@ -423,6 +423,8 @@ If X = 1 Then
                 VSFCommGrdK.CellBackColor = vbWhite
           Next
       'End If
+
+
 Else
      VSFCommGrdT.Rows = rsMap1.RecordCount + 1
      LblCount = rsMap1.RecordCount
