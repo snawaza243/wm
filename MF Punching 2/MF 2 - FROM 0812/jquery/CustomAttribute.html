@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>jQuery Data Attribute</title>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+
+<div id="myElement" data-user="john_doe">Hello!</div>
+<button id="updateBtn">Update Data</button>
+
+<script>
+  $('#updateBtn').on('click', function() {
+    alert('Updated data-user to: ' + $('#myElement').data('user'));
+
+    // Set data-user (in jQuery's cache)
+     $('#myElement').data('user', 'emily_rose');
+
+    // Also update the actual DOM attribute
+    // $('#myElement').attr('data-user', 'emily_rose');
+
+    alert('Updated data-user to: ' + $('#myElement').data('user'));
+  });
+</script>
+
+</body>
+</html>
