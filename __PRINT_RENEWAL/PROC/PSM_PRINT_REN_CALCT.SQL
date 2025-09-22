@@ -1,4 +1,4 @@
-CREATE OR REPLACE PROCEDURE PSM_PRINT_REN_CALCT(
+CREATE OR REPLACE PROCEDURE WEALTHMAKER.PSM_PRINT_REN_CALCT(
     PX_LATER_TYPE IN VARCHAR2,
     PX_MON_YEAR IN VARCHAR2,
     PX_LOGE IN VARCHAR2,
@@ -19,8 +19,10 @@ BEGIN
         V_MON := SUBSTR(PX_MON_YEAR, 1, 2);
         V_YEAR := SUBSTR(PX_MON_YEAR, 4, 4);
 
+        -- Set V_DATE1 to '01/MM/YYYY'
         V_DATE1 := '01/' || LPAD(V_MON, 2, '0') || '/' || V_YEAR;
 
+        -- Set V_DATE2 based on month and leap year logic
         IF V_MON IN ('01','03','05','07','08','10','12') THEN
             V_DATE2 := '31/' || LPAD(V_MON, 2, '0') || '/' || V_YEAR;
         ELSIF V_MON IN ('04','06','09','11') THEN
@@ -32,9 +34,12 @@ BEGIN
         END IF;
     END IF;
  
+    -- Handle Letter Type A
     IF PX_LATER_TYPE = 'A' THEN
+        -- Truncate the temporary table
         EXECUTE IMMEDIATE 'TRUNCATE TABLE RenewalLetter_Vw_sub';
         
+        -- Prepare SQL with variables embedded directly
         V_SQL := 'INSERT INTO RenewalLetter_Vw_sub ' ||
                  'SELECT A.CLIENT_NAME, A.ADDRESS1, A.ADDRESS2, A.CITY_ID, B.GRADE, A.SOURCECODE, ' ||
                  'A.INVESTOR_NAME, A.AMOUNT, A.MAT_PERIOD, A.TRAN_CODE, A.ARDATE, A.MUT_NAME, ' ||
@@ -49,8 +54,10 @@ BEGIN
         
         EXECUTE IMMEDIATE V_SQL;
         
+        -- Truncate the main view table
         EXECUTE IMMEDIATE 'TRUNCATE TABLE RenewalLetter_Vw';
         
+        -- Insert aggregated data into main view table
         V_SQL := 'INSERT INTO RenewalLetter_Vw ' ||
                  'SELECT MAX(A.SOURCECODE) as SOURCECODE1, MAX(A.CLIENT_NAME) as CLIENT_NAME1, ' ||
                  'MAX(A.ADDRESS1) as ADD1, MAX(A.ADDRESS2) as ADD2, MAX(A.CITY_ID) as CITY_CD, ' ||
@@ -61,9 +68,12 @@ BEGIN
         
         EXECUTE IMMEDIATE V_SQL;
         
+    -- Handle Letter Type B
     ELSIF PX_LATER_TYPE = 'B' THEN
+        -- Truncate the temporary table for type B
         EXECUTE IMMEDIATE 'TRUNCATE TABLE RenewalLetter_Vw_sub_B';
         
+        -- Prepare SQL with variables embedded directly
         V_SQL := 'INSERT INTO RenewalLetter_Vw_sub_B ' ||
                  'SELECT A.CLIENT_NAME, A.ADDRESS1, A.ADDRESS2, A.CITY_ID, B.GRADE, A.SOURCECODE, ' ||
                  'A.INVESTOR_NAME, A.AMOUNT, A.MAT_PERIOD, A.TRAN_CODE, A.ARDATE, A.MUT_NAME, ' ||
@@ -80,19 +90,24 @@ BEGIN
         
     END IF;
     
+    -- Commit the transaction if everything succeeded
     COMMIT;
     
     IF PX_LATER_TYPE = 'A' THEN
         OPEN PX_CURSOR FOR 
-            SELECT 'SUCCESS: Data Calculated!' AS msg, tb.* FROM RenewalLetter_Vw tb;    
+            -- 'SUCCESS: Calculated Successfully'
+            SELECT tb.* FROM RenewalLetter_Vw tb;
     ELSIF PX_LATER_TYPE = 'B' THEN
         OPEN PX_CURSOR FOR 
-            SELECT 'SUCCESS: Data Calculated!' AS msg, tb.* FROM RenewalLetter_Vw_sub_B tb;
+            SELECT tb.* FROM RenewalLetter_Vw_sub_B tb;
     END IF;
 
 EXCEPTION
     WHEN OTHERS THEN
+        -- Rollback to the savepoint in case of any error
         ROLLBACK TO start_transaction;
+        
+        -- Re-raise the exception to notify the caller
         RAISE_APPLICATION_ERROR(-20001, 'Error in PSM_PRINT_REN_CALCT: ' || SQLERRM);
 END PSM_PRINT_REN_CALCT;
 /
