@@ -17,7 +17,6 @@ BEGIN
 
     IF PX_MONTH IS NULL OR PX_YEAR IS NULL THEN
         RAISE_APPLICATION_ERROR(-20001, 'Month and Year are required.');
-
     END IF;
 
     delete  from iss_comp_grade where mon_no=PX_MONTH and year_no=PX_YEAR;
