@@ -10,35 +10,32 @@ CREATE OR REPLACE PROCEDURE PSM_LOG_DELETE_TABLE(
     PX_COL5     IN VARCHAR2 DEFAULT NULL,
     PX_CURSOR   OUT SYS_REFCURSOR
 ) AS
-    V_MONTH NUMBER;
-    V_YEAR  NUMBER;
-    V_ERROR VARCHAR2(200);
+    V_MONTH     NUMBER;
+    V_YEAR      NUMBER;
+    V_msg       VARCHAR2(200);
 BEGIN
-    -- Delete data based on form name
-    IF PX_FRM_NAME = 'update_grade_for_fd_com' THEN
-        
-        -- Check for null month/year
+
+    IF PX_FRM_NAME = 'update_grade_for_fd_com' THEN        
         IF PX_COL1 IS NULL OR PX_COL2 IS NULL THEN
             RAISE_APPLICATION_ERROR(-20001, 'MONTH and YEAR cannot be null');
         END IF;
-    
-        -- Convert input columns to numbers safely
+        
         V_MONTH := TO_NUMBER(PX_COL1);
         V_YEAR  := TO_NUMBER(PX_COL2);
-
-        -- Delete from table
-        DELETE FROM ISS_COMP_GRADE
-        WHERE MON_NO = V_MONTH
-          AND YEAR_NO = V_YEAR;
+        
+        DELETE FROM ISS_COMP_GRADE WHERE MON_NO = V_MONTH AND YEAR_NO = V_YEAR;
+        COMMIT;
+        V_msg:= 'SUCCESS: DATA DELETED!';
+        
     END IF;
 
     OPEN PX_CURSOR FOR
-        SELECT 'SUCCESS: DATA DELETED!' AS MSG FROM DUAL;
+        SELECT V_msg AS MSG FROM DUAL;
 
 EXCEPTION
     WHEN OTHERS THEN
-        V_ERROR := 'ERROR: ' || SUBSTR(SQLERRM, 1, 100);
+        V_msg := 'ERROR: ' || SUBSTR(SQLERRM, 1, 100);
         OPEN PX_CURSOR FOR
-            SELECT V_ERROR AS MSG FROM DUAL;
+            SELECT V_msg AS MSG FROM DUAL;
 END PSM_LOG_DELETE_TABLE;
 /

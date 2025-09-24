@@ -1,4 +1,4 @@
-CREATE OR REPLACE PROCEDURE WEALTHMAKER.PSM_PRINT_REN_CALCT(
+CREATE OR REPLACE PROCEDURE WEALTHMAKER.PSM_PRINT_REN_CALCT0(
     PX_LATER_TYPE IN VARCHAR2,
     PX_MON_YEAR IN VARCHAR2,
     PX_LOGE IN VARCHAR2,
@@ -95,8 +95,16 @@ BEGIN
     
     IF PX_LATER_TYPE = 'A' THEN
         OPEN PX_CURSOR FOR 
-            -- 'SUCCESS: Calculated Successfully'
-            SELECT tb.* FROM RenewalLetter_Vw tb;
+            SELECT
+                SOURCECODE1,
+                CLIENT_NAME1,
+                ADD1,
+                ADD2, 
+                MUTNAME,
+                TO_CHAR(ARDATE,'DD/MM/YYYY') AS ARDATE,
+                CITY_NAME,
+                PINCODE
+            FROM RenewalLetter_Vw;
     ELSIF PX_LATER_TYPE = 'B' THEN
         OPEN PX_CURSOR FOR 
             SELECT tb.* FROM RenewalLetter_Vw_sub_B tb;
@@ -109,5 +117,5 @@ EXCEPTION
         
         -- Re-raise the exception to notify the caller
         RAISE_APPLICATION_ERROR(-20001, 'Error in PSM_PRINT_REN_CALCT: ' || SQLERRM);
-END PSM_PRINT_REN_CALCT;
+END;
 /
