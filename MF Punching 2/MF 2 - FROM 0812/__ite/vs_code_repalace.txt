@@ -1,0 +1,4 @@
+<td class="rtl">$1 $2</td>
+
+
+<td>(.*?)\s*<span class="rtl">(.*?)<\/span><\/td>
