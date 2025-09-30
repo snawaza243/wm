@@ -1,40 +1,38 @@
 CREATE OR REPLACE PROCEDURE WEALTHMAKER.PSM_MF_ADD_VALIDATION1 (
-    P_TXTDOCID          IN VARCHAR2,
-    P_IMENTRYDATE       IN VARCHAR2,
-    P_SIPSTP_A          IN VARCHAR2, -- CmbSipStpA
+    P_DT                IN VARCHAR2,
+    P_ENTRY_DATE        IN VARCHAR2, -- ImEntryDtA
+    P_SIP_STP           IN VARCHAR2, -- CmbSipStpA
     P_SIP_START_DT      IN VARCHAR2, -- ImSipStartDtA
     P_SIP_END_DT        IN VARCHAR2, -- ImSipEndDtA
-    P_LABEL32_CLIENT_CODE  IN VARCHAR2, -- Label32
+    P_INV_CODE          IN VARCHAR2, -- Label32
     P_CHKCLOSE_FOR_SCH  IN VARCHAR2, -- FOR MUTILPE SCH POPUP
-    P_MYSCHCODE         IN VARCHAR2, -- MySchCode
-    P_TXTCLOSESCHTEXT   IN VARCHAR2,
-    P_TXTAMOUNTA        IN VARCHAR2, -- TxtAmountA
-    P_INSTALLMENT_TYPE  IN VARCHAR2,  -- CmbsubinvText
-    P_CMBSUBSIPA        IN VARCHAR2,  -- CmbSubSipA
-    P_TXTSCHEMEA        IN VARCHAR2, -- TxtSchemeA
+    P_SCH_CODE          IN VARCHAR2, -- MySchCode
+    P_CLOSE_SCH_TEXT    IN VARCHAR2, -- P_CLOSE_SCH_TEXT
+    P_AMOUNT            IN VARCHAR2, -- TxtAmountA
+    P_INSTALLMENT_TYPE  IN VARCHAR2, -- CmbsubinvText
+    P_SUB_SIP           IN VARCHAR2, -- CmbSubSipA
+    P_SCH_NAME          IN VARCHAR2, -- TxtSchemeA
     P_BUSS_BRANCH       IN VARCHAR2, -- CmbBusiBranch
-    P_TXTBUSICODEA      IN VARCHAR2, -- TxtBusiCodeA
-    P_IMENTRYDTA        IN VARCHAR2, -- ImEntryDtA
-    P_DTCHQDATE         IN VARCHAR2, -- dtChqDate
+    P_BUSS_CODE         IN VARCHAR2, -- TxtBusiCodeA
+    P_CHQ_DT            IN VARCHAR2, -- dtChqDate
     P_TRAN_TYPE         IN VARCHAR2, -- CmbTranTypeA
-    P_CMBFREQUENCY      IN VARCHAR2,  -- CmbFrequency
-    P_TXTINSTALLMENS    IN VARCHAR2,  -- TxtInstallmens
-    P_TXTSIPAMOUNT      IN VARCHAR2, -- TxtSipAmount
+    P_FREQUENCY         IN VARCHAR2,  -- CmbFrequency
+    P_INSTALLMENTS      IN VARCHAR2,  -- TxtInstallmens
+    P_SIP_AMOUNT        IN VARCHAR2, -- TxtSipAmount
     P_SIP_FRESH_RENEWAL IN VARCHAR2, -- OptsipF, OptsipR
-    P_TXTINVESTORA      IN VARCHAR2, -- txtInvestorA
-    P_CMBAMCA           IN VARCHAR2, -- CmbAmcA
-    P_TXTAPPNOA         IN VARCHAR2, -- TxtAppnoA
-    P_TXTCLIENTCODEA    IN VARCHAR2, -- TxtClientCodeA
-    P_TXTSWITCHSCHEMEA  IN VARCHAR2, -- TxtSwitchSchemeA
-    P_TXTSWITCHFOLIOA   IN VARCHAR2, -- TxtSwitchFolioA
+    P_INVESTOR          IN VARCHAR2, -- txtInvestorA
+    P_AMC               IN VARCHAR2, -- CmbAmcA
+    P_APP_NO            IN VARCHAR2, -- TxtAppnoA
+    P_CLIENT_CODE       IN VARCHAR2, -- TxtClientCodeA
+    P_SWITCH_SCH        IN VARCHAR2, -- TxtSwitchSchemeA
+    P_SWITCH_FOLIO      IN VARCHAR2, -- TxtSwitchFolioA
     P_PANVARIFY         IN VARCHAR2, -- TxtPanVarify
     P_PANA              IN VARCHAR2, -- TxtPanA
-    P_CHKATMTRANSACTIONA IN VARCHAR2, -- ChkAtmTransactionA
-    P_MYAMCCODE         IN VARCHAR2, -- MyAmcCode
+    P_CHK_ATM_TR        IN VARCHAR2, -- ChkAtmTransactionA
+    P_AMC_CODE          IN VARCHAR2, -- MyAmcCode
     P_GLBUP_PREVIOUSDATE IN VARCHAR2,
     P_GLBUP_NEXTDATE    IN VARCHAR2,
     P_PAYMENT_MODE      IN VARCHAR2, 
-    P_ENTRYDATE         IN VARCHAR2,
     P_EXPENSES          IN VARCHAR2,    
     P_LOG               IN  VARCHAR2,
     P_ROLE              IN  VARCHAR2,
@@ -51,32 +49,29 @@ BEGIN
 
     V_P_PANA:=P_PANA;
 
-    IF P_ROLE <> '212' THEN        
-        OPEN P_CURSOR FOR SELECT 'ERROR: YOU ARE NOT AUTHORIZED TO PUNCH THE TRANSACTION' AS MESSAGE FROM DUAL;
+    IF P_ROLE NOT IN ('212') THEN        
+        OPEN P_CURSOR FOR SELECT 'YOU ARE NOT AUTHORIZED TO PUNCH THE TRANSACTION' AS MESSAGE FROM DUAL;
         RETURN;
     END IF;
     
-    IF TRIM(P_TXTDOCID) <> '' THEN
+    IF TRIM(P_DT) IS NOT NULL THEN
         DECLARE V_FN_CHECK_FOR_APPROVAL_ALL VARCHAR2(5);
         BEGIN
-            SELECT WEALTHMAKER.FN_CHECK_FOR_APPROVAL_ALL(P_TXTDOCID) INTO V_FN_CHECK_FOR_APPROVAL_ALL FROM DUAL;
+            SELECT WEALTHMAKER.FN_CHECK_FOR_APPROVAL_ALL(P_DT) INTO V_FN_CHECK_FOR_APPROVAL_ALL FROM DUAL;
             IF V_FN_CHECK_FOR_APPROVAL_ALL = '2' THEN
-                OPEN P_CURSOR FOR SELECT ' Approval request for this transaction has already been raised ' AS MESSAGE FROM DUAL;
-                RETURN;
+                OPEN P_CURSOR FOR SELECT 'Approval request for this transaction has already been raised' AS MESSAGE FROM DUAL; RETURN;
             ELSIF V_FN_CHECK_FOR_APPROVAL_ALL = '4' THEN
-                OPEN P_CURSOR FOR SELECT ' Approval request for this transaction has been rejected by Management ' AS MESSAGE FROM DUAL;
-                RETURN;
+                OPEN P_CURSOR FOR SELECT 'Approval request for this transaction has been rejected by Management' AS MESSAGE FROM DUAL; RETURN;
             END IF;
         END;
     ELSE
-        OPEN P_CURSOR FOR SELECT ' DT IS REQUIRED ' AS MESSAGE FROM DUAL;
+        OPEN P_CURSOR FOR SELECT 'DT IS REQUIRED' AS MESSAGE FROM DUAL;
         RETURN;
     END IF;
 
-    IF P_SIPSTP_A = 'SIP' THEN
-        IF P_SIP_END_DT = '' OR P_SIP_START_DT = '' THEN
-            OPEN P_CURSOR FOR SELECT ' Please Enter SIP End Date ' AS MESSAGE FROM DUAL;
-            RETURN;
+    IF P_SIP_STP = 'SIP' THEN
+        IF P_SIP_END_DT IS NULL OR P_SIP_START_DT IS NULL THEN
+            OPEN P_CURSOR FOR SELECT 'Please Enter SIP End Date ' AS MESSAGE FROM DUAL; RETURN;
         END IF;
     END IF;
 
@@ -84,8 +79,8 @@ BEGIN
         STR1 VARCHAR2(100); 
     BEGIN
         IF P_CHKCLOSE_FOR_SCH = '1' THEN
-            IF P_TXTCLOSESCHTEXT IS NOT NULL AND P_TXTCLOSESCHTEXT <> '' THEN
-                STR1 := REGEXP_SUBSTR(P_TXTCLOSESCHTEXT, '[^=]+', 1, 2);
+            IF P_CLOSE_SCH_TEXT IS NOT NULL AND P_CLOSE_SCH_TEXT <> '' THEN
+                STR1 := REGEXP_SUBSTR(P_CLOSE_SCH_TEXT, '[^=]+', 1, 2);
                 MYCLOSESCHCODE := STR1;
             END IF;
         ELSE
@@ -93,37 +88,37 @@ BEGIN
         END IF;
     END;
 
-    IF P_LABEL32_CLIENT_CODE <> '' AND MYSCHCODE <> '' AND P_TXTAMOUNTA <> '' THEN
+    IF P_INV_CODE <> '' AND MYSCHCODE <> '' AND P_AMOUNT <> '' THEN
         DECLARE 
             V_COUNT_DUP_TRAN_CODE NUMBER;
             V_AMOUNT1 NUMBER;
             V_AMOUNT2 NUMBER; 
         BEGIN
-            V_AMOUNT1 := NVL(TO_NUMBER(P_TXTAMOUNTA),0) - 100;
-            V_AMOUNT2 :=  NVL(TO_NUMBER(P_TXTAMOUNTA),0) + 100;
+            V_AMOUNT1 := NVL(TO_NUMBER(P_AMOUNT),0) - 100;
+            V_AMOUNT2 :=  NVL(TO_NUMBER(P_AMOUNT),0) + 100;
 
             SELECT COUNT(*) INTO V_COUNT_DUP_TRAN_CODE 
             FROM TRANSACTION_MF_TEMP1 A,SCHEME_INFO B 
             WHERE   (ASA <> 'C' OR ASA IS NULL) 
             AND A.SCH_CODE=B.SCH_CODE AND A.DOC_ID IS NOT NULL  
-            AND CLIENT_CODE=P_LABEL32_CLIENT_CODE
+            AND CLIENT_CODE=P_INV_CODE
             AND TR_DATE>SYSDATE-90
-            AND B.SCH_CODE= P_MYSCHCODE 
+            AND B.SCH_CODE= P_SCH 
             AND AMOUNT BETWEEN V_AMOUNT1 AND V_AMOUNT2;
 
             IF V_COUNT_DUP_TRAN_CODE > 0 THEN 
                 -- OPEN CURSOR AND RETURN THE ALL ALL VALID WITH # CONCATENATED 
                 OPEN P_CURSOR FOR
-                SELECT 'DUPLICATEFORM#'|| 'MF#'|| P_TXTAMOUNTA || '#' || P_LABEL32_CLIENT_CODE || '#' || P_MYSCHCODE || '#' || '0' FROM DUAL;
+                SELECT 'DUPLICATEFORM#'|| 'MF#'|| P_AMOUNT || '#' || P_INV_CODE || '#' || P_SCH || '#' || '0' FROM DUAL;
                 RETURN;
             END IF;
         END;
     ELSE
         -- save_method;
         BEGIN
-            IF P_TXTAMOUNTA <> '' THEN
+            IF P_AMOUNT <> '' THEN
                 MICROPANFLAG := 0;
-                IF P_INSTALLMENT_TYPE = 'MICRO' AND P_TXTAMOUNTA < 50000 THEN
+                IF P_INSTALLMENT_TYPE = 'MICRO' AND P_AMOUNT < 50000 THEN
                     MICROPANFLAG := 1;
                 ELSE
                     MICROPANFLAG := 0;
@@ -134,24 +129,24 @@ BEGIN
         DECLARE
             STR1 VARCHAR2(100); 
         BEGIN
-            IF P_TXTSCHEMEA IS NOT NULL AND P_TXTSCHEMEA <> '' THEN
-                STR1 := REGEXP_SUBSTR(P_TXTSCHEMEA, '[^=]+', 1, 2);
+            IF P_SCH_NAME IS NOT NULL AND P_SCH_NAME <> '' THEN
+                STR1 := REGEXP_SUBSTR(P_SCH_NAME, '[^=]+', 1, 2);
                 MYSCHCODE := STR1;
             END IF;
         END;
 
 
-        IF P_TXTDOCID IS NOT NULL AND P_TXTDOCID <> '' THEN
+        IF P_DT IS NOT NULL AND P_DT <> '' THEN
             DECLARE
                 V_COMBO_VAL NUMBER;
             BEGIN
-                SELECT COMBO_PLAN_VAL(P_TXTDOCID, MYSCHCODE, 0, 'MF')
+                SELECT COMBO_PLAN_VAL(P_DT, MYSCHCODE, 0, 'MF')
                 INTO V_COMBO_VAL
                 FROM DUAL;
 
                 IF V_COMBO_VAL = 0 THEN
                     OPEN P_CURSOR FOR
-                        OPEN P_CURSOR FOR SELECT 'ERROR: LI premium for combo plan can''t exceed 6.70 Lacs OR plan must be of combo' AS MESSAGE FROM DUAL;
+                        SELECT 'ERROR: LI premium for combo plan can''t exceed 6.70 Lacs OR plan must be of combo' AS MESSAGE FROM DUAL;
                         RETURN;
                 END IF;
             END;
@@ -185,11 +180,11 @@ BEGIN
             V_RESULT  NUMBER;
             V_ERRMSG  VARCHAR2(200);
         BEGIN
-            IF P_TXTDOCID IS NOT NULL AND P_TXTDOCID <> '' THEN
+            IF P_DT IS NOT NULL AND P_DT <> '' THEN
                 -- Call the stored function/procedure
                 WEALTHMAKER.FN_VALIDATE_CLIENT_DT(
-                    PDT_NO      => P_TXTDOCID,
-                    PCLIENT_CODE => P_LABEL32_CLIENT_CODE,
+                    PDT_NO      => P_DT,
+                    PCLIENT_CODE => P_INV_CODE,
                     RESULT      => V_RESULT,
                     MESSAGE     => V_ERRMSG
                 );
@@ -212,9 +207,9 @@ BEGIN
             IF P_BUSS_BRANCH IS NOT NULL AND P_BUSS_BRANCH <> '' THEN
                 -- Call the validation procedure
                 WEALTHMAKER.FN_VALIDATE_BRANCH_RM_DT(
-                    PDT_NO       => P_TXTDOCID,
+                    PDT_NO       => P_DT,
                     PBRANCH_CODE => MYBRANCHCODE,
-                    PPAYROLL_ID  => TRIM(P_TXTBUSICODEA),
+                    PPAYROLL_ID  => TRIM(P_BUSS_CODE),
                     RESULT       => V_RESULT,
                     MESSAGE      => V_ERRMSG
                 );
@@ -234,11 +229,11 @@ BEGIN
         DECLARE
             v_fp_status NUMBER;
         BEGIN
-            IF P_TxtDocID IS NOT NULL AND P_TxtDocID <> '' 
-            AND P_Label32_CLIENT_CODE IS NOT NULL AND P_Label32_CLIENT_CODE <> '' THEN
+            IF P_DT IS NOT NULL AND P_DT <> '' 
+            AND P_INV_CODE IS NOT NULL AND P_INV_CODE <> '' THEN
 
                 -- Call the function and store the result
-                SELECT fp_status_check1(P_Label32_CLIENT_CODE, P_TxtDocID)
+                SELECT fp_status_check1(P_INV_CODE, P_DT)
                 INTO v_fp_status
                 FROM dual;
 
@@ -257,12 +252,12 @@ BEGIN
         DECLARE
             V_EXISTS NUMBER;
         BEGIN
-            IF P_TXTDOCID IS NOT NULL AND P_TXTDOCID <> '' THEN
+            IF P_DT IS NOT NULL AND P_DT <> '' THEN
                 -- Check in transaction_st
                 SELECT COUNT(*)
                 INTO V_EXISTS
                 FROM TRANSACTION_ST
-                WHERE DOC_ID = P_TXTDOCID;
+                WHERE DOC_ID = P_DT;
 
                 IF V_EXISTS > 0 THEN
                     OPEN P_CURSOR FOR
@@ -275,7 +270,7 @@ BEGIN
                 SELECT COUNT(*)
                 INTO V_EXISTS
                 FROM TRANSACTION_STTEMP
-                WHERE DOC_ID = P_TXTDOCID;
+                WHERE DOC_ID = P_DT;
 
                 IF V_EXISTS > 0 THEN
                     OPEN P_CURSOR FOR
@@ -298,7 +293,7 @@ BEGIN
             P_HAVE_TR     VARCHAR2(20) := '';
             P_GLBINS_PREVIOUSDATE DATE;
             P_GLBINS_NEXTDATE     DATE;
-            V_IMENTRYDATE        DATE:= TO_DATE(P_IMENTRYDATE,'DD/MM/YYYY');
+            V_IMENTRYDATE        DATE:= TO_DATE(P_ENTRY_DATE,'DD/MM/YYYY');
         BEGIN
             P_FRSAVE := 1;
             P_FRMODY := 0;
@@ -350,8 +345,8 @@ BEGIN
 
         DECLARE
             V_SERVER_DATE   DATE := TRUNC(SYSDATE);
-            V_IM_ENTRY_DATE DATE := TO_DATE(P_IMENTRYDATE,'DD/MM/YYYY');
-            V_CHQ_DATE      DATE := TO_DATE(P_DTCHQDATE,'DD/MM/YYYY'); 
+            V_IM_ENTRY_DATE DATE := TO_DATE(P_ENTRY_DATE,'DD/MM/YYYY');
+            V_CHQ_DATE      DATE := TO_DATE(P_CHQ_DT,'DD/MM/YYYY'); 
             V_MONTH_DIFF    NUMBER;
             RESULT          NUMBER;
         BEGIN
@@ -382,7 +377,7 @@ BEGIN
             SELECT COUNT(*)
             INTO V_COUNT
             FROM TB_DOC_UPLOAD
-            WHERE COMMON_ID = TRIM(P_TXTDOCID)
+            WHERE COMMON_ID = TRIM(P_DT)
             AND TRAN_TYPE = 'MF';
 
             IF V_COUNT = 0 THEN
@@ -394,7 +389,7 @@ BEGIN
         END;
 
         DECLARE
-            V_FREQ_TEXT  VARCHAR2(100) := P_CMBFREQUENCY;  -- Passed from front-end
+            V_FREQ_TEXT  VARCHAR2(100) := P_FREQUENCY;  -- Passed from front-end
             V_FREQ_PARTS DBMS_UTILITY.LNAME_ARRAY;         -- Array to hold split parts
             V_FREQ_COUNT INTEGER;
         BEGIN
@@ -427,15 +422,15 @@ BEGIN
             RETURN;
         END IF;
 
-        IF TRIM(P_SIPSTP_A) = '' THEN
+        IF TRIM(P_SIP_STP) = '' THEN
             OPEN P_CURSOR FOR
                 SELECT 'Please Select SIP Type' AS MESSAGE
                 FROM DUAL;
             RETURN;
         END IF;
 
-        IF P_SIPSTP_A IN ('SIP','STP') THEN
-            IF (TRIM(P_CMBFREQUENCY) IS NULL OR TRIM(P_TXTINSTALLMENS) IS NULL) THEN
+        IF P_SIP_STP IN ('SIP','STP') THEN
+            IF (TRIM(P_FREQUENCY) IS NULL OR TRIM(P_INSTALLMENTS) IS NULL) THEN
                 OPEN P_CURSOR FOR
                     SELECT 'Please Enter Frequency Type and No. Of Installments' AS MESSAGE
                     FROM DUAL;
@@ -444,7 +439,7 @@ BEGIN
         END IF;
 
 
-        IF P_SIPSTP_A IN ('SIP') THEN
+        IF P_SIP_STP IN ('SIP') THEN
             IF TRIM(P_SIP_END_DT) IS NULL THEN
                 OPEN P_CURSOR FOR
                     SELECT 'Please Enter SIP End Date' AS MESSAGE
@@ -452,8 +447,8 @@ BEGIN
                 RETURN;
             END IF;
 
-            --IS_NUMERIC(P_TXTSIPAMOUNT)
-            IF TRIM(P_TXTSIPAMOUNT) IN ('', '0')  THEN
+            --IS_NUMERIC(P_SIP_AMOUNT)
+            IF TRIM(P_SIP_AMOUNT) IN ('', '0')  THEN
                 OPEN P_CURSOR FOR
                     SELECT 'Please Enter Valid SIP Amount' AS MESSAGE
                     FROM DUAL;
@@ -477,7 +472,7 @@ BEGIN
                 RETURN;
             END IF;
 
-            IF TRIM(P_DTCHQDATE) IS NULL THEN        
+            IF TRIM(P_CHQ_DT) IS NULL THEN        
                 OPEN P_CURSOR FOR
                     SELECT 'Cheque/Draft/ECS/UTR/Fund Transfer Can Not be Left Blank. ' AS MESSAGE
                     FROM DUAL;
@@ -492,14 +487,14 @@ BEGIN
             RETURN;
         END IF;
 
-        IF TRIM(P_TXTINVESTORA) <>'' THEN
+        IF TRIM(P_INVESTOR) <>'' THEN
             OPEN P_CURSOR FOR
                 SELECT 'Please Fill Investor Name' AS MESSAGE
                 FROM DUAL;
             RETURN;
         END IF;
 
-        IF TRIM(P_TXTBUSICODEA) <>'' THEN
+        IF TRIM(P_BUSS_CODE) <>'' THEN
             OPEN P_CURSOR FOR
                 SELECT 'Please Fill Business Code A' AS MESSAGE
                 FROM DUAL;
@@ -507,7 +502,7 @@ BEGIN
         END IF;
 
         -- CmbAmcA
-        IF TRIM(P_CMBAMCA) = '' THEN
+        IF TRIM(P_AMC) = '' THEN
             OPEN P_CURSOR FOR
                 SELECT 'Please Select AMC' AS MESSAGE
                 FROM DUAL;
@@ -515,12 +510,12 @@ BEGIN
         END IF;
 
         IF TRIM(P_TRAN_TYPE) = 'PURCHASE' THEN
-            IF TRIM(P_TXTAPPNOA) IS NOT NULL AND TRIM(P_TXTAPPNOA) <> '' THEN
-                IF LENGTH(P_TXTAPPNOA) < 6 THEN
+            IF TRIM(P_APP_NO) IS NOT NULL AND TRIM(P_APP_NO) <> '' THEN
+                IF LENGTH(P_APP_NO) < 6 THEN
                     OPEN P_CURSOR FOR
                         SELECT ' Minimum Length Of App No Should Be Greater or Equal To 6 ' FROM DUAL;
                         RETURN;
-                ELSIF P_TXTAPPNOA = '000000' THEN
+                ELSIF P_APP_NO = '000000' THEN
                     OPEN P_CURSOR FOR
                         SELECT ' Please Enter A Valid App No ' FROM DUAL;
                     RETURN;
@@ -528,21 +523,21 @@ BEGIN
             END IF;
         END IF;
 
-        IF TRIM(P_TXTSCHEMEA) IS NULL THEN
+        IF TRIM(P_SCH_NAME) IS NULL THEN
             OPEN P_CURSOR FOR
                 SELECT 'Select The Scheme' AS MESSAGE
                 FROM DUAL;
             RETURN;
         END IF;
 
-        IF TRIM(P_IMENTRYDTA) IS NULL THEN
+        IF TRIM(P_ENTRY_DATE) IS NULL THEN
             OPEN P_CURSOR FOR
                 SELECT 'Transaction Date Can Not Be Left Blank' AS MESSAGE
                 FROM DUAL;
             RETURN;
         END IF;
 
-        IF TRIM(P_TXTCLIENTCODEA) IS NULL THEN
+        IF TRIM(P_CLIENT_CODE) IS NULL THEN
             OPEN P_CURSOR FOR
                 SELECT 'Client Code Can Not Left Blank' AS MESSAGE
                 FROM DUAL;
@@ -555,7 +550,7 @@ BEGIN
         BEGIN
             BEGIN
                 -- Try converting to number
-                V_AMOUNT := TO_NUMBER(P_TXTAMOUNTA);
+                V_AMOUNT := TO_NUMBER(P_AMOUNT);
             EXCEPTION
                 WHEN VALUE_ERROR THEN
                     -- If conversion fails, treat as invalid
@@ -574,7 +569,7 @@ BEGIN
             END IF;
         END;
 
-        IF TRIM(P_TXTAMOUNTA) IS NULL OR TRIM(P_TXTAMOUNTA) = '' THEN
+        IF TRIM(P_AMOUNT) IS NULL OR TRIM(P_AMOUNT) = '' THEN
             OPEN P_CURSOR FOR
                 SELECT 'Amount Can Not Left Blank' AS MESSAGE
                 FROM DUAL;
@@ -618,9 +613,9 @@ BEGIN
             V_SCH_CODE VARCHAR2(100);
         BEGIN
             -- Check if input is not blank
-            IF TRIM(P_TXTSCHEMEA) IS NOT NULL THEN
+            IF TRIM(P_SCH_NAME) IS NOT NULL THEN
                 -- Extract part after '=' using regex
-                V_SCH_CODE := REGEXP_SUBSTR(P_TXTSCHEMEA, '[^=]+', 1, 2);
+                V_SCH_CODE := REGEXP_SUBSTR(P_SCH_NAME, '[^=]+', 1, 2);
                 MYSCHCODE := V_SCH_CODE;
             END IF;
 
@@ -637,9 +632,9 @@ BEGIN
             V_SWITCH_CODE VARCHAR2(100);
         BEGIN
             -- Check if input is not blank
-            IF TRIM(P_TXTSWITCHSCHEMEA) IS NOT NULL THEN
+            IF TRIM(P_SWITCH_SCH) IS NOT NULL THEN
                 -- Extract part after '=' using regex
-                V_SWITCH_CODE := REGEXP_SUBSTR(P_TXTSWITCHSCHEMEA, '[^=]+', 1, 2);
+                V_SWITCH_CODE := REGEXP_SUBSTR(P_SWITCH_SCH, '[^=]+', 1, 2);
                 MYSWITCHSCHCODEA := V_SWITCH_CODE;
             END IF;
         END;
@@ -648,10 +643,10 @@ BEGIN
             V_COUNT NUMBER;
         BEGIN
             -- Check transaction type
-            IF P_TRAN_TYPE = 'SWITCH IN' OR P_SIPSTP_A = 'STP' THEN
+            IF P_TRAN_TYPE = 'SWITCH IN' OR P_SIP_STP = 'STP' THEN
 
                 -- Validate Switch Scheme
-                IF TRIM(P_TXTSWITCHSCHEMEA) IS NULL THEN
+                IF TRIM(P_SWITCH_SCH) IS NULL THEN
                     OPEN P_CURSOR FOR
                         SELECT 'Select the Scheme you have Switched From' AS MESSAGE
                         FROM DUAL;
@@ -659,7 +654,7 @@ BEGIN
                 END IF;
 
                 -- Validate Switch Folio
-                IF TRIM(P_TXTSWITCHFOLIOA) IS NULL THEN
+                IF TRIM(P_SWITCH_FOLIO) IS NULL THEN
                     OPEN P_CURSOR FOR
                         SELECT 'Select the Folio you have Switched From' AS MESSAGE
                         FROM DUAL;
@@ -699,7 +694,7 @@ BEGIN
             V_CATEGORY      VARCHAR2(10);
         BEGIN
             -- Skip PAN validation for MICROSIP under SIP
-            IF NOT (P_TRAN_TYPE = 'SIP' AND P_CMBSUBSIPA = 'MICROSIP') THEN
+            IF NOT (P_TRAN_TYPE = 'SIP' AND P_SUB_SIP = 'MICROSIP') THEN
                 
                 -- Micro PAN validation
                 IF MYSCHCODE <> 'OP#10826' THEN
@@ -715,11 +710,11 @@ BEGIN
                 END IF;
 
                 -- Minor check for investor starting with '3'
-                IF MYSCHCODE <> 'OP#10826' AND SUBSTR(P_LABEL32_CLIENT_CODE, 1, 1) = '3' THEN
+                IF MYSCHCODE <> 'OP#10826' AND SUBSTR(P_INV_CODE, 1, 1) = '3' THEN
                     SELECT NVL(DOB, SYSDATE - 10000)
                     INTO V_DOB
                     FROM INVESTOR_MASTER
-                    WHERE INV_CODE = P_LABEL32_CLIENT_CODE;
+                    WHERE INV_CODE = P_INV_CODE;
 
                     IF V_DOB IS NOT NULL AND MONTHS_BETWEEN(SYSDATE, V_DOB) / 12 <= 18 THEN
                         V_IS_MINOR := TRUE;
@@ -730,7 +725,7 @@ BEGIN
                         SELECT UPPER(PAN)
                         INTO V_PAN1
                         FROM INVESTOR_MASTER
-                        WHERE INV_CODE = P_LABEL32_CLIENT_CODE;
+                        WHERE INV_CODE = P_INV_CODE;
 
                         IF V_PAN1 IS NOT NULL AND V_PAN1 <> '0' THEN
                             IF V_PAN1 <> UPPER(P_PANVARIFY) THEN
@@ -743,11 +738,11 @@ BEGIN
                 END IF;
 
                 -- Minor check for investor starting with '4'
-                IF MYSCHCODE <> 'OP#10826' AND SUBSTR(P_LABEL32_CLIENT_CODE, 1, 1) = '4' THEN
+                IF MYSCHCODE <> 'OP#10826' AND SUBSTR(P_INV_CODE, 1, 1) = '4' THEN
                     SELECT NVL(DOB, TO_DATE('01/01/1800', 'DD/MM/YYYY'))
                     INTO V_DOB
                     FROM CLIENT_TEST
-                    WHERE CLIENT_CODEKYC = P_LABEL32_CLIENT_CODE;
+                    WHERE CLIENT_CODEKYC = P_INV_CODE;
 
                     IF V_DOB = TO_DATE('01/01/1800', 'DD/MM/YYYY') THEN
                         OPEN P_CURSOR FOR
@@ -758,7 +753,7 @@ BEGIN
                     SELECT NVL(INVESTOR_CODE, '1')
                     INTO V_CATEGORY
                     FROM CLIENT_MASTER
-                    WHERE CLIENT_CODE = SUBSTR(P_LABEL32_CLIENT_CODE, 1, 8);
+                    WHERE CLIENT_CODE = SUBSTR(P_INV_CODE, 1, 8);
 
                     IF V_DOB IS NOT NULL AND MONTHS_BETWEEN(SYSDATE, V_DOB) / 12 <= 18 THEN
                         V_IS_MINOR := (V_CATEGORY = '1');
@@ -772,7 +767,7 @@ BEGIN
                             FROM CLIENT_TEST
                             WHERE UPPER(CLIENT_PAN) = UPPER(P_PANVARIFY);
 
-                            IF V_INV_CD IS NOT NULL AND V_INV_CD <> P_LABEL32_CLIENT_CODE THEN
+                            IF V_INV_CD IS NOT NULL AND V_INV_CD <> P_INV_CODE THEN
                                 OPEN P_CURSOR FOR
                                     SELECT 'PAN entered does not match with the selected investor''s PAN' AS MESSAGE FROM DUAL;
                                 RETURN;
@@ -781,7 +776,7 @@ BEGIN
                             SELECT COUNT(*)
                             INTO V_ACCOUNT_PAN
                             FROM CLIENT_TEST
-                            WHERE CLIENT_CODEKYC = P_LABEL32_CLIENT_CODE
+                            WHERE CLIENT_CODEKYC = P_INV_CODE
                             AND (UPPER(CLIENT_PAN) = UPPER(P_PANVARIFY) OR CLIENT_PAN IS NULL);
 
                             IF V_ACCOUNT_PAN = 0 THEN
@@ -796,7 +791,7 @@ BEGIN
                             SELECT NVL(UPPER(G_PAN), '0')
                             INTO V_PAN1
                             FROM CLIENT_TEST
-                            WHERE CLIENT_CODEKYC = P_LABEL32_CLIENT_CODE;
+                            WHERE CLIENT_CODEKYC = P_INV_CODE;
 
                             IF V_PAN1 <> '0' AND V_PAN1 <> UPPER(P_PANVARIFY) THEN
                                 OPEN P_CURSOR FOR
@@ -807,7 +802,7 @@ BEGIN
                             SELECT COUNT(*)
                             INTO V_ACCOUNT_PAN
                             FROM CLIENT_TEST
-                            WHERE CLIENT_CODEKYC = P_LABEL32_CLIENT_CODE
+                            WHERE CLIENT_CODEKYC = P_INV_CODE
                             AND (UPPER(G_PAN) = UPPER(P_PANVARIFY) OR G_PAN IS NULL);
 
                             IF V_ACCOUNT_PAN = 0 THEN
@@ -831,7 +826,7 @@ BEGIN
         V_MIN_AMOUNT NUMBER;
         BEGIN
             -- Check if ATM transaction is selected
-            IF P_CHKATMTRANSACTIONA = '1' THEN
+            IF P_CHK_ATM_TR = '1' THEN
 
                 -- Fetch minimum amount for the scheme
                 SELECT MIN_AMOUNT
@@ -842,7 +837,7 @@ BEGIN
                 AND (TO_DT >= SYSDATE OR TO_DT IS NULL);
 
                 -- Compare with entered amount
-                IF NVL(P_TXTAMOUNTA, 0) < V_MIN_AMOUNT THEN
+                IF NVL(P_AMOUNT, 0) < V_MIN_AMOUNT THEN
                     OPEN P_CURSOR FOR
                         SELECT 'Minimum amount condition to have Reliance ATM Card is not being fulfilled' AS MESSAGE
                         FROM DUAL;
@@ -868,8 +863,8 @@ BEGIN
             SELECT COUNT(*)
             INTO V_EXISTS
             FROM TRANSACTION_MF_TEMP1
-            WHERE MUT_CODE = P_CMBAMCA
-            AND APP_NO = P_TXTAPPNOA
+            WHERE MUT_CODE = P_AMC
+            AND APP_NO = P_APP_NO
             AND (ASA <> 'C' OR ASA IS NULL);
 
             -- If record exists, show message and exit
@@ -888,8 +883,8 @@ BEGIN
             V_RECD_TOTAL NUMBER := 0;
         BEGIN
             -- Calculate total receivable using two functions
-            SELECT NVL(UPFRONT_RECD_NONANG_DETAIL(P_CMBAMCA, MYSCHCODE, TO_DATE(P_IMENTRYDTA, 'MM/DD/YYYY'), P_TXTAMOUNTA, P_TRAN_TYPE, MYSWITCHSCHCODEA), 0)
-                 + NVL(TRAIL_RECD_ANG_DETAIL(P_CMBAMCA, MYSCHCODE, TO_DATE(P_ENTRYDATE, 'MM/DD/YYYY'), P_TXTAMOUNTA), 0)
+            SELECT NVL(UPFRONT_RECD_NONANG_DETAIL(P_AMC, MYSCHCODE, TO_DATE(P_ENTRY_DATE, 'MM/DD/YYYY'), P_AMOUNT, P_TRAN_TYPE, MYSWITCHSCHCODEA), 0)
+                 + NVL(TRAIL_RECD_ANG_DETAIL(P_AMC, MYSCHCODE, TO_DATE(P_ENTRY_DATE, 'MM/DD/YYYY'), P_AMOUNT), 0)
             INTO V_RECD_TOTAL
             FROM DUAL;
 
