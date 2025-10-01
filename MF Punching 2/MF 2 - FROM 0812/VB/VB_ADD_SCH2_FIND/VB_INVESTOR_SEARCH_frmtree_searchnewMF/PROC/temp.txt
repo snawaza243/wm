@@ -1,0 +1,55 @@
+this funciton si woking fine "function displaySearchResults(data, setDataTo, setCount=null) {
+    var resultsContainer = $(setDataTo);
+    resultsContainer.empty();
+
+    if (data.data && data.data.length > 0) {
+        if (setCount) {
+            setCount.val(data.totalCount);
+        }
+        var html = '<div class="' + setDataTo + '_count d-none">Found ' + data.totalCount + ' records</div>';
+        html += '<table class="' + setDataTo+ '_table">';
+
+        // Create table header
+        html += '<thead><tr>';
+        if (data.schema && data.schema.length > 0) {
+            data.schema.forEach(function (column) {
+                html += '<th>' + column.columnName + '</th>';
+            });
+        } else if (data.data.length > 0) {
+            // Fallback: use keys from first data item
+            Object.keys(data.data[0]).forEach(function (key) {
+                html += '<th>' + key + '</th>';
+            });
+        }
+        html += '</tr></thead>';
+
+        // Create table body
+        html += '<tbody>';
+        data.data.forEach(function (row) {
+            html += '<tr>';
+            Object.values(row).forEach(function (value) {
+                html += '<td>' + (value !== null ? value : '') + '</td>';
+            });
+            html += '</tr>';
+        });
+        html += '</tbody></table>';
+
+        resultsContainer.html(html);
+    } else {
+        resultsContainer.html('<div class="no-results">No records found matching your criteria</div>');
+    }
+}", but i want in some anoehr form.
+
+a paramterign not dependted . and ca use for any oter also . 
+
+so do consider the follisng coidng and feature
+
+in thsi "(data, setDataTo, setCount=null)"
+
+data will be as it is , insted of paign a div lets pass a targetTablethose all the headre and body data do emptyr then set the resutl data and do the  header defiend as per hte data is comign wiht the header.
+
+antoehr parm for het setting the data row count if the id or class naem is pass then set the data row count toeht eletnet.
+
+add another paramt that will be defautl widht of hte tbale like 100px 150px , of hte each column,
+
+antoehr param true and false if true then make table column adustable 
