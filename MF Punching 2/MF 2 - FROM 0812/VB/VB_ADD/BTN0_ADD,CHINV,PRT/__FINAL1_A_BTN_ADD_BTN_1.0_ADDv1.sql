@@ -1,7 +1,6 @@
---2025-10-06
+--251007
 
-
-CREATE OR REPLACE PROCEDURE PSM_MF2_ADD_PROCESS (
+CREATE OR REPLACE PROCEDURE PSM_MF2_ADD_TR_PROCESS (
     PX_LOG_ID               IN VARCHAR2,
     PX_ROLE_ID              IN VARCHAR2,
     PX_DT_NUMBER            IN VARCHAR2,
@@ -55,62 +54,66 @@ CREATE OR REPLACE PROCEDURE PSM_MF2_ADD_PROCESS (
     PX_CURSOR               OUT SYS_REFCURSOR
 )
 AS
+    VP_MICRO_PAN_FLAG       NUMBER;
+    V_CHK_ATM_TR            VARCHAR2:=NULL;
 
-VP_MICRO_PAN_FLAG           NUMBER;
-V_CHK_ATM_TR                VARCHAR2:=NULL;
 
-
-/*
-PAYMENT_MODE
-C-->Cheque
-D-->Draft
-E-->ECS
-H-->Cash
-R-->Others
-U-->RTGS
-B-->File_Transfer
-
-*/
+    /* PAYMENT_MODE KEY:VALIE
+        C-->Cheque
+        D-->Draft
+        E-->ECS
+        H-->Cash
+        R-->Others
+        U-->RTGS
+        B-->File_Transfer
+    */
 
 BEGIN
     
 -- VALIDATION 1
-    BEGIN 
-
+    BEGIN
+        -- AUTHORIZATION CHECK
         IF PX_ROLE_ID NOT IN ('212') THEN        
             OPEN P_CURSOR FOR SELECT 'YOU ARE NOT AUTHORIZED TO PUNCH THE TRANSACTION' AS MSG FROM DUAL;
             RETURN;
         END IF;
-
         
-        IF TRIM(PX_DT) IS NOT NULL THEN
-            DECLARE V_FN_CHECK_FOR_APPROVAL_ALL VARCHAR2(1);
-            BEGIN
-                SELECT WEALTHMAKER.FN_CHECK_FOR_APPROVAL_ALL(PX_DT) INTO V_FN_CHECK_FOR_APPROVAL_ALL FROM DUAL WHERE ROWNUM = 1;
-                IF V_FN_CHECK_FOR_APPROVAL_ALL = '2' THEN
-                    OPEN PX_CURSOR FOR SELECT 'Approval request for this transaction has already been raised' AS MSG FROM DUAL; RETURN;
-                ELSIF V_FN_CHECK_FOR_APPROVAL_ALL = '4' THEN
-                    OPEN PX_CURSOR FOR SELECT 'Approval request for this transaction has been rejected by Management' AS MSG FROM DUAL; RETURN;
-                END IF;
-            END;
-        ELSE
-            OPEN PX_CURSOR FOR SELECT 'DT IS REQUIRED' AS MSG FROM DUAL;
-            RETURN;
-        END IF;
-
+        -- REQ DT OR APPROVAL CHECK
+        BEGIN
+            IF TRIM(PX_DT) IS NOT NULL THEN
+                DECLARE V_FN_CHECK_FOR_APPROVAL_ALL VARCHAR2(1);
+                BEGIN
+                    SELECT WEALTHMAKER.FN_CHECK_FOR_APPROVAL_ALL(PX_DT) INTO V_FN_CHECK_FOR_APPROVAL_ALL FROM DUAL WHERE ROWNUM = 1;
+                    IF V_FN_CHECK_FOR_APPROVAL_ALL = '2' THEN
+                        OPEN PX_CURSOR FOR SELECT 'APPROVAL REQUEST FOR THIS TRANSACTION HAS ALREADY BEEN RAISED' AS MSG FROM DUAL; RETURN;
+                    ELSIF V_FN_CHECK_FOR_APPROVAL_ALL = '4' THEN
+                        OPEN PX_CURSOR FOR SELECT 'APPROVAL REQUEST FOR THIS TRANSACTION HAS BEEN REJECTED BY MANAGEMENT' AS MSG FROM DUAL; RETURN;
+                    END IF;
+                END;
+            ELSE
+                OPEN PX_CURSOR FOR SELECT 'DT IS REQUIRED' AS MSG FROM DUAL;
+                RETURN;
+            END IF;
+        END;
+        
+        -- REQ PX_SIP_END_DATE FOR PX_SIP_STP SIP 
         IF PX_SIP_STP = 'SIP' THEN
             IF PX_SIP_END_DATE IS NULL OR P_SIP_START_DT IS NULL THEN
-                OPEN PX_CURSOR FOR SELECT 'Please Enter SIP End Date ' AS MSG FROM DUAL; RETURN;
+                OPEN PX_CURSOR FOR SELECT 'PLEASE ENTER SIP END DATE' AS MSG FROM DUAL; RETURN;
             END IF;
         END IF;
 
-        IF PX_AUTO_SWITCH_MATURITY = '1' AND PX_HDN_SCHEME3_CLOSE IS NOT NULL THEN
-            V_SCH_CD_CLOSE:= PX_HDN_SCHEME3_CLOSE;
-        ELSE
-            V_SCH_CD_CLOSE := '';
-        END IF;
+        -- SET CLOSE SCH FOR AUTO CLS CHK
+        BEGIN
+            IF PX_AUTO_SWITCH_MATURITY = '1' AND PX_HDN_SCHEME3_CLOSE IS NOT NULL THEN
+                V_SCH_CD_CLOSE:= PX_HDN_SCHEME3_CLOSE;
+            ELSE
+                V_SCH_CD_CLOSE := '';
+            END IF;
+        END;
 
-        IF PX_INV_CODE <> '' AND PX_HDN_SCHEME1 <> '' AND PX_AMOUNT <> '' THEN
+        --POPUP: DUPLICATE
+        IF PX_INV_CODE IS NOT NULL AND PX_HDN_SCHEME1 IS NOT NULL AND PX_AMOUNT IS NOT NULL THEN
             DECLARE 
                 VP_COUNT_DUP_TR NUMBER;
                 VP_AMT1 NUMBER;
@@ -135,14 +138,15 @@ BEGIN
                         'MF'            AS FORMTYPE,
                         PX_AMOUNT       AS PREM_AMT,
                         PX_INV_CODE     AS CCODE,
-                        PX_HDN_SCHEME1  AS sch_code 
+                        PX_HDN_SCHEME1  AS SCH_CODE 
                     FROM DUAL;
                     RETURN;
                 END IF;
             END;
         ELSE
-
             -- VALIDATION 2
+            
+            -- SET MICRO FLAG BY SIP_SUB_TYPE AND AMT < 50000
             IF PX_AMOUNT IS NOT NULL THEN
                 VP_MICRO_PAN_FLAG :=0;
                 IF PX_SIP_TYPE = 'MICRO' AND PX_AMOUNT <'50000' THEN
@@ -152,7 +156,7 @@ BEGIN
                 END IF;
             END IF;
 
-            -- LI premium EXCEED AMOUNT
+            -- LI PREMIUM EXCEED AMOUNT
             IF PX_DT IS NOT NULL THEN
                 DECLARE VP_VAL_COUNT NUMBER;
                 BEGIN
@@ -164,16 +168,16 @@ BEGIN
                 END;
             END IF;
 
-            -- validation of not to punch in Unallocated Branch and uploaded client , rm, branch 
+            -- CHECK UNLLOCATED BRANCH AND BLOCK TO PUNCH            
             IF PX_BRANCH IS NOT NULL AND PX_BRANCH <> '' AND PX_BRANCH <> 0 THEN
                 DECLARE
                     V_BRANCH_COUNT NUMBER;
                 BEGIN
                     SELECT COUNT(*)
-                    INTO V_BRANCH_COUNT
-                    FROM WEALTHMAKER.BRANCH_MASTER
-                    WHERE BRANCH_CODE = PX_BRANCH
-                    AND BRANCH_NAME LIKE 'UNALLO%';
+                      INTO V_BRANCH_COUNT
+                      FROM WEALTHMAKER.BRANCH_MASTER
+                     WHERE BRANCH_CODE = PX_BRANCH
+                       AND BRANCH_NAME LIKE 'UNALLO%';
 
                     IF V_BRANCH_COUNT > 0 THEN
                         OPEN PX_CURSOR FOR SELECT 'ERROR: Transaction can not be punched in Unallocated Branch. ' AS MSG FROM DUAL;
@@ -182,13 +186,12 @@ BEGIN
                 END;
             END IF;
 
-            -- VALIDATE UPLOADED CLIENT DT
-            IF PX_DT IS NOT NULL THEN
+            -- VALIDATE UPLOADED CLIENT DT CHECK
+            BEGIN
                 DECLARE
                     VP_RESULT  NUMBER;
                     VP_ERRMSG  VARCHAR2(200);
                 BEGIN
-                    -- Call the stored function/procedure
                     WEALTHMAKER.FN_VALIDATE_CLIENT_DT(
                         PDT_NO      => PX_DT,
                         PCLIENT_CODE => PX_INV_CODE,
@@ -199,22 +202,21 @@ BEGIN
                     -- If result = 0, then validation failed
                     IF NVL(VP_RESULT, 0) = 0 THEN
                         OPEN PX_CURSOR FOR
-                            SELECT VP_ERRMSG AS MSG
+                            SELECT 'ERROR: Uploaded Client DT Check' || VP_ERRMSG AS MSG
                             FROM DUAL;
                         RETURN;
                     END IF;
 
                 END;
-            END IF;
+            END;
 
-            -- VALIDATE UPLOADED BRANCH DT
-            IF PX_BRANCH IS NOT NULL THEN
+            -- VALIDATE UPLOADED BRANCH DT CHECK
+            BEGIN
                 DECLARE
                     VP_RESULT  NUMBER;
                     VP_ERRMSG  VARCHAR2(200);
                 BEGIN
                     IF PX_BSS_CODE IS NOT NULL AND PX_BSS_CODE <> '' THEN
-                        -- Call the validation procedure
                         WEALTHMAKER.FN_VALIDATE_BRANCH_RM_DT(
                             PDT_NO       => PX_DT,
                             PBRANCH_CODE => PX_BRANCH,
@@ -223,7 +225,6 @@ BEGIN
                             MESSAGE      => VP_ERRMSG
                         );
 
-                        -- Check validation result
                         IF NVL(VP_RESULT, 0) = 0 THEN
                             OPEN PX_CURSOR FOR
                                 SELECT VP_ERRMSG AS MSG
@@ -232,40 +233,37 @@ BEGIN
                         END IF;
                     END IF;
                 END;
-            END IF;
+            END;
 
             -- VALIDATE FP STATUS
-            IF PX_DT IS NOT NULL AND PX_INV_CODE IS NOT NULL  THEN 
+            BEGIN
                 DECLARE
-                    vP_fp_status NUMBER;
+                    VP_FP_STATUS NUMBER;
                 BEGIN
-                    IF PX_DT IS NOT NULL AND PX_DT <> '' 
-                    AND PX_INV_CODE IS NOT NULL AND PX_INV_CODE <> '' THEN
-
-                        -- Call the function and store the result
-                        SELECT fp_status_check1(PX_INV_CODE, PX_DT)
-                        INTO vP_fp_status
-                        FROM dual;
+                    IF PX_DT IS NOT NULL AND PX_INV_CODE IS NOT NULL THEN
+                        SELECT FP_STATUS_CHECK1(PX_INV_CODE, PX_DT)
+                          INTO VP_FP_STATUS
+                          FROM DUAL;
 
                         -- If status = 0, return error
-                        IF NVL(vP_fp_status, 0) = 0 THEN
+                        IF NVL(VP_FP_STATUS, 0) = 0 THEN
                             OPEN PX_CURSOR FOR
-                                SELECT 'Please create Financial planning for the investor first' AS MSG
-                                FROM dual;
+                                SELECT 'ERROR: Please create Financial planning for the investor first' AS MSG
+                                FROM DUAL;
                             RETURN;
                         END IF;
                     END IF;
                 END;
                 
                 SELECT NUL FROM DUAL;
-            END IF;
+            END;
 
             -- VALIDATE DOCUMENT NUMBER IN transaction_st AND transaction_sttemp
-            IF PX_DT IS NOT NULL THEN
+            BEGIN
                 DECLARE
                     VP_EXISTS NUMBER;
                 BEGIN
-                    IF PX_DT IS NOT NULL AND PX_DT <> '' THEN
+                    IF PX_DT IS NOT NULL THEN
                         -- Check in transaction_st
                         SELECT COUNT(*)
                         INTO VP_EXISTS
@@ -293,10 +291,9 @@ BEGIN
                         END IF;
                     END IF;
                 END;
-            END IF;
+            END;
 
-            -- SAVE VALIDATION MODIVICATIN VALIDATION
-
+            -- SAVE/MODIFY VALIDATION
             IF PX_TR_DATE IS NOT NULL THEN
                 DECLARE
                     VP_ORG_DT      DATE;
@@ -362,7 +359,7 @@ BEGIN
 
             END IF;
 
-            -- CANNT PUNCH IN FUTURE AND CHQ_DT CANNT BE A MONTH
+            -- CANNOT PUNCH IN FUTURE AND CHQ_DT CANNT BE MORE THAN A MONTH
             IF PX_TR_DATE IS NOT NULL AND PX_CHEQUE_DATE IS NOT NULL THEN
                 DECLARE
                     VP_SERVER_DT   DATE := TRUNC(SYSDATE);
@@ -413,23 +410,35 @@ BEGIN
                 END;                
             END IF;
 
-
             -- PX_TRANSACTION_TYPE AND PAYMENT_MOTH 
-            IF PX_TRANSACTION_TYPE IS NOT NULL THEN
-                IF PX_TRANSACTION_TYPE = 'PURCHASE' AND PX_PAYMENT_MODE NOT IN ('CHEQUE', 'DRAFT', 'ECS', 'RTGS', 'FT') THEN
+            BEGIN
+                IF PX_TRANSACTION_TYPE IS NOT NULL THEN
+                
+                    /* PAYMENT_MODE KEY:VALIE
+            C-->Cheque
+            D-->Draft
+            E-->ECS
+            H-->Cash
+            R-->Others
+            U-->RTGS
+            B-->File_Transfer
+        */
+
+                    IF PX_TRANSACTION_TYPE = 'PURCHASE' AND PX_PAYMENT_MODE NOT IN ('C', 'D', 'E', 'U', 'B') THEN
+                        OPEN PX_CURSOR FOR
+                            SELECT 'Please Select Cheque/Draft/ECS/RTGS/Fund Transfer From Payment Mode' AS MSG
+                            FROM DUAL;
+                        RETURN;
+                    END IF;
+                ELSE
                     OPEN PX_CURSOR FOR
-                        SELECT 'Please Select Cheque/Draft/ECS/RTGS/Fund Transfer From Payment Mode' AS MSG
+                        SELECT 'Please Select Transaction Type' AS MSG
                         FROM DUAL;
                     RETURN;
                 END IF;
-            ELSE
-                OPEN PX_CURSOR FOR
-                    SELECT 'Please Select Transaction Type' AS MSG
-                    FROM DUAL;
-                RETURN;
-            END IF;
+            END;
 
-
+            -- CHECK SIP/STP FOR PURCHASE PX_TRANSACTION_TYPE
             IF PX_TRANSACTION_TYPE = 'PURCHASE' THEN
                 IF PX_SIP_STP IS NULL  THEN
                     OPEN PX_CURSOR FOR
@@ -439,9 +448,9 @@ BEGIN
                 END IF;
             END IF;
 
-            --FREQ AND INSTALLMENTS
+            -- REQURIED FREQ AND INSTALLMENTS FOR SIP/STP
             IF PX_SIP_STP IN ('SIP','STP') THEN
-                IF (TRIM(PX_FREQUENCY) IS NULL OR TRIM(PX_INSTALLMENTS_NO) IS NULL) THEN
+                IF (PX_FREQUENCY IS NULL OR PX_INSTALLMENTS_NO IS NULL) THEN
                     OPEN PX_CURSOR FOR
                         SELECT 'Please Enter Frequency Type and No. Of Installments' AS MSG
                         FROM DUAL;
@@ -449,8 +458,7 @@ BEGIN
                 END IF;
             END IF;
 
-
-            -- SIP END DT AND SIP AMOUNT
+            -- REQURIED PX_SIP_END_DATE, PX_SIP_AMOUNT AND PX_FRESH_RENEWAL FOR SIP 
             IF PX_SIP_STP IN ('SIP') THEN
                 IF TRIM(PX_SIP_END_DATE) IS NULL THEN
                     OPEN PX_CURSOR FOR
@@ -475,10 +483,20 @@ BEGIN
                 END IF;
             END IF;
 
-
-            -- PAYMENT MODE NUMBER ADN DT VALIDATION
+            -- REQ CHQ_NO, CHQ_DT FOR PAY_MODE 'C', 'D', 'E', 'U', 'B'
             IF TRIM(PX_FRESH_RENEWAL) IN ('F') THEN
-                IF  TRIM(PX_PAYMENT_MODE) IN ('CHEQUE', 'DRAFT', 'ECS', 'RTGS', 'FT') THEN
+            
+                /* PAYMENT_MODE KEY:VALIE
+        C-->Cheque
+        D-->Draft
+        E-->ECS
+        H-->Cash
+        R-->Others
+        U-->RTGS
+        B-->File_Transfer
+    */
+
+                IF  TRIM(PX_PAYMENT_MODE) IN ('C', 'D', 'E', 'U', 'B') THEN
 
                     IF  TRIM(PX_CHEQUE_NO) IS NULL THEN
                         OPEN PX_CURSOR FOR
@@ -496,49 +514,65 @@ BEGIN
                 END IF;
             END IF;
 
+            -- REQ OTHER PAY_MODE FOR SWITCH IN PX_TRANSACTION_TYPE
+            IF TRIM(PX_TRANSACTION_TYPE)  = 'SWITCH IN' AND TRIM(PX_PAYMENT_MODE) IN ('C', 'D', 'E', 'H', 'U', 'B') THEN
+                            
+                /* PAYMENT_MODE KEY:VALIE
+        C-->Cheque
+        D-->Draft
+        E-->ECS
+        H-->Cash
+        R-->Others
+        U-->RTGS
+        B-->File_Transfer
+    */
+                
+                OPEN PX_CURSOR FOR
+                    SELECT 'Please Select Other Option ' AS MSG
+                    FROM DUAL;
+                RETURN;
+            END IF;
 
-        IF TRIM(PX_TRANSACTION_TYPE)  = 'SWITCH IN' AND TRIM(PX_PAYMENT_MODE) IN ('CHEQUE', 'DRAFT', 'ECS', 'CASH', 'RTGS', 'FT') THEN
-            OPEN PX_CURSOR FOR
-                SELECT 'Please Select Other Option ' AS MSG
-                FROM DUAL;
-            RETURN;
-        END IF;
+            -- REQ INV AH NAME
+            IF TRIM(PX_AH_NAME) IS NULL THEN
+                OPEN PX_CURSOR FOR
+                    SELECT 'Please Fill Investor Name' AS MSG
+                    FROM DUAL;
+                RETURN;
+            END IF;
 
-        IF TRIM(PX_AH_NAME) <>'' THEN
-            OPEN PX_CURSOR FOR
-                SELECT 'Please Fill Investor Name' AS MSG
-                FROM DUAL;
-            RETURN;
-        END IF;
+            -- REQ BSS_CODE
+            IF TRIM(PX_BSS_CODE) IS NULL THEN
+                OPEN PX_CURSOR FOR
+                    SELECT 'Please Fill Business Code. ' AS MSG
+                    FROM DUAL;
+                RETURN;
+            END IF;
 
-        IF TRIM(PX_BSS_CODE) <>'' THEN
-            OPEN PX_CURSOR FOR
-                SELECT 'Please Fill Business Code A' AS MSG
-                FROM DUAL;
-            RETURN;
-        END IF;
-
-        IF PX_AMC IS NULL THEN
-            OPEN PX_CURSOR FOR
-                SELECT 'Please Select AMC' AS MSG
-                FROM DUAL;
-            RETURN;
-        END IF;
-
-        IF TRIM(PX_TRANSACTION_TYPE) = 'PURCHASE' THEN
-            IF TRIM(PX_APP_NO) IS NOT NULL THEN
-                IF LENGTH(PX_APP_NO) < 6 THEN
-                    OPEN PX_CURSOR FOR
-                        SELECT ' Minimum Length Of App No Should Be Greater or Equal To 6 ' FROM DUAL;
+            -- REQ AMC 
+            IF PX_AMC IS NULL THEN
+                OPEN PX_CURSOR FOR
+                    SELECT 'Please Select AMC' AS MSG
+                    FROM DUAL;
+                RETURN;
+            END IF;
+        
+            -- REQ VALID APP_NO FOR PURCHASE PX_TRANSACTION_TYPE
+            IF TRIM(PX_TRANSACTION_TYPE) = 'PURCHASE' THEN
+                IF TRIM(PX_APP_NO) IS NOT NULL THEN
+                    IF LENGTH(PX_APP_NO) < 6 THEN
+                        OPEN PX_CURSOR FOR
+                            SELECT ' Minimum Length Of App No Should Be Greater or Equal To 6 ' FROM DUAL;
+                            RETURN;
+                    ELSIF PX_APP_NO = '000000' THEN
+                        OPEN PX_CURSOR FOR
+                            SELECT ' Please Enter A Valid App No ' FROM DUAL;
                         RETURN;
-                ELSIF PX_APP_NO = '000000' THEN
-                    OPEN PX_CURSOR FOR
-                        SELECT ' Please Enter A Valid App No ' FROM DUAL;
-                    RETURN;
+                    END IF;
                 END IF;
             END IF;
-        END IF;
 
+        -- REQ SCH_1 PX_HDN_SCHEME1
         IF TRIM(PX_HDN_SCHEME1) IS NULL THEN
             OPEN PX_CURSOR FOR
                 SELECT 'Select The Scheme' AS MSG
@@ -546,6 +580,7 @@ BEGIN
             RETURN;
         END IF;
 
+        -- REQ TR_DATE ENTRY DATE PX_TR_DATE
         IF TRIM(PX_TR_DATE) IS NULL THEN
             OPEN PX_CURSOR FOR
                 SELECT 'Transaction Date Can Not Be Left Blank' AS MSG
@@ -553,6 +588,7 @@ BEGIN
             RETURN;
         END IF;
 
+        -- REQ CLIENT_CODE (SOURCE_CODE) 8 DIGIT
         IF TRIM(PX_CLIENT_CODE) IS NULL THEN
             OPEN PX_CURSOR FOR
                 SELECT 'Client Code Can Not Left Blank' AS MSG
@@ -560,50 +596,42 @@ BEGIN
             RETURN;
         END IF;
 
-
-        IF PX_AMOUNT IS NOT NULL THEN
-            DECLARE
-                VP_AMOUNT NUMBER;
-            BEGIN
+        -- REQ VALID AMOUNT
+        BEGIN
+            IF PX_AMOUNT IS NOT NULL THEN
+                DECLARE
+                    VP_AMOUNT NUMBER;
                 BEGIN
-                    -- Try converting to number
-                    VP_AMOUNT := TO_NUMBER(PX_AMOUNT);
-                EXCEPTION
-                    WHEN VALUE_ERROR THEN
-                        -- If conversion fails, treat as invalid
-                        OPEN PX_CURSOR FOR
-                            SELECT 'Amount must be a valid number' AS MSG
-                            FROM DUAL;
+                    BEGIN
+                        VP_AMOUNT := TO_NUMBER(PX_AMOUNT);
+                    EXCEPTION
+                        WHEN VALUE_ERROR THEN
+                            OPEN PX_CURSOR FOR
+                                SELECT 'Amount must be a valid number' AS MSG
+                                FROM DUAL;
+                            RETURN;
+                    END;
+
+                    IF NVL(VP_AMOUNT, 0) = 0 THEN
+                        OPEN PX_CURSOR FOR SELECT 'Amount cannot be zero' AS MSG FROM DUAL;
                         RETURN;
+                    END IF;
                 END;
+            ELSE
+                OPEN PX_CURSOR FOR SELECT 'Amount cannot be null' AS MSG FROM DUAL;
+                RETURN;
+            END IF;
+        END;
 
-                -- Now check if it's zero
-                IF NVL(VP_AMOUNT, 0) = 0 THEN
-                    OPEN PX_CURSOR FOR SELECT 'Amount cannot be zero' AS MSG FROM DUAL;
-                    RETURN;
-                END IF;
-            END;
-        ELSE
-            OPEN PX_CURSOR FOR SELECT 'Amount cannot be null' AS MSG FROM DUAL;
-            RETURN;
-        END IF;
-
-        IF TRIM(PX_BRANCH) <>'' THEN
+        -- REQ BRANCH
+        IF TRIM(PX_BRANCH) IS NULL THEN
             OPEN PX_CURSOR FOR
                 SELECT 'Branch Can Not Left Blank' AS MSG
                 FROM DUAL;
-        END IF;
+        END IF;            
 
-        IF TRIM(PX_HDN_SCHEME1) IS NULL THEN
-            OPEN PX_CURSOR FOR
-                SELECT 'Select Scheme First' AS MSG
-                FROM DUAL;
-            RETURN;
-        END IF;
-            
-
+        -- REQ SWITCH FOLIO-SCH FOR PX_TRANSACTION_TYPE SWITCH IN OR PX_SIP_STP = 'STP'
         IF PX_TRANSACTION_TYPE = 'SWITCH IN' OR PX_SIP_STP = 'STP' THEN
-            -- Validate Switch Scheme
             IF TRIM(PX_HDN_SCHEME2_SWITCH) IS NULL THEN
                 OPEN PX_CURSOR FOR
                     SELECT 'Select the Scheme you have Switched From' AS MSG
@@ -611,7 +639,6 @@ BEGIN
                 RETURN;
             END IF;
 
-            -- Validate Switch Folio
             IF TRIM(PX_FROM_SWITCH_FOLIO) IS NULL THEN
                 OPEN PX_CURSOR FOR
                     SELECT 'Select the Folio you have Switched From' AS MSG
@@ -627,8 +654,8 @@ BEGIN
                 RETURN;
             END IF;
 
-            declare V_COUNT number;
-            begin
+            DECLARE V_COUNT NUMBER;
+            BEGIN
                 -- Check if both schemes belong to the same AMC
                 SELECT COUNT(DISTINCT MUT_CODE)
                 INTO V_COUNT
@@ -641,7 +668,7 @@ BEGIN
                         FROM DUAL;
                     RETURN;
                 END IF;
-            end;
+            END;
         END IF;
   
         --Cross Checking Of Pan With Account Master
@@ -778,6 +805,8 @@ BEGIN
                     -- Final fallback: copy PAN if missing
                     IF TRIM(PX_HDN_PAN1) IS NULL OR NOT REGEXP_LIKE(PX_HDN_PAN1, '^[A-Z]{5}[0-9]{4}[A-Z]{1}$') THEN
                         V_PX_HDN_PAN1 := PX_PAN2;
+                    ELSE
+                        V_PX_HDN_PAN1 := PX_HDN_PAN1;
                     END IF;
 
                 END IF;
@@ -864,99 +893,59 @@ BEGIN
         END IF;
 
         IF PX_PAYMENT_MODE IN ('C', 'D', 'E', 'U','B') AND PX_FRESH_RENEWAL = 'F' THEN
-            INSERT INTO transaction_mf_Temp1 (
+            INSERT INTO TRANSACTION_MF_TEMP1 (
                 ATM_FLAG,SIP_AMOUNT,CLIENT_CODE,BUSINESS_RMCODE,LOGGEDUSERID,CLIENT_OWNER, BUSI_BRANCH_CODE,PANNO,MUT_CODE,SCH_CODE,TR_DATE,TRAN_TYPE,
-                APP_NO,SIP_START_DATE,Pan,FOLIO_NO,SWITCH_FOLIO,SWITCH_SCHEME,PAYMENT_MODE,BANK_NAME,CHEQUE_NO,CHEQUE_DATE,
-                AMOUNT,SIP_TYPE,LEAD_NAME,SOURCE_CODE,INVESTOR_NAME,EXP_RATE,EXP_AMOUNT,AC_HOLDER_CODE,frequency,installments_no,TIMEST,SIP_END_DATE,
-                sip_fr,dispatch,doc_id,micro_investment,target_switch_scheme,cob_flag,SWP_flag,FREEDOM_SIP_FLAG
+                APP_NO,SIP_START_DATE,PAN,FOLIO_NO,SWITCH_FOLIO,SWITCH_SCHEME,PAYMENT_MODE,BANK_NAME,CHEQUE_NO,CHEQUE_DATE,
+                AMOUNT,SIP_TYPE,LEAD_NAME,SOURCE_CODE,INVESTOR_NAME,EXP_RATE,EXP_AMOUNT,AC_HOLDER_CODE,FREQUENCY,INSTALLMENTS_NO,TIMEST,SIP_END_DATE,
+                SIP_FR,DISPATCH,DOC_ID,MICRO_INVESTMENT,TARGET_SWITCH_SCHEME,COB_FLAG,SWP_FLAG,FREEDOM_SIP_FLAG
                 ) VALUES(
-                    V_CHK_ATM_TR,PX_SIP_AMOUNT, PX_INV_CODE, PX_BSS_CODE, PX_LOG_ID, PX_BSS_CODE, PX_BRANCH, PX_HDN_PAN1, PX_AMC, PX_HDN_SCHEME1, TO_DATE(PX_TR_DATE, 'DD/MM/YYYY'),PX_TRANSACTION_TYPE,
+                    V_CHK_ATM_TR,PX_SIP_AMOUNT, PX_INV_CODE, PX_BSS_CODE, PX_LOG_ID, PX_BSS_CODE, PX_BRANCH, V_PX_HDN_PAN1,/*PX_HDN_PAN1,*/ PX_AMC, PX_HDN_SCHEME1, TO_DATE(PX_TR_DATE, 'DD/MM/YYYY'),PX_TRANSACTION_TYPE,
                     PX_APP_NO, NVL(TO_DATE(PX_SIP_START_DATE,'DD/MM/YYYY'), NULL),PX_PAN2, PX_FOLIO_NO, PX_FROM_SWITCH_FOLIO, PX_HDN_SCHEME2_SWITCH, PX_PAYMENT_MODE, PX_BANK_NAME, PX_CHEQUE_NO, PX_CHEQUE_DATE,
                     PX_AMOUNT, PX_SIP_STP, '', PX_CLIENT_CODE, PX_AH_NAME, PX_EXP_PER, PX_EXP_RS, PX_AH_CODE, PX_FREQUENCY, PX_INSTALLMENTS_NO, SYSDATE,  NVL(TO_DATE(PX_SIP_END_DATE,'DD/MM/YYYY'), NULL),
-                    PX_FRESH_RENEWAL, PX_REGULAR_NFO, PX_DT_NUMBER,PX_SIP_TYPE, PX_HDN_SCHEME3_CLOSE, PX_COB_CASE, PX_SWP_CASE, PX_FREEDOM_SIP 
+                    PX_FRESH_RENEWAL, PX_REGULAR_NFO, PX_DT_NUMBER,PX_SIP_TYPE, V_SCH_CD_CLOSE, /*PX_HDN_SCHEME3_CLOSE,*/ PX_COB_CASE, PX_SWP_CASE, PX_FREEDOM_SIP 
                 );
         ELSE
-            INSERT INTO transaction_mf_Temp1 (
+            INSERT INTO TRANSACTION_MF_TEMP1 (
                 ATM_FLAG,SIP_AMOUNT,CLIENT_CODE,BUSINESS_RMCODE,LOGGEDUSERID,CLIENT_OWNER, BUSI_BRANCH_CODE,PANNO,MUT_CODE,SCH_CODE,TR_DATE,TRAN_TYPE,
-                APP_NO,SIP_START_DATE,Pan,FOLIO_NO,SWITCH_FOLIO,SWITCH_SCHEME,PAYMENT_MODE,
-                AMOUNT,SIP_TYPE,LEAD_NAME,SOURCE_CODE,INVESTOR_NAME,EXP_RATE,EXP_AMOUNT,AC_HOLDER_CODE,frequency,installments_no,TIMEST,SIP_END_DATE,
-                sip_fr,dispatch,doc_id,micro_investment,target_switch_scheme,cob_flag,SWP_flag,FREEDOM_SIP_FLAG
+                APP_NO,SIP_START_DATE,PAN,FOLIO_NO,SWITCH_FOLIO,SWITCH_SCHEME,PAYMENT_MODE,
+                AMOUNT,SIP_TYPE,LEAD_NAME,SOURCE_CODE,INVESTOR_NAME,EXP_RATE,EXP_AMOUNT,AC_HOLDER_CODE,FREQUENCY,INSTALLMENTS_NO,TIMEST,SIP_END_DATE,
+                SIP_FR,DISPATCH,DOC_ID,MICRO_INVESTMENT,TARGET_SWITCH_SCHEME,COB_FLAG,SWP_FLAG,FREEDOM_SIP_FLAG
                 ) VALUES(
-                    V_CHK_ATM_TR,PX_SIP_AMOUNT, PX_INV_CODE, PX_BSS_CODE, PX_LOG_ID, PX_BSS_CODE, PX_BRANCH, PX_HDN_PAN1, PX_AMC, PX_HDN_SCHEME1, TO_DATE(PX_TR_DATE, 'DD/MM/YYYY'),PX_TRANSACTION_TYPE,
+                    V_CHK_ATM_TR,PX_SIP_AMOUNT, PX_INV_CODE, PX_BSS_CODE, PX_LOG_ID, PX_BSS_CODE, PX_BRANCH, V_PX_HDN_PAN1,/*PX_HDN_PAN1,*/ PX_AMC, PX_HDN_SCHEME1, TO_DATE(PX_TR_DATE, 'DD/MM/YYYY'),PX_TRANSACTION_TYPE,
                     PX_APP_NO, NVL(TO_DATE(PX_SIP_START_DATE,'DD/MM/YYYY'), NULL),PX_PAN2, PX_FOLIO_NO, PX_FROM_SWITCH_FOLIO, PX_HDN_SCHEME2_SWITCH, PX_PAYMENT_MODE,
                     PX_AMOUNT, PX_SIP_STP, '', PX_CLIENT_CODE, PX_AH_NAME, PX_EXP_PER, PX_EXP_RS, PX_AH_CODE, PX_FREQUENCY, PX_INSTALLMENTS_NO, SYSDATE,  NVL(TO_DATE(PX_SIP_END_DATE,'DD/MM/YYYY'), NULL),
-                    PX_FRESH_RENEWAL, PX_REGULAR_NFO, PX_DT_NUMBER,PX_SIP_TYPE, PX_HDN_SCHEME3_CLOSE, PX_COB_CASE, PX_SWP_CASE, PX_FREEDOM_SIP 
+                    PX_FRESH_RENEWAL, PX_REGULAR_NFO, PX_DT_NUMBER,PX_SIP_TYPE, V_SCH_CD_CLOSE, /*PX_HDN_SCHEME3_CLOSE,*/ PX_COB_CASE, PX_SWP_CASE, PX_FREEDOM_SIP 
                 );
         END IF;
 
-        Declare 
-            v_ret_msg varchar2(1000):='Current transaction has been recorded successfully';
+        SELECT MAX(TRAN_CODE) INTO V_GENERATED_TR 
+          FROM TRANSACTION_MF_TEMP1 
+         WHERE BUSINESS_RMCODE=PX_BSS_CODE
+           AND PANNO = PX_HDN_PAN1 OR PX_HDN_PAN1 IS NULL
+           AND (PX_PAYMENT_MODE IN  ('C', 'D', 'E', 'U','B') AND CHEQUE_NO =  PX_CHEQUE_NO) OR PX_CHEQUE_NO IS NULL
+           AND APP_NO = PX_APP_NO OR PX_APP_NO IS NULL 
+           AND ROWNUM = 1;
 
-            v_GENERATED_TR varchar2(1000);
-
-
-
-        begin
-
-        select max(tran_code) INTO v_GENERATED_TR from transaction_mf_Temp1 where BUSINESS_RMCODE=PX_BSS_CODE
-        and PANNO = PX_HDN_PAN1 OR PX_HDN_PAN1 IS NULL
-
-        and PX_PAYMENT_MODE IN  ('C', 'D', 'E', 'U','B') AND CHEQUE_NO =  PX_CHEQUE_NO OR  IS NULL
-and APP_NO = PX_APP_NO OR PX_APP_NO IS NULL AND ROWNUM = 1;
-
-                    OPEN PX_CURSOR FOR
-                        SELECT 'SUCCESS' AS MSG
-                        'Current transaction has been recorded successfully' AS MSG1,
-                        'Your ARNo is' || v_GENERATED_TR AS MSG2
-                        FROM DUAL;
-                    RETURN;
-
-
-        end;
-
-
- 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    END IF;
-
-    IF V_RETURN IS NOT NULL THEN
-        OPEN PX_CURSOR FOR 
-            SELECT 'ERROR: ' || V_RETURN AS MSG FROM DUAL;
-        RETURN;
-    ELSE 
-        OPEN PX_CURSOR FOR 
-            SELECT 'SUCCESS: MF PUNCHING TRANSACTION VALIDATION PASS ' AS MSG FROM DUAL;
-        RETURN;
-
+        IF V_GENERATED_TR IS NOT NULL THEN
+            OPEN PX_CURSOR FOR
+                SELECT 'SUCCESS' AS MSG,
+                'Current transaction has been recorded successfully' AS MSG1,
+                'Your ARNo is' || V_GENERATED_TR AS MSG2
+                FROM DUAL;
+            RETURN;
+        ELSE
+            OPEN PX_CURSOR FOR
+                SELECT 'AR CODE NOT FETCHED' AS MSG FROM DUAL;
+            RETURN;
         END IF;
-
-    -- Dummy result to test the output (replace with actual SELECT)
-    OPEN PX_CURSOR FOR
-        SELECT
-            PX_DT_NUMBER       AS DT_NUMBER,
-            PX_TR_DATE         AS TR_DATE,
-            PX_CLIENT_CODE     AS CLIENT_CODE,
-            PX_AMOUNT          AS AMOUNT,
-            'SUCCESS'          AS STATUS
-        FROM DUAL;
+        
+    END IF;
+    END
 
 EXCEPTION
     WHEN OTHERS THEN
-        -- Optional: log or handle error
+     v_err_msg:=SQLERRM;
         OPEN PX_CURSOR FOR
-            SELECT 'ERROR' AS STATUS, SQLERRM AS ERROR_MESSAGE FROM DUAL;
+            SELECT 'ERROR: ' || v_err_msg AS MSG FROM DUAL;
 END;
+

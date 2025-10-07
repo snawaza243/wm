@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Advanced &lt;details&gt; Tag Examples</title>
+  <style>
+    :root {
+      --bg-color: #f7f9fb;
+      --text-color: #333;
+      --accent-color: #0056b3;
+      --border-color: #ccc;
+      --card-bg: #fff;
+    }
+
+    body {
+      font-family: "Segoe UI", Arial, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      margin: 0;
+      padding: 30px;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    h1, h2 {
+      color: var(--accent-color);
+    }
+
+    /* Container styling */
+    .section {
+      margin-bottom: 40px;
+    }
+
+    /* DETAILS styling */
+    details {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      margin: 10px 0;
+      padding: 10px 15px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+      transition: all 0.3s ease;
+    }
+
+    details[open] {
+      border-color: var(--accent-color);
+      box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+    }
+
+    summary {
+      font-weight: 600;
+      cursor: pointer;
+      position: relative;
+      padding-left: 25px;
+      list-style: none;
+      color: var(--accent-color);
+      user-select: none;
+    }
+
+    summary::before {
+      content: "▶";
+      position: absolute;
+      left: 0;
+      top: 2px;
+      font-size: 0.9em;
+      transition: transform 0.2s ease;
+    }
+
+    details[open] summary::before {
+      transform: rotate(90deg);
+    }
+
+    details p, details ul, details pre {
+      margin-top: 10px;
+    }
+
+    /* Code block */
+    pre {
+      background: #f1f1f1;
+      padding: 10px;
+      border-radius: 5px;
+      overflow-x: auto;
+    }
+
+    /* Forms */
+    form {
+      background: var(--card-bg);
+      padding: 15px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+    }
+
+    label {
+      display: block;
+      margin: 8px 0;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 6px;
+      border-radius: 4px;
+      border: 1px solid #bbb;
+    }
+
+    button {
+      background: var(--accent-color);
+      color: white;
+      border: none;
+      padding: 8px 15px;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    button:hover {
+      background: #003f80;
+    }
+
+    /* Nested details */
+    details details {
+      margin-left: 20px;
+      border-left: 2px solid var(--accent-color);
+      padding-left: 10px;
+    }
+
+    /* Accordion effect for grouped details */
+    .accordion details {
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+    }
+
+    /* Dark mode toggle */
+    .dark-mode-toggle {
+      display: inline-block;
+      padding: 8px 12px;
+      background: var(--accent-color);
+      color: white;
+      border-radius: 4px;
+      cursor: pointer;
+      float: right;
+      font-size: 0.9em;
+    }
+
+    body.dark {
+      --bg-color: #1e1e1e;
+      --text-color: #eaeaea;
+      --accent-color: #66aaff;
+      --border-color: #444;
+      --card-bg: #2a2a2a;
+    }
+
+    body.dark button {
+      background: #66aaff;
+    }
+
+  </style>
+</head>
+<body>
+
+  <span class="dark-mode-toggle" onclick="document.body.classList.toggle('dark')">🌙 Toggle Dark Mode</span>
+
+  <h1>Advanced &lt;details&gt; Tag Demonstration</h1>
+  <p>This page shows beginner to advanced uses of the <code>&lt;details&gt;</code> HTML tag — with styling, animation, icons, and even dark mode.</p>
+
+  <hr>
+
+  <!-- 1. FAQ Section -->
+  <div class="section">
+    <h2>1. FAQ Section</h2>
+    <div class="accordion">
+      <details>
+        <summary>💬 What is your return policy?</summary>
+        <p>We offer a 30-day return policy for all unopened items. Contact our support team for details.</p>
+      </details>
+
+      <details>
+        <summary>🚚 Do you offer international shipping?</summary>
+        <p>Yes, we ship to most countries worldwide with tracking and insurance options.</p>
+      </details>
+
+      <details>
+        <summary>💳 What payment methods are accepted?</summary>
+        <p>We accept Visa, Mastercard, PayPal, and cryptocurrency payments.</p>
+      </details>
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- 2. Product Specs -->
+  <div class="section">
+    <h2>2. Product Details with Nested Sections</h2>
+    <details>
+      <summary>📱 Smartphone Specifications</summary>
+      <ul>
+        <li>12MP dual-lens camera</li>
+        <li>6.7-inch OLED display</li>
+        <li>512 GB storage</li>
+      </ul>
+      <details>
+        <summary>Battery & Performance</summary>
+        <p>5000mAh battery, supports 45W fast charging and wireless charging.</p>
+      </details>
+      <details>
+        <summary>Connectivity</summary>
+        <p>Supports 5G, Bluetooth 5.3, NFC, and Wi-Fi 6E.</p>
+      </details>
+    </details>
+  </div>
+
+  <hr>
+
+  <!-- 3. Code Example -->
+  <div class="section">
+    <h2>3. Developer Documentation Example</h2>
+    <details>
+      <summary>📘 Show JavaScript Example</summary>
+      <pre><code>
+// Fetch data from API
+fetch('/api/data')
+  .then(response => response.json())
+  .then(data => console.log('Data:', data))
+  .catch(error => console.error('Error:', error));
+      </code></pre>
+    </details>
+  </div>
+
+  <hr>
+
+  <!-- 4. Form Example -->
+  <div class="section">
+    <h2>4. Advanced Form Settings</h2>
+    <form>
+      <label>Name:
+        <input type="text" name="name" placeholder="Enter your name">
+      </label>
+
+      <details>
+        <summary>⚙️ Advanced Settings</summary>
+        <label>API Key:
+          <input type="text" name="api-key" placeholder="Enter API key">
+        </label>
+        <label>
+          <input type="checkbox" name="debug"> Enable Debug Mode
+        </label>
+      </details>
+
+      <button type="submit">Submit</button>
+    </form>
+  </div>
+
+  <hr>
+
+  <!-- 5. Educational Example -->
+  <div class="section">
+    <h2>5. Quiz Example</h2>
+    <p><strong>Question:</strong> What is the capital of Japan?</p>
+    <details>
+      <summary>Show Answer</summary>
+      <p>Tokyo 🇯🇵</p>
+    </details>
+  </div>
+
+  <hr>
+
+  <!-- 6. Changelog -->
+  <div class="section">
+    <h2>6. Version History</h2>
+    <details open>
+      <summary>Version 3.0.0 (2025)</summary>
+      <ul>
+        <li>🚀 Added AI assistant integration</li>
+        <li>⚡ Improved app speed by 30%</li>
+      </ul>
+    </details>
+
+    <details>
+      <summary>Version 2.9.0 (2024)</summary>
+      <ul>
+        <li>🐞 Bug fixes</li>
+        <li>🎨 Updated UI components</li>
+      </ul>
+    </details>
+  </div>
+
+  <hr>
+
+  <!-- 7. Nested Details -->
+  <div class="section">
+    <h2>7. Nested Example (Categories)</h2>
+    <details>
+      <summary>🌍 Continents</summary>
+      <details>
+        <summary>Asia</summary>
+        <p>Countries: Japan, China, India, South Korea</p>
+      </details>
+      <details>
+        <summary>Europe</summary>
+        <p>Countries: France, Germany, Italy, Spain</p>
+      </details>
+    </details>
+  </div>
+
+  <hr>
+
+  <p style="text-align:center; opacity:0.8;"><em>Built using only HTML & CSS — no JavaScript required for toggling sections!</em></p>
+
+</body>
+</html>

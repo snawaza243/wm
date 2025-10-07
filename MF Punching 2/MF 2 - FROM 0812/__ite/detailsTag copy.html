@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HTML &lt;details&gt; Tag Examples</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      line-height: 1.6;
+      background-color: #f7f9fb;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h1, h2, h3 {
+      color: #333;
+    }
+
+    details {
+      background: #fff;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      padding: 10px 15px;
+      margin: 10px 0;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    summary {
+      font-weight: bold;
+      cursor: pointer;
+      color: #0056b3;
+    }
+
+    summary:hover {
+      color: #003d80;
+    }
+
+    pre {
+      background: #f4f4f4;
+      padding: 10px;
+      border-radius: 4px;
+      overflow-x: auto;
+    }
+
+    ul {
+      margin: 10px 0;
+      padding-left: 20px;
+    }
+
+    form {
+      background: #fff;
+      padding: 15px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      margin-top: 10px;
+    }
+
+    label {
+      display: block;
+      margin: 8px 0;
+    }
+
+    button {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      padding: 8px 15px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>&lt;details&gt; Tag — Complete Example Page</h1>
+  <p>This page shows different ways to use the HTML <code>&lt;details&gt;</code> tag.</p>
+
+  <hr>
+
+  <h2>1. FAQ Section</h2>
+  <details>
+    <summary>What is your return policy?</summary>
+    <p>We offer a 30-day return policy for all unopened items.</p>
+  </details>
+
+  <details>
+    <summary>Do you offer international shipping?</summary>
+    <p>Yes, we ship to most countries worldwide.</p>
+  </details>
+
+  <hr>
+
+  <h2>2. Product Details</h2>
+  <p>This phone has an amazing camera.</p>
+  <details>
+    <summary>See full specifications</summary>
+    <ul>
+      <li>12MP main camera</li>
+      <li>6.5-inch OLED display</li>
+      <li>128 GB storage</li>
+    </ul>
+  </details>
+
+  <hr>
+
+  <h2>3. Code or Technical Documentation</h2>
+  <details>
+    <summary>Show example code</summary>
+    <pre><code>
+fetch('/api/data')
+  .then(response => response.json())
+  .then(data => console.log(data));
+    </code></pre>
+  </details>
+
+  <hr>
+
+  <h2>4. Forms or Settings</h2>
+  <form>
+    <label>Name: <input type="text" name="name"></label>
+
+    <details>
+      <summary>Advanced Settings</summary>
+      <label>API Key: <input type="text" name="api-key"></label>
+      <label>Debug Mode: <input type="checkbox" name="debug"></label>
+    </details>
+
+    <button type="submit">Submit</button>
+  </form>
+
+  <hr>
+
+  <h2>5. Educational or Quiz Content</h2>
+  <h3>Question:</h3>
+  <p>What is the capital of France?</p>
+  <details>
+    <summary>Show Answer</summary>
+    <p>Paris 🇫🇷</p>
+  </details>
+
+  <hr>
+
+  <h2>6. Release Notes / Change Log</h2>
+  <details open>
+    <summary>Version 3.0.0 (2025)</summary>
+    <ul>
+      <li>Added AI assistant integration</li>
+      <li>Improved performance</li>
+    </ul>
+  </details>
+
+  <details>
+    <summary>Version 2.9.0 (2024)</summary>
+    <ul>
+      <li>Bug fixes</li>
+      <li>Updated UI</li>
+    </ul>
+  </details>
+
+  <hr>
+
+  <h2>7. Nested Details (Multi-level Info)</h2>
+  <details>
+    <summary>Animals</summary>
+    <details>
+      <summary>Mammals</summary>
+      <p>Examples: Dog, Cat, Elephant</p>
+    </details>
+    <details>
+      <summary>Birds</summary>
+      <p>Examples: Eagle, Parrot, Penguin</p>
+    </details>
+  </details>
+
+  <hr>
+  <p><em>All examples above show different ways to use the &lt;details&gt; tag in HTML.</em></p>
+
+</body>
+</html>
